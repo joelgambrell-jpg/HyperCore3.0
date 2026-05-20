@@ -1,0 +1,2594 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="assets/css/nexus-core.css" />
+<title>NEXUS Package Export</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.20);
+    --accent:#00c2ff;
+    --ok:#00ff66;
+    --bad:#ff3b3b;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+
+  .wrap-anywhere,
+  a,
+  .link,
+  .link a,
+  td,
+  th,
+  p,
+  div,
+  span{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+    word-wrap:break-word;
+    white-space:normal;
+  }
+
+  body{
+    margin:0;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#fff;
+    background:var(--bg);
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .nx-header-wrap{
+    background:rgba(0,0,0,0.35);
+    border-bottom:1px solid rgba(255,255,255,0.18);
+    backdrop-filter:blur(8px);
+  }
+  .nx-header{
+    max-width:1100px;
+    margin:0 auto;
+    padding:14px 18px;
+    display:flex;
+    align-items:center;
+  }
+  .nx-header img{
+    height:54px;
+    width:auto;
+    object-fit:contain;
+    max-width:100%;
+  }
+
+  .wrap{
+    max-width:1100px;
+    margin:18px auto 60px;
+    padding:0 18px;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:18px;
+    backdrop-filter:blur(10px);
+  }
+
+  .topbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    color:#3ecbff;
+    background:#0a0f24;
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .btn.secondary{
+    background:rgba(0,0,0,0.20);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.35);
+  }
+  .btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+  }
+
+  h1{
+    margin:0 0 6px;
+    font-size:28px;
+    font-weight:900;
+  }
+  .sub{
+    margin:0 0 14px;
+    font-weight:800;
+    opacity:.95;
+  }
+
+  .meta{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:12px;
+    margin:12px 0 8px;
+  }
+  @media (max-width:900px){
+    .meta{grid-template-columns:1fr;}
+  }
+
+  .field{
+    background:var(--panel2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+  }
+  .label{
+    font-size:12px;
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    opacity:.95;
+    margin-bottom:8px;
+  }
+
+  select{
+    width:100%;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    outline:none;
+    font-size:15px;
+    font-weight:900;
+    background:rgba(255,255,255,0.92);
+    color:#111;
+  }
+
+  .hint{
+    font-size:13px;
+    opacity:.9;
+    line-height:1.35;
+  }
+
+  #printArea{margin-top:14px;}
+
+  .report{
+    background:rgba(255,255,255,0.96);
+    color:#111;
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.08);
+    padding:18px;
+    overflow:visible !important;
+  }
+
+  .report h2{
+    margin:0 0 6px;
+    font-size:18px;
+    letter-spacing:.02em;
+    border-bottom:2px solid rgba(0,0,0,0.08);
+    padding-bottom:6px;
+  }
+
+  .report h3{
+    margin:16px 0 8px;
+    font-size:15px;
+    letter-spacing:.02em;
+  }
+
+  .kv{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:8px 12px;
+    margin:10px 0 0;
+  }
+  .kv div{
+    padding:6px 8px;
+    border-bottom:1px solid rgba(0,0,0,0.08);
+  }
+  .kv .k{
+    font-weight:900;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:8px;
+    min-width:0 !important;
+    table-layout:auto !important;
+  }
+  th,td{
+    border:1px solid rgba(0,0,0,0.15);
+    padding:8px 8px;
+    vertical-align:top;
+    font-size:13px;
+    white-space:normal !important;
+    word-break:break-word !important;
+    overflow-wrap:anywhere !important;
+  }
+  th{
+    background:rgba(0,0,0,0.05);
+    text-align:left;
+    font-weight:900;
+  }
+
+  .muted{opacity:.8;}
+  .mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  }
+
+  .pagebreak{
+    page-break-after:always;
+    break-after:page;
+    height:0;
+  }
+
+  .section-gap{
+    margin-top:12px;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:88px;
+    padding:8px 12px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.06);
+    border:1px solid rgba(0,0,0,0.10);
+    font-weight:900;
+  }
+  .ok{color:#0a7a2d;}
+  .bad{color:#a30000;}
+  .pill.ok{
+    color:#002b14;
+    background:rgba(0,255,102,0.20);
+    border-color:rgba(0,255,102,0.55);
+  }
+  .pill.bad{
+    color:#3d0000;
+    background:rgba(255,59,59,0.16);
+    border-color:rgba(255,59,59,0.45);
+  }
+  .pill.warn{
+    color:#5c4300;
+    background:rgba(255,183,0,0.16);
+    border-color:rgba(255,183,0,0.40);
+  }
+  .pill.muted{
+    color:#666;
+    background:rgba(0,0,0,0.03);
+    border-color:rgba(0,0,0,0.10);
+  }
+
+  .status-banner{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:12px;
+    font-weight:900;
+    border:1px solid rgba(0,0,0,0.10);
+    background:rgba(0,0,0,0.03);
+  }
+  .status-banner.pass{
+    background:rgba(0,255,102,0.10);
+    border-color:rgba(0,255,102,0.38);
+  }
+  .status-banner.fail{
+    background:rgba(255,59,59,0.10);
+    border-color:rgba(255,59,59,0.32);
+  }
+  .status-banner.review{
+    background:rgba(255,183,0,0.12);
+    border-color:rgba(255,183,0,0.32);
+  }
+
+  .link a{
+    color:#0a0f24;
+    text-decoration:underline;
+    font-weight:900;
+  }
+
+  img{
+    max-width:100%;
+    height:auto;
+  }
+
+  .source-box{
+    margin-top:10px;
+    padding:10px 12px;
+    border:1px solid rgba(0,0,0,0.10);
+    border-radius:12px;
+    background:rgba(0,0,0,0.03);
+  }
+
+  .tilt-grid{
+    margin-top:8px;
+  }
+  .tilt-grid table{
+    margin-top:10px;
+  }
+  .tilt-buttons{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .tilt-buttons .pill{
+    min-width:74px;
+  }
+
+  .nx-footer{
+    margin-top:40px;
+    padding:18px 12px;
+    text-align:center;
+    font-size:12px;
+    font-weight:700;
+    color:rgba(255,255,255,0.85);
+    background:rgba(0,0,0,0.35);
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+
+
+  /* ===========================================================
+     Procore Upload Workflow Enhancements
+     - Full package stays intact.
+     - Individual pieces can be printed/exported separately.
+     =========================================================== */
+  .procore-tools{
+    margin:14px 0;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(0,0,0,.30);
+    border:1px solid rgba(255,255,255,.18);
+  }
+  .procore-tools h2{
+    margin:0 0 8px;
+    font-size:18px;
+    font-weight:900;
+  }
+  .procore-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:10px;
+  }
+  @media(max-width:900px){
+    .procore-grid{grid-template-columns:1fr;}
+  }
+  .procore-box{
+    padding:12px;
+    border-radius:14px;
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.14);
+  }
+  .procore-box .label{
+    color:#fff;
+    opacity:1;
+  }
+  .procore-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .upload-name{
+    margin-top:8px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(0,0,0,.25);
+    border:1px solid rgba(255,255,255,.16);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:12px;
+    font-weight:900;
+    overflow-wrap:anywhere;
+  }
+  .upload-status{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(125,211,252,.13);
+    border:1px solid rgba(125,211,252,.35);
+    color:#e8f7ff;
+    font-weight:900;
+    line-height:1.35;
+  }
+  .upload-status.warn{
+    background:rgba(255,213,74,.18);
+    border-color:rgba(255,213,74,.42);
+    color:#fff3cf;
+  }
+  .upload-status.pass{
+    background:rgba(45,255,155,.14);
+    border-color:rgba(45,255,155,.38);
+    color:#eafff1;
+  }
+  .upload-checklist{
+    margin:10px 0 0;
+    padding-left:18px;
+    font-size:13px;
+    line-height:1.5;
+    font-weight:800;
+  }
+  .upload-checklist li{
+    margin:4px 0;
+  }
+
+  @media print{
+    body{
+      background:#fff !important;
+      color:#000 !important;
+    }
+    .nx-header-wrap,.topbar,.meta,.hint,.actions,.nx-footer,.nx-back-btn,#nxSessionBanner{
+      display:none !important;
+    }
+    .wrap{
+      margin:0;
+      padding:0;
+      max-width:none;
+    }
+    .card{
+      background:#fff !important;
+      border:none !important;
+      backdrop-filter:none !important;
+      padding:0;
+    }
+    .report{
+      border:none !important;
+      border-radius:0 !important;
+      padding:0 !important;
+    }
+    .pagebreak{
+      page-break-after:always !important;
+      break-after:page !important;
+    }
+    h2, h3, img, .source-box{
+      break-inside:avoid;
+      page-break-inside:avoid;
+    }
+    thead{
+      display:table-header-group;
+    }
+    tfoot{
+      display:table-footer-group;
+    }
+    tr, td, th{
+      break-inside:auto !important;
+      page-break-inside:auto !important;
+    }
+    .link a{
+      color:#000 !important;
+    }
+    th,td{
+      font-size:11px !important;
+      padding:6px 6px !important;
+    }
+    .kv{
+      grid-template-columns:180px 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="nexus-page">
+
+  <div id="nxSessionBanner" class="nx-session-banner">
+    <div class="nx-left">
+      <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+      <span class="nx-pill" data-nx-status>Ready</span>
+    </div>
+    <div class="nx-right"></div>
+  </div>
+
+  <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+  <div class="nx-header-wrap">
+    <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h1>Package Export</h1>
+          <div class="sub" id="eqLabel">Equipment: (missing eq)</div>
+        </div>
+        <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+          <a class="btn secondary" id="backBtn" href="index.html">Back</a>
+          <button class="btn" id="printBtn" type="button">Export Full Package</button>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div class="field">
+          <div class="label">Procore destination</div>
+          <select id="procoreDest">
+            <option value="construction">Construction (attachments for Construction)</option>
+            <option value="energization">Energization / Commissioning (attachments for Energization)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label">Open Procore</div>
+          <button class="btn secondary" id="openProcoreBtn" type="button">Open selected Procore page</button>
+        </div>
+        <div class="field">
+          <div class="label">Status</div>
+          <div class="hint" id="status">Ready</div>
+        </div>
+      </div>
+
+      <div class="hint">
+        This generates a single printable package that includes: RIF (digital No-Procore readout), L2 (digital No-Procore readout),
+        Megohmmeter Test Log (Line/Load), <b>Equipment Megohmmeter Test (If Applicable)</b>, Fluke Connect Megohmmeter Testing,
+        Snap-on TorqueConnect import sessions, Torque Vanguard validation results, foreman verification status, Tilt Test pre-torque proof,
+        Finished Product Verification Photo (if saved), Pre-FOD (readout + link), and the Excel-driven AI-validated Construction Check Sheet.
+        The package now listens for Firebase updates when Firebase is available, mirrors live section data into the existing export renderer, and falls back to local browser data with auto-refresh.
+      </div>
+
+      <div class="procore-tools" id="procoreTools">
+        <h2>Procore Upload Tools</h2>
+        <div class="hint">
+          Use <b>Export Full Package</b> for one complete turnover PDF, or use <b>Export Selected Piece</b> when Procore needs individual attachments.
+          This does not upload directly into Procore; it prepares the correct printable package/piece and opens the selected Procore page for attachment.
+        </div>
+
+        <div class="procore-grid">
+          <div class="procore-box">
+            <div class="label">Package / Piece to Export</div>
+            <select id="pieceExportSel">
+              <option value="FULL">Full Package</option>
+              <option value="Receipt Inspection Form">Receipt Inspection Form</option>
+              <option value="L2 Installation Verification">L2 Installation Verification</option>
+              <option value="Megohmmeter Test Log">Megohmmeter Test Log</option>
+              <option value="Equipment Megohmmeter Test">Equipment Megohmmeter Test</option>
+              <option value="Fluke Connect Megohmmeter Testing">Fluke Connect Megohmmeter Testing</option>
+              <option value="Snap-on TorqueConnect Import Sessions">Snap-on TorqueConnect Import Sessions</option>
+              <option value="Torque Vanguard Validation">Torque Vanguard Validation</option>
+              <option value="Foreman Verification">Foreman Verification</option>
+              <option value="Tilt Test">Tilt Test</option>
+              <option value="Finished Product Verification Photo">Finished Product Verification Photo</option>
+              <option value="Pre-FOD">Pre-FOD</option>
+              <option value="Construction Check Sheet">Construction Check Sheet</option>
+            </select>
+            <div class="upload-name" id="uploadFileName">Package file name will appear here.</div>
+          </div>
+
+          <div class="procore-box">
+            <div class="label">Actions</div>
+            <div class="procore-actions">
+              <button class="btn" id="printFullBtn" type="button">Export Full Package</button>
+              <button class="btn secondary" id="printPieceBtn" type="button">Export Selected Piece</button>
+              <button class="btn secondary" id="copyUploadNameBtn" type="button">Copy Upload Name</button>
+            </div>
+            <div class="upload-status" id="procoreUploadStatus">
+              Choose full package or a piece, export/print to PDF, then attach it in the selected Procore destination.
+            </div>
+          </div>
+        </div>
+
+        <ol class="upload-checklist">
+          <li>Export the full package or selected piece as PDF.</li>
+          <li>Open the selected Procore page.</li>
+          <li>Upload the PDF as an attachment in Procore.</li>
+          <li>Keep the generated file name so the attachment is traceable to equipment and package section.</li>
+        </ol>
+      </div>
+
+      <div id="printArea">
+        <div class="report" id="report"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="nx-footer">
+    © 2026 NEXUS Data Science LLC — All Rights Reserved
+  </footer>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="nexus-firebase-bridge.js"></script>
+<script src="assets/js/vanguard_core.js"></script>
+<script src="assets/js/vanguard_loader.js" data-vanguard-mode="export"></script>
+<script>
+(function(){
+  const reportEl = document.getElementById('report');
+
+  function renderVanguardSummary(eqId){
+    if(!window.NEXUS_VANGUARD){
+      return '';
+    }
+
+    try{
+
+      const state = window.NEXUS_VANGUARD.getState(eqId);
+
+      let intelligence = null;
+
+try{
+  if(window.NEXUS_VANGUARD_INTELLIGENCE){
+    intelligence = window.NEXUS_VANGUARD_INTELLIGENCE.refresh();
+  }else{
+    intelligence = readJSON("nexus_" + eqId + "_vanguard_intelligence");
+  }
+}catch(e){}
+      if(!state){
+        return '';
+      }
+
+      const locks = Array.isArray(state.locks) ? state.locks : [];
+      const actions = Array.isArray(state.requiredActions) ? state.requiredActions : [];
+      const flags = Array.isArray(state.aiFlags) ? state.aiFlags : [];
+
+      function vpill(text, cls){
+        return '<span class="pill ' + cls + '">' + safe(text) + '</span>';
+      }
+
+      const readiness = [];
+
+      if(state.readiness && state.readiness.readyForMeg){
+        readiness.push(vpill('READY FOR MEG','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForL2){
+        readiness.push(vpill('READY FOR L2','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForPrefod){
+        readiness.push(vpill('READY FOR PRE-FOD','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForFpv){
+        readiness.push(vpill('READY FOR FPV','ok'));
+      }
+
+      if(state.readiness && state.readiness.readyForEnergization){
+        readiness.push(vpill('READY FOR ENERGIZATION','ok'));
+      }
+
+      return `
+        <h2>Vanguard Intelligence Summary</h2>
+
+        <div class="status-banner ${
+          state.status && state.status.tone === 'danger'
+            ? 'fail'
+            : state.status && state.status.tone === 'warning'
+              ? 'review'
+              : 'pass'
+        }">
+          STATUS:
+          ${safe((state.status && state.status.label) || 'UNKNOWN')}
+          ${
+            state.status && state.status.message
+              ? (' — ' + safe(state.status.message))
+              : ''
+          }
+        </div>
+
+        <div class="kv">
+          ${kvRowHtml(
+            'Confidence Score',
+            '<span class="pill ok">' + safe((state.confidenceScore || 0) + '%') + '</span>'
+          )}
+
+          ${kvRowHtml(
+            'Risk Score',
+            '<span class="pill ' + ((state.riskScore || 0) > 50 ? 'bad' : 'warn') + '">' +
+            safe((state.riskScore || 0) + '%') +
+            '</span>'
+          )}
+
+          ${kvRow('Equipment', state.equipmentId || eqId || '')}
+          ${kvRow('Project', state.projectId || '')}
+        </div>
+
+        <h3>Readiness Gates</h3>
+        ${
+          readiness.length
+            ? readiness.join(' ')
+            : '<div class="muted">No readiness gates active.</div>'
+        }
+
+        <h3>Active Locks</h3>
+        ${
+          locks.length
+            ? renderTable(
+                ['Code','Severity','Description'],
+                locks.map(function(lock){
+                  return [
+                    lock.code || '',
+                    lock.severity || '',
+                    lock.label || ''
+                  ];
+                })
+              )
+            : '<div class="muted">No active Vanguard locks.</div>'
+        }
+
+        <h3>Required Actions</h3>
+        ${
+          actions.length
+            ? renderTable(
+                ['Required Action'],
+                actions.map(function(a){ return [a]; })
+              )
+            : '<div class="muted">No required actions.</div>'
+        }
+
+        <h3>AI Flags</h3>
+        ${
+          flags.length
+            ? renderTable(
+                ['Flag','Severity','Count'],
+                flags.map(function(flag){
+                  return [
+                    flag.label || flag.code || '',
+                    flag.severity || '',
+                    flag.count || ''
+                  ];
+                })
+              )
+            : '<div class="muted">No AI flags detected.</div>'
+        }
+
+        <div class="pagebreak"></div>
+      `;
+
+    }catch(err){
+      console.warn('Vanguard summary render failed', err);
+      return '';
+    }
+  }
+
+  const eqLabel = document.getElementById('eqLabel');
+  const backBtn = document.getElementById('backBtn');
+  const statusEl = document.getElementById('status');
+  const destSel = document.getElementById('procoreDest');
+
+
+
+  function renderApprovedRequirementTraceability(eqId){
+    try{
+      const vg = window.NEXUS_VANGUARD || window.Vanguard || null;
+      const review = window.NEXUS_VANGUARD_REQUIREMENT_REVIEW || window.VanguardRequirementReview || null;
+      let state = vg && typeof vg.getState === 'function' ? vg.getState() : null;
+      if(!state){
+        try{ state = JSON.parse(localStorage.getItem('nexus_' + String(eqId || '').trim() + '_vanguard_system') || '{}'); }catch(e){ state = {}; }
+      }
+      const docs = state && state.documents ? state.documents : {};
+      const approved = review && typeof review.approvedRequirements === 'function'
+        ? review.approvedRequirements()
+        : (Array.isArray(docs.approvedRequirements) ? docs.approvedRequirements : (Array.isArray(docs.selectedRequirements) ? docs.selectedRequirements : []));
+      const gate = review && typeof review.gateStatus === 'function'
+        ? review.gateStatus()
+        : (docs.reviewGate || {});
+      let html = '<div class="nexus-card"><h2>Approved Requirement Traceability</h2>';
+      html += '<p class="muted">Only engineer-approved requirements should drive field workflow enforcement. AI suggestions that are not approved remain office review data, not field rules.</p>';
+      html += '<table><tbody>';
+      html += '<tr><th>Review Gate</th><td>' + escapeHtml(gate.status || 'NOT PUBLISHED') + '</td></tr>';
+      html += '<tr><th>Total / Approved / Pending</th><td>' + escapeHtml(String(gate.total || approved.length || 0)) + ' / ' + escapeHtml(String(gate.approved || approved.length || 0)) + ' / ' + escapeHtml(String(gate.pending || 0)) + '</td></tr>';
+      html += '<tr><th>Published At</th><td>' + escapeHtml(gate.publishedAt || docs.approvedRulesPublishedAt || 'Not published') + '</td></tr>';
+      html += '</tbody></table>';
+      if(!approved.length){
+        html += '<div class="muted">No approved requirement rules found. Requirement review must be completed before customer-facing requirement traceability is final.</div>';
+      } else {
+        html += '<table><thead><tr><th>Type</th><th>Approved Requirement</th><th>Source</th><th>Page</th></tr></thead><tbody>';
+        approved.forEach(function(req){
+          html += '<tr><td>' + escapeHtml(req.requirementType || req.type || 'GENERAL') + '</td><td>' + escapeHtml(req.value || req.requirement || '') + '</td><td>' + escapeHtml(req.sourceDocument || req.document || '') + '</td><td>' + escapeHtml(req.page || '') + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      try{
+        const ar = window.VanguardApprovedRules || window.NEXUS_VANGUARD_APPROVED_RULES || null;
+        const trace = ar && typeof ar.exportTrace === 'function' ? ar.exportTrace(eqId) : null;
+        const rows = [];
+        ['torque','meg','ccs'].forEach(function(step){
+          const item = trace && trace[step] ? trace[step] : null;
+          if(item){ rows.push([step.toUpperCase(), item.status || '', String(item.passedRuleCount || 0) + ' / ' + String(item.ruleCount || 0), String(item.failedRuleCount || 0), item.updatedAt || '']); }
+        });
+        if(rows.length){
+          html += '<h3>Approved Rule Enforcement Results</h3>';
+          html += renderTable(['Workflow Step','Field Status','Approved Rules Passed','Failed Rules','Checked At'], rows);
+        }
+      }catch(e){ console.warn('Approved rules enforcement trace failed', e); }
+      html += '</div>';
+      return html;
+    }catch(err){
+      console.warn('Approved requirement traceability render failed', err);
+      return '<div class="muted">Unable to render approved requirement traceability.</div>';
+    }
+  }
+
+  function renderVanguardEvidenceChain(eqId){
+    if(!window.NEXUS_VANGUARD || typeof window.NEXUS_VANGUARD.getState !== 'function'){
+      return '<div class="muted">Vanguard evidence engine not loaded yet. Reopen export after field pages sync if this remains blank.</div>';
+    }
+
+    try{
+      const state = window.NEXUS_VANGUARD.getState(eqId) || {};
+      const evidence = state.evidence && typeof state.evidence === 'object' ? state.evidence : {};
+      const groups = Object.keys(evidence).sort();
+
+      if(!groups.length){
+        return '<div class="status-banner review">NO VANGUARD EVIDENCE CHAIN FOUND — field pages may not have been opened/synced since the platform engine was added.</div>';
+      }
+
+      const rows = groups.map(function(group){
+        const bucket = evidence[group] || {};
+        const items = Array.isArray(bucket.items) ? bucket.items : [];
+        const last = bucket.lastItem || items[items.length - 1] || bucket;
+        const verified = last.verified === true || last.pass === true || last.passed === true || String(last.status || '').toUpperCase() === 'PASS' || String(last.status || '').toUpperCase() === 'COMPLETE';
+        return [
+          group,
+          items.length || (bucket.lastItem ? 1 : ''),
+          verified ? 'VERIFIED / PASS' : (last.status || last.result || last.validationStatus || 'CAPTURED'),
+          last.source || bucket.source || '',
+          last.capturedAt || last.importedAt || bucket.updatedAt || '',
+          last.role || ''
+        ];
+      });
+
+      return renderTable(
+        ['Evidence Group','Count','Status','Source','Last Updated','Role'],
+        rows
+      );
+    }catch(err){
+      console.warn('Vanguard evidence chain render failed', err);
+      return '<div class="muted">Unable to render Vanguard evidence chain.</div>';
+    }
+  }
+
+  function safe(v){
+    const s = (v == null ? '' : String(v));
+    return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function readJSON(key){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function readText(key){
+    try{
+      return localStorage.getItem(key) || '';
+    }catch(e){
+      return '';
+    }
+  }
+
+  function allKeys(){
+    const out = [];
+    try{
+      for(let i=0;i<localStorage.length;i++){
+        out.push(localStorage.key(i));
+      }
+    }catch(e){}
+    return out.filter(Boolean);
+  }
+
+  function getQueryEq(){
+    try{
+      const qs = new URLSearchParams(location.search);
+      return (qs.get('eq') || '').trim();
+    }catch(e){
+      return '';
+    }
+  }
+
+  function inferEqFromStorage(){
+    const candidates = [
+      'nexus_active_eq','nexus_active_equipment','nexus_current_eq','nexus_selected_eq','nexus_eq','nexus_equipment','eq'
+    ];
+
+    for(const key of candidates){
+      const val = readText(key).trim();
+      if(val) return val;
+    }
+
+    const metaKeys = allKeys().filter(k => /^nexus_meta_/i.test(k) && !/NO_EQ$/i.test(k));
+    if(metaKeys.length === 1){
+      return metaKeys[0].replace(/^nexus_meta_/, '').trim();
+    }
+
+    const stepKeys = allKeys().filter(k => /^nexus_.+_step_/i.test(k) && !/^nexus_NO_EQ_step_/i.test(k));
+    if(stepKeys.length){
+      const eqs = Array.from(new Set(stepKeys.map(function(k){
+        const m = k.match(/^nexus_(.+?)_step_/i);
+        return m ? m[1] : '';
+      }).filter(Boolean)));
+      if(eqs.length === 1) return eqs[0];
+    }
+
+    const torqueKeys = allKeys().filter(k => /^nexus_.+_torque_/i.test(k) && !/^nexus_NO_EQ_/i.test(k));
+    if(torqueKeys.length){
+      const eqs = Array.from(new Set(torqueKeys.map(function(k){
+        const m = k.match(/^nexus_(.+?)_torque_/i);
+        return m ? m[1] : '';
+      }).filter(Boolean)));
+      if(eqs.length === 1) return eqs[0];
+    }
+
+    return '';
+  }
+
+  const eq = getQueryEq() || inferEqFromStorage();
+  let liveFirebasePackage = null;
+  let liveFirebaseConnected = false;
+  let liveFirebaseLastUpdate = '';
+  let localRefreshSignature = '';
+  let localRefreshTimer = null;
+
+  function firebaseSafeEq(eqId){
+    const cleaned = String(eqId || 'NO_EQ').trim().replace(/[.#$\[\]/]/g, '_');
+    return cleaned || 'NO_EQ';
+  }
+
+  function writeJSON(key, value){
+    if(!key || value === undefined || value === null) return;
+    try{
+      localStorage.setItem(key, JSON.stringify(value));
+    }catch(e){
+      console.warn('Package Export local mirror failed for key:', key, e);
+    }
+  }
+
+  function writeText(key, value){
+    if(!key || value === undefined || value === null) return;
+    try{
+      localStorage.setItem(key, String(value));
+    }catch(e){
+      console.warn('Package Export local text mirror failed for key:', key, e);
+    }
+  }
+
+  function asArray(v){
+    if(Array.isArray(v)) return v;
+    if(v && typeof v === 'object') return Object.keys(v).map(function(k){ return v[k]; });
+    return [];
+  }
+
+  function firstObject(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(v && typeof v === 'object' && !Array.isArray(v)) return v;
+    }
+    return null;
+  }
+
+  function firstArray(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(Array.isArray(v)) return v;
+      if(v && typeof v === 'object'){
+        const arr = asArray(v);
+        if(arr.length) return arr;
+      }
+    }
+    return [];
+  }
+
+  function getSection(data, names){
+    if(!data || typeof data !== 'object') return null;
+    for(const name of names){
+      if(data[name] !== undefined && data[name] !== null) return data[name];
+    }
+    return null;
+  }
+
+  function getFirebaseDatabaseCompat(){
+    try{
+      if(window.firebase && window.firebase.database){
+        return window.firebase.database();
+      }
+    }catch(e){}
+
+    try{
+      if(window.firebaseDb && typeof window.firebaseDb.ref === 'function'){
+        return window.firebaseDb;
+      }
+    }catch(e){}
+
+    try{
+      if(window.NEXUS_FIREBASE && window.NEXUS_FIREBASE.database && typeof window.NEXUS_FIREBASE.database.ref === 'function'){
+        return window.NEXUS_FIREBASE.database;
+      }
+    }catch(e){}
+
+    try{
+      if(window.nexusFirebase && window.nexusFirebase.database && typeof window.nexusFirebase.database.ref === 'function'){
+        return window.nexusFirebase.database;
+      }
+    }catch(e){}
+
+    return null;
+  }
+
+  function mirrorFirebasePackageToLocal(eqId, data){
+    if(!eqId || !data || typeof data !== 'object') return;
+    const eqk = eqId || 'NO_EQ';
+
+    function packageSectionIsVerified(section){
+      if(!section || typeof section !== 'object') return false;
+      const status = String(section.status || section.overallStatus || section.packageStatus || section.validationStatus || '').toUpperCase();
+      return section.verified === true || section.approved === true || section.complete === true || section.signedOff === true || status === 'COMPLETE' || status === 'PASS' || status === 'READY';
+    }
+
+    function registerImportedPackageEvidence(group, section){
+      if(!section || typeof section !== 'object') return;
+      try{
+        if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.registerEvidence === 'function'){
+          window.NEXUS_VANGUARD.registerEvidence(group, {
+            equipmentId: eqk,
+            source: 'package_export_import_mirror',
+            importedAt: new Date().toISOString(),
+            verified: packageSectionIsVerified(section),
+            section: section
+          });
+        }
+      }catch(e){}
+    }
+
+    function readOnlyPackageNote(stepId, section){
+      registerImportedPackageEvidence(stepId, section);
+    }
+
+    const meta = firstObject(
+      getSection(data, ['meta','equipmentMeta','equipment_meta','equipment','setup','equipmentSetup','rifMeta']),
+      data.meta,
+      data.equipment
+    );
+    if(meta){
+      writeJSON('nexus_meta_' + eqk, meta);
+    }
+
+    const steps = firstObject(getSection(data, ['steps','stepStatus','completion','packageStatus','status']));
+    if(steps){
+      writeJSON('nexus_' + eqk + '_package_imported_step_status_v1', steps);
+      registerImportedPackageEvidence('package-step-status', { steps: steps, status: 'IMPORTED_READ_ONLY' });
+    }
+
+    const rif = firstObject(getSection(data, ['rif','RIF','receiptInspection','receiptInspectionForm']));
+    if(rif){
+      const id = (rif.meta && rif.meta.rifId) || rif.rifId || rif.id || ('RIF-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
+      writeJSON('nexus/equipment/' + eqk + '/rifs/' + id, rif);
+      readOnlyPackageNote('rif', rif);
+    }
+
+    const l2 = firstObject(getSection(data, ['l2','L2','l2ivf','installationVerification','installation_verification']));
+    if(l2){
+      const id = (l2.meta && l2.meta.l2Id) || l2.l2Id || l2.id || ('L2-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
+      writeJSON('nexus/equipment/' + eqk + '/l2s/' + id, l2);
+      readOnlyPackageNote('l2', l2);
+    }
+
+    const meg = firstObject(getSection(data, ['meg','megLog','meg_log','megohmmeter','megohmmeterLog']));
+    if(meg){
+      writeJSON('nexus_' + eqk + '_meg_log_v2', meg);
+      readOnlyPackageNote('meg', meg);
+    }
+
+    const megEquip = firstObject(getSection(data, ['megEquip','equipmentMeg','equipment_meg','equipMeg']));
+    if(megEquip){
+      writeJSON('nexus_' + eqk + '_meg_equip_v1', megEquip);
+    }
+
+    const megVanguard = firstObject(getSection(data, ['megVanguard','meg_vanguard','megValidation','meg_validation']));
+    if(megVanguard){
+      writeJSON('nexus_' + eqk + '_meg_vanguard_export', megVanguard);
+    }
+
+    const torque = firstObject(getSection(data, ['torque','torqueLog','torque_log']));
+    const torqueVanguard = firstObject(getSection(data, ['torqueVanguard','torque_vanguard','torqueValidation','torque_validation']), torque && torque.vanguard, torque && torque.validation);
+    if(torqueVanguard){
+      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torqueVanguard);
+      readOnlyPackageNote('torque', torqueVanguard);
+    }else if(torque){
+      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torque);
+    }
+
+    const foreman = firstObject(getSection(data, ['foreman','foremanVerification','torqueForeman','torque_foreman','torqueForemanState']), torque && torque.foreman, torque && torque.foremanState);
+    if(foreman){
+      writeJSON('nexus_' + eqk + '_torque_foreman_state_v1', foreman);
+    }
+
+    const tilt = firstObject(getSection(data, ['tilt','tiltTest','torqueTilt','torque_tilt']), torque && torque.tilt, torque && torque.tiltTest);
+    if(tilt){
+      writeJSON('nexus_' + eqk + '_torque_tilt_v2', tilt);
+    }
+
+    const flukeSessions = firstArray(getSection(data, ['flukeSessions','fluke','flukeConnect','megFlukeSessions']), meg && meg.flukeSessions, meg && meg.fluke);
+    if(flukeSessions.length){
+      const normalized = flukeSessions.map(function(s){
+        if(s && typeof s === 'object'){
+          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
+        }
+        return s;
+      });
+      writeJSON('nexus.meg.fluke.sessions.v1', normalized);
+    }
+
+    const snapSessions = firstArray(getSection(data, ['snaponSessions','snapOnSessions','torqueSessions','torqueConnect','snapon','snapOn']), torque && torque.sessions, torque && torque.snaponSessions);
+    if(snapSessions.length){
+      const normalized = snapSessions.map(function(s){
+        if(s && typeof s === 'object'){
+          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
+        }
+        return s;
+      });
+      writeJSON('nexus.torque.sessions.v1', normalized);
+    }
+
+    const fpv = firstObject(getSection(data, ['fpv','finishedProductVerification','finished_product_verification','fpvPhoto']));
+    if(fpv){
+      const img = fpv.photo || fpv.photoDataUrl || fpv.image || fpv.imageDataUrl || fpv.dataUrl || fpv.dataURL || '';
+      const notes = fpv.notes || fpv.note || fpv.comment || '';
+      if(img) writeText('nexus_' + eqk + '_fpv_photo', img);
+      if(notes) writeText('nexus_' + eqk + '_fpv_notes', notes);
+      if(img) readOnlyPackageNote('fpv', fpv);
+    }
+
+    const prefod = firstObject(getSection(data, ['prefod','preFod','pre_fod','preFOD','prefodChecklist']));
+    if(prefod){
+      writeJSON('nexus_' + eqk + '_prefod_checklist_v1', prefod);
+      readOnlyPackageNote('prefod', prefod);
+    }
+
+    const ccs = firstObject(getSection(data, ['ccs','constructionCheckSheet','construction_check_sheet','constructionCheckSheetImport','ccsImport','ccsVanguardValidation']));
+    if(ccs){
+      writeJSON('nexus_' + eqk + '_ccs_vanguard_export', ccs);
+      writeJSON('nexus_' + eqk + '_ccs_two_tab_v1', ccs);
+      writeJSON('nexus_' + eqk + '_ccs_excel', ccs);
+      if(packageSectionIsVerified(ccs) && Number(ccs.issueRows || (ccs.validation && Array.isArray(ccs.validation.issues) ? ccs.validation.issues.length : 0) || (Array.isArray(ccs.issues) ? ccs.issues.length : 0) || 0) === 0){
+        readOnlyPackageNote('ccs', ccs);
+      }
+    }
+  }
+
+  function firebaseSnapshotSignature(data){
+    try{
+      return JSON.stringify(data || {});
+    }catch(e){
+      return String(Date.now());
+    }
+  }
+
+  function packageLocalSignature(eqId){
+    const eqk = eqId || 'NO_EQ';
+    const interesting = allKeys().filter(function(k){
+      return k === 'nexus.meg.fluke.sessions.v1' ||
+        k === 'nexus.torque.sessions.v1' ||
+        k.indexOf('nexus_' + eqk + '_') === 0 ||
+        k.indexOf('nexus/equipment/' + eqk + '/') === 0 ||
+        k.indexOf('local:nexus/equipment/' + eqk + '/') === 0;
+    }).sort();
+
+    try{
+      return interesting.map(function(k){ return k + '=' + (localStorage.getItem(k) || '').length + ':' + (localStorage.getItem(k) || '').slice(0,80); }).join('|');
+    }catch(e){
+      return String(Date.now());
+    }
+  }
+
+  function setLiveStatus(message){
+    if(statusEl) statusEl.textContent = message;
+    try{
+      const statusNode = document.querySelector('[data-nx-status]');
+      if(statusNode) statusNode.textContent = message;
+      const eqNode = document.querySelector('[data-nx-eq]');
+      if(eqNode) eqNode.textContent = eq || '(none)';
+    }catch(e){}
+  }
+
+  function subscribeFirebasePackage(eqId){
+    if(!eqId){
+      return false;
+    }
+
+    const db = getFirebaseDatabaseCompat();
+    if(!db || typeof db.ref !== 'function'){
+      return false;
+    }
+
+    const safeId = firebaseSafeEq(eqId);
+    const paths = [
+      'nexus/equipment/' + safeId,
+      'equipment/' + safeId
+    ];
+
+    let connectedAny = false;
+
+    paths.forEach(function(path){
+      try{
+        const ref = db.ref(path);
+        ref.on('value', function(snapshot){
+          const data = snapshot && typeof snapshot.val === 'function' ? snapshot.val() : null;
+          if(!data) return;
+          const sig = firebaseSnapshotSignature(data);
+          if(liveFirebaseLastUpdate === sig) return;
+          liveFirebaseLastUpdate = sig;
+          liveFirebasePackage = data;
+          liveFirebaseConnected = true;
+          connectedAny = true;
+          mirrorFirebasePackageToLocal(eqId, data);
+          buildReport();
+          setLiveStatus('Live Firebase sync active. Package updated: ' + new Date().toLocaleString());
+        }, function(error){
+          console.warn('Package Export Firebase listener failed at ' + path + ':', error);
+        });
+      }catch(e){
+        console.warn('Package Export Firebase subscribe failed at ' + path + ':', e);
+      }
+    });
+
+    return connectedAny;
+  }
+
+  function startLocalAutoRefresh(eqId){
+    if(!eqId) return;
+    localRefreshSignature = packageLocalSignature(eqId);
+
+    function maybeRefresh(reason){
+      const sig = packageLocalSignature(eqId);
+      if(sig !== localRefreshSignature){
+        localRefreshSignature = sig;
+        buildReport();
+        if(!liveFirebaseConnected){
+          setLiveStatus('Local package data refreshed' + (reason ? ' (' + reason + ')' : '') + ': ' + new Date().toLocaleString());
+        }
+      }
+    }
+
+    window.addEventListener('storage', function(e){
+      if(!e || !e.key) return;
+      if(e.key === 'nexus.meg.fluke.sessions.v1' || e.key === 'nexus.torque.sessions.v1' || e.key.indexOf('nexus_' + eqId + '_') === 0 || e.key.indexOf('nexus/equipment/' + eqId + '/') === 0){
+        maybeRefresh('storage');
+      }
+    });
+
+    window.addEventListener('focus', function(){ maybeRefresh('focus'); });
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) maybeRefresh('visible');
+    });
+
+    localRefreshTimer = setInterval(function(){ maybeRefresh('auto'); }, 1500);
+  }
+
+
+  function safeFilePart(value){
+    return String(value || '')
+      .trim()
+      .replace(/[^\w\-]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 80) || 'PACKAGE';
+  }
+
+  function selectedPieceName(){
+    const sel = document.getElementById('pieceExportSel');
+    return sel ? String(sel.value || 'FULL') : 'FULL';
+  }
+
+  function currentProcoreDestinationLabel(){
+    if(!destSel) return 'PROCORE';
+    return destSel.value === 'energization' ? 'ENERGIZATION' : 'CONSTRUCTION';
+  }
+
+  function generatedUploadFileName(){
+    const piece = selectedPieceName();
+    const piecePart = piece === 'FULL' ? 'FULL_PACKAGE' : safeFilePart(piece).toUpperCase();
+    const datePart = new Date().toISOString().slice(0,10).replace(/-/g,'');
+    return [
+      'NEXUS',
+      safeFilePart(eq || 'NO_EQ').toUpperCase(),
+      currentProcoreDestinationLabel(),
+      piecePart,
+      datePart
+    ].join('_') + '.pdf';
+  }
+
+  function updateUploadFileName(){
+    const el = document.getElementById('uploadFileName');
+    if(el) el.textContent = generatedUploadFileName();
+
+    const status = document.getElementById('procoreUploadStatus');
+    if(status){
+      const piece = selectedPieceName();
+      status.className = 'upload-status ' + (piece === 'FULL' ? 'pass' : '');
+      status.textContent = piece === 'FULL'
+        ? 'Full package selected. Export to PDF, then attach the complete package in Procore.'
+        : 'Piece selected: ' + piece + '. Export this section as its own PDF, then attach it in Procore.';
+    }
+  }
+
+  function normalizeTitleText(value){
+    return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+  }
+
+  function findReportSectionNodes(pieceTitle){
+    if(!reportEl || !pieceTitle || pieceTitle === 'FULL') return [];
+    const wanted = normalizeTitleText(pieceTitle);
+    const headings = Array.from(reportEl.querySelectorAll('h2'));
+
+    let start = headings.find(function(h){
+      const t = normalizeTitleText(h.textContent || '');
+      return t === wanted || t.indexOf(wanted) !== -1 || wanted.indexOf(t) !== -1;
+    });
+
+    if(!start && pieceTitle === 'L2 Installation Verification'){
+      start = headings.find(function(h){ return normalizeTitleText(h.textContent).indexOf('l2') !== -1; });
+    }
+
+    if(!start && pieceTitle === 'Receipt Inspection Form'){
+      start = headings.find(function(h){ return normalizeTitleText(h.textContent).indexOf('receipt inspection') !== -1; });
+    }
+
+    if(!start) return [];
+
+    const nodes = [];
+    let n = start;
+    while(n){
+      if(n !== start && n.nodeType === 1 && n.tagName === 'H2') break;
+      nodes.push(n.cloneNode(true));
+      n = n.nextSibling;
+    }
+    return nodes;
+  }
+
+  function printHtmlDocument(title, bodyHtml){
+    const w = window.open('', '_blank', 'noopener');
+    if(!w){
+      alert('Popup blocked. Allow popups for this site or use Export Full Package.');
+      return;
+    }
+
+    const fileName = generatedUploadFileName();
+
+    w.document.open();
+    w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + safe(title) + '</title>' +
+      '<style>' +
+      'body{font-family:Arial,Helvetica,sans-serif;margin:22px;color:#111;background:#fff;}' +
+      '.report{color:#111;background:#fff;}' +
+      'h1{font-size:22px;margin:0 0 6px;} h2{font-size:18px;border-bottom:2px solid #ddd;padding-bottom:6px;margin:16px 0 8px;} h3{font-size:15px;margin:14px 0 8px;}' +
+      '.muted{opacity:.75}.mono{font-family:monospace}.kv{display:grid;grid-template-columns:190px 1fr;gap:6px 10px;margin:10px 0}.kv div{padding:5px 6px;border-bottom:1px solid #eee}.kv .k{font-weight:900}' +
+      'table{width:100%;border-collapse:collapse;margin-top:8px;table-layout:auto}th,td{border:1px solid #ccc;padding:6px;font-size:11px;vertical-align:top;overflow-wrap:anywhere;word-break:break-word}th{background:#f2f2f2;text-align:left}' +
+      '.pill{display:inline-flex;min-width:70px;padding:5px 8px;border-radius:999px;border:1px solid #ccc;font-weight:900;justify-content:center}.pill.ok{background:#dfffe8;color:#064d22}.pill.bad{background:#ffe0e0;color:#700}.pill.warn{background:#fff1bd;color:#5c4300}.pill.muted{background:#eee;color:#666}' +
+      '.status-banner{margin:10px 0;padding:9px;border-radius:10px;border:1px solid #ddd;background:#f8f8f8;font-weight:900}.status-banner.pass{background:#e7ffe9}.status-banner.fail{background:#ffe8e8}.status-banner.review{background:#fff4ce}' +
+      'img{max-width:100%;height:auto}.source-box{padding:8px;border:1px solid #ddd;border-radius:10px;background:#f8f8f8;margin-top:8px}.pagebreak{display:none}' +
+      '@media print{body{margin:0;}button{display:none}}' +
+      '</style></head><body>' +
+      '<h1>NEXUS Procore Attachment Export</h1>' +
+      '<div style="font-weight:900;margin-bottom:6px;">Equipment: ' + safe(eq || 'NO_EQ') + '</div>' +
+      '<div style="font-size:12px;margin-bottom:12px;">Suggested file name: <b>' + safe(fileName) + '</b></div>' +
+      '<div class="report">' + bodyHtml + '</div>' +
+      '<script>setTimeout(function(){window.focus();window.print();},350);<\/script>' +
+      '</body></html>');
+    w.document.close();
+  }
+
+  function printSelectedPiece(){
+    const piece = selectedPieceName();
+    if(piece === 'FULL'){
+      window.print();
+      return;
+    }
+
+    const nodes = findReportSectionNodes(piece);
+    if(!nodes.length){
+      alert('Could not find the selected section in the current package. Rebuild/refresh the report and try again.');
+      return;
+    }
+
+    const holder = document.createElement('div');
+    nodes.forEach(function(n){ holder.appendChild(n); });
+    printHtmlDocument(piece, holder.innerHTML);
+  }
+
+  function copyUploadName(){
+    const name = generatedUploadFileName();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(name).then(function(){
+        const status = document.getElementById('procoreUploadStatus');
+        if(status){
+          status.className = 'upload-status pass';
+          status.textContent = 'Copied upload file name: ' + name;
+        }
+      }).catch(function(){
+        prompt('Copy this upload file name:', name);
+      });
+    }else{
+      prompt('Copy this upload file name:', name);
+    }
+  }
+
+
+  function savePackageSnapshot(){
+    if(!eq) return;
+    const payload = {
+      equipment: eq,
+      generatedAt: new Date().toISOString(),
+      destination: destSel ? destSel.value : '',
+      html: reportEl ? reportEl.innerHTML : '',
+      suggestedFileName: generatedUploadFileName(),
+      selectedPiece: selectedPieceName(),
+      procoreDestinationLabel: currentProcoreDestinationLabel()
+    };
+    writeJSON('nexus_' + eq + '_package_export_snapshot', payload);
+  }
+
+  eqLabel.textContent = eq ? 'Equipment: ' + eq : 'Equipment: (missing eq)';
+  backBtn.href = eq ? ('equipment.html?eq=' + encodeURIComponent(eq)) : 'index.html';
+
+  function nexusUrl(relPath){
+    const base = new URL(window.location.href);
+    base.hash = '';
+    base.pathname = base.pathname.replace(/[^/]*$/, '');
+    relPath = String(relPath || '').replace(/^\/+/, '');
+    return new URL(relPath, base).toString();
+  }
+
+  function eqMetaKey(){ return 'nexus_meta_' + (eq || 'NO_EQ'); }
+
+  function loadEqMeta(){
+    const keysToTry = [
+      eqMetaKey(),
+      'nexus_meta_' + eq,
+      'nexus_meta_',
+      'nexus_meta',
+      'nexus_equipment_meta',
+      'nexus_equipment_setup',
+      'nexus_equipment_setup_v1'
+    ];
+
+    for(const key of keysToTry){
+      const doc = readJSON(key);
+      if(doc && typeof doc === 'object') return doc;
+    }
+
+    const metaKeys = allKeys().filter(k => /^nexus_meta_/i.test(k) && !/NO_EQ$/i.test(k));
+    if(metaKeys.length === 1){
+      const doc = readJSON(metaKeys[0]);
+      if(doc && typeof doc === 'object') return doc;
+    }
+
+    return null;
+  }
+
+  function firstNonBlank(){
+    for(let i=0;i<arguments.length;i++){
+      const v = arguments[i];
+      if(String(v || '').trim()) return String(v);
+    }
+    return '';
+  }
+
+  function normalizeResult(val){
+    const v = String(val || '').trim().toLowerCase();
+    if(v === 'pass') return 'PASS';
+    if(v === 'fail') return 'FAIL';
+    if(v === 'na' || v === 'n/a') return 'N/A';
+    if(v === 'complete') return 'COMPLETE';
+    if(v === 'review') return 'REVIEW';
+    if(v === 'locked') return 'LOCKED';
+    if(v === 'unvalidated') return 'UNVALIDATED';
+    if(v === 'missing') return 'MISSING';
+    return String(val || '').toUpperCase();
+  }  function statusPillClass(text){
+    const v = String(text || '').toUpperCase();
+    if(v === 'COMPLETE' || v === 'PASS' || v === 'YES') return 'ok';
+    if(v === 'REVIEW' || v === 'LOCKED' || v === 'PARTIAL' || v === 'UNVALIDATED') return 'warn';
+    if(v === 'FAIL' || v === 'NO' || v === 'NOT COMPLETE' || v === 'MISSING' || v === 'BLOCKED') return 'bad';
+    return 'muted';
+  }
+
+  function statusPill(text){
+    return '<span class="pill ' + statusPillClass(text) + '">' + safe(text) + '</span>';
+  }
+
+  function stepKey(stepId){ return 'nexus_' + (eq || 'NO_EQ') + '_step_' + stepId; }
+  function isDone(stepId){
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.isStepComplete === 'function'){
+        return window.NEXUS_VANGUARD.isStepComplete(stepId, eq || 'NO_EQ') === true;
+      }
+    }catch(e){}
+    return localStorage.getItem(stepKey(stepId)) === '1';
+  }
+
+  function sectionHeader(title, subtitle){
+    return '\n<h2>' + safe(title) + '</h2>' + (subtitle ? ('<div class="muted">' + safe(subtitle) + '</div>') : '');
+  }
+
+  function kvRow(k,v){
+    return '<div class="k">' + safe(k) + '</div><div class="wrap-anywhere">' + safe(v || '') + '</div>';
+  }
+
+  function kvRowHtml(k,vHtml){
+    return '<div class="k">' + safe(k) + '</div><div class="wrap-anywhere">' + (vHtml || '') + '</div>';
+  }
+
+  function kvRowLink(k, href, label){
+    const url = (href || '').trim();
+    if(!url) return '<div class="k">' + safe(k) + '</div><div class="muted">(not set)</div>';
+    const text = label || url;
+    return '<div class="k">' + safe(k) + '</div><div class="link wrap-anywhere"><a class="wrap-anywhere" href="' + safe(url) + '" target="_blank" rel="noopener noreferrer">' + safe(text) + '</a></div>';
+  }
+
+  function renderTable(headers, rows){
+    if(!Array.isArray(rows) || !rows.length) return '<div class="muted">(No rows filled)</div>';
+    return '<table><thead><tr>' +
+      headers.map(function(h){ return '<th>' + safe(h) + '</th>'; }).join('') +
+      '</tr></thead><tbody>' +
+      rows.map(function(r){ return '<tr>' + r.map(function(c){ return '<td>' + safe(c) + '</td>'; }).join('') + '</tr>'; }).join('') +
+      '</tbody></table>';
+  }
+
+  function hasAnyFilledRow(rows){
+    const out = Array.isArray(rows) ? rows : [];
+    return out.some(function(r){
+      return Object.values(r || {}).some(function(x){ return String(x || '').trim() !== ''; });
+    });
+  }
+
+  function findFirstJsonByKeys(keys){
+    for(const key of keys){
+      const doc = readJSON(key);
+      if(doc) return doc;
+    }
+    return null;
+  }
+
+  function findLatestRif(eqId){
+    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/rifs/';
+    const out = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(prefix)) continue;
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
+      const t = updated ? Date.parse(updated) : 0;
+      out.push({ key:k, doc, t });
+    }
+    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return out[0] || null;
+  }
+
+  function findLatestL2(eqId){
+    const prefix = 'nexus/equipment/' + (eqId || 'NO_EQ') + '/l2s/';
+    const out = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k || !k.startsWith(prefix)) continue;
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+      const updated = (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) || '';
+      const t = updated ? Date.parse(updated) : 0;
+      out.push({ key:k, doc, t });
+    }
+    out.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return out[0] || null;
+  }
+
+  function findLatestPrefod(eqId){
+    if(!eqId) return null;
+
+    const knownKeys = [
+      'nexus_' + eqId + '_prefod_export',
+      'nexus_' + eqId + '_prefod_vanguard_export',
+      'nexus_' + eqId + '_prefod_checklist_v1',
+      'nexus_' + eqId + '_prefod_checklist',
+      'nexus_' + eqId + '_prefod',
+      'nexus_' + eqId + '_form_prefod',
+      'prefod_' + eqId,
+      'nexus_prefod_' + eqId,
+      'nexus_' + eqId + '_prefod_v1',
+      'nexus_' + eqId + '_prefod_v2',
+      'nexus_' + eqId + '_prefod_log_v1'
+    ];
+
+    for(const k of knownKeys){
+      const doc = readJSON(k);
+      if(doc && typeof doc === 'object') return { key:k, doc, t:0 };
+    }
+
+    const hits = [];
+    const eqLower = String(eqId).toLowerCase();
+
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(!k) continue;
+      const kl = k.toLowerCase();
+      if(kl.indexOf('prefod') === -1) continue;
+      if(kl.indexOf(eqLower) === -1) continue;
+
+      const doc = readJSON(k);
+      if(!doc || typeof doc !== 'object') continue;
+
+      const updated =
+        (doc.meta && (doc.meta.updatedAt || doc.meta.createdAt)) ||
+        doc.updatedAt ||
+        doc.createdAt ||
+        doc.timestamp ||
+        '';
+
+      const t = updated ? Date.parse(updated) : 0;
+      hits.push({ key:k, doc, t });
+    }
+
+    hits.sort(function(a,b){ return (b.t || 0) - (a.t || 0); });
+    return hits[0] || null;
+  }
+
+  const RIF_FIELD_DEFS = [
+    ['1.1','Serial Number'],['1.2','Date of Manufacture'],['1.3','Type/Style'],['1.4','No. of Packages Received'],
+    ['1.5','Receiving Date'],['1.6','Voltage Rating (Volts)'],['1.7','Input Voltage (Volts)'],['1.8','Output Voltage (Volts)'],
+    ['1.9','Current Rating (Amps)'],['1.10','KAIC Rating'],['1.11','Withstand Rating kA'],['1.12','kW Rating'],
+    ['1.13','Number of Modules'],['1.14','Frequency (Hz)'],['1.15','Firmware Revision'],['1.16','Battery Model'],
+    ['1.17','Battery Manufacture Date'],['1.18','Number of Strings'],['1.19','Jars per String'],['1.20','Cells per Jar'],['1.21','Battery Manufacture Date']
+  ];
+
+  const RIF_CHECK_DEFS = [
+    ['2.1','Confirm End of Line (EOL) Inspection for equipment provided by LLE Vendor.'],
+    ['2.2','Confirm LLE Vendor provided EOL as an attachment to this inspection.'],
+    ['2.3','Equipment ratings match referenced design drawings and specification requirements.'],
+    ['2.4','Confirm, there is no visual damage to equipment enclosure.'],
+    ['2.5','Confirm, there is no sign of water inside the enclosure, no visible rust.'],
+    ['2.6','Confirm the accessories listed in manufacturer’s submittal have been delivered as specified.'],
+    ['2.7','Confirm the spare parts listed in manufacturer’s submittal have been delivered as specified.'],
+    ['2.8','Confirm the ID tags of equipment and components match submittal and drawings.'],
+    ['2.9','RIF checks complete and observation created for any identified issues.']
+  ];
+
+  const L2_CHECK_DEFS = [
+    ['3.1','Pre-requisite Checks :: Confirm equipment was tested per applicable standards (NETA ATS Standard for US)'],
+    ['3.2','Associated Documentation :: Referenced Manufacturer Shop Drawing ID'],
+    ['3.3','Associated Documentation :: Referenced Manufacturer Shop Drawing Revision Date'],
+    ['3.4','Visual inspection :: Verify the following Installation quality checks with the equipment de-energized (Power OFF);'],
+    ['3.5','Visual Inspection :: Confirm equipment inspected and matches bill of material and specifications'],
+    ['3.6','Visual Inspection :: Confirm that all dirt, debris, tools, and other foreign objects have been removed.'],
+    ['3.7','Visual Inspection :: Confirm that circuit breaker sizes and types correspond to drawings and Panel Schedule.'],
+    ['3.8','Visual Inspection :: Confirm Main Breaker Settings per SCCS'],
+    ['3.9','Visual Inspection :: Confirm feeder cable connections are tight and have torque marks.'],
+    ['3.10','Visual Inspection :: Confirm power wiring connections are tight, wiring is secure to prevent damage'],
+    ['3.11','Visual Inspection :: Confirm operation and sequencing of interlocking systems.'],
+    ['3.12','Visual Inspection :: Confirm correct barrier and shutter installation and operation.'],
+    ['3.13','Visual Inspection :: Confirm successful pull test on all active components.'],
+    ['3.14','Visual Inspection :: Inspect mechanical indicating devices for correct operation.'],
+    ['3.15','Visual Inspection :: Confirm that filters are in place and vents are clear.'],
+    ['3.16','Visual Inspection :: Confirm successful inspection of control power transformers as per the below; cracked insulation, broken leads, connections tightness, defective wiring, and overall general condition.'],
+    ['3.17','Visual Inspection :: Confirm primary and secondary fuse or circuit breaker ratings match drawings.'],
+    ['3.18','Visual Inspection :: Confirm correct functioning of draw out disconnecting contacts and interlocks.'],
+    ['3.19','Visual Inspection :: Confirm Arc Flash Labels affixed on Equipment'],
+    ['3.20','Visual Inspection :: Confirm successful inspection of anchorage, alignment, grounding, and required area clearances.'],
+    ['3.21','Visual Inspection :: Confirm the unit is clean, no loose parts, and no foreign material inside enclosure'],
+    ['3.22','Visual Inspection :: Confirm insulators free of physical damage or contaminated surfaces.'],
+    ['3.23','Visual Inspection :: Confirm seismic restraints installed in accordance with design documentation'],
+    ['3.24','Visual Inspection :: Confirm electrical room is secure and weatherproof'],
+    ['3.25','Visual Inspection :: Confirm EPMS interface control cabling terminated and point to point tested.'],
+    ['3.26','Visual Inspection :: Confirm panel schedule/panel directory posted inside'],
+    ['3.27','Visual Inspection :: Confirm Device and Unit addressing information is recorded and posted inside control section'],
+    ['3.28','Visual Inspection :: Confirm branch circuits wiring match required phase colour'],
+    ['3.29','Visual Inspection :: Confirm all control devices and wiring complete'],
+    ['3.30','L2-IVF checks complete and observation created for any identified issues.']
+  ];
+
+  function renderRifNoProcore(rifDoc){
+    if(!rifDoc) return '<div class="muted">No saved digital RIF found for this equipment.</div>';
+
+    const meta = rifDoc.meta || {};
+    const header = rifDoc.header || {};
+    const fields = rifDoc.fields || {};
+    const checks = rifDoc.checks || {};
+
+    const fieldRows = RIF_FIELD_DEFS.map(function(def){
+      const step = def[0], label = def[1];
+      const f = fields[step] || {};
+      const v = (f.value || '');
+      const n = (f.note || '');
+      if(!String(v).trim() && !String(n).trim()) return null;
+      return [step, label, v, n];
+    }).filter(Boolean);
+
+    const checkRows = RIF_CHECK_DEFS.map(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      const r = normalizeResult(c.result || '');
+      const n = (c.note || '');
+      if(!String(r).trim() && !String(n).trim()) return null;
+      return [step, text, r, n];
+    }).filter(Boolean);
+
+    const exceptions = [];
+    RIF_CHECK_DEFS.forEach(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      if((c.result || '').toLowerCase() === 'fail'){
+        exceptions.push([step, text, c.note || '']);
+      }
+    });
+
+    return '<div class="kv">' +
+      kvRow('RIF ID', meta.rifId || '(unknown)') +
+      kvRow('Created', meta.createdAt || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRow('Header: Type', header.type || '') +
+      kvRow('Header: Quality', header.quality || '') +
+      kvRow('Header: Location', header.location || '') +
+      '</div><h3>Section 1: Receipt Data</h3>' +
+      (fieldRows.length ? renderTable(['Step','Field','Value','Note'], fieldRows) : '<div class="muted">(No Receipt Data fields filled)</div>') +
+      '<h3>Section 2: Inspection Checklist</h3>' +
+      (checkRows.length ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows) : '<div class="muted">(No Checklist entries saved)</div>') +
+      '<h3>Exceptions Summary</h3>' +
+      (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
+  }
+
+  function renderL2NoProcore(l2Doc){
+    if(!l2Doc) return '<div class="muted">No saved digital L2 found for this equipment.</div>';
+
+    const meta = l2Doc.meta || {};
+    const header = l2Doc.header || {};
+    const checks = l2Doc.checks || {};
+
+    const checkRows = L2_CHECK_DEFS.map(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      const r = normalizeResult(c.result || '');
+      const n = (c.note || '');
+      if(!String(r).trim() && !String(n).trim()) return null;
+      return [step, text, r, n];
+    }).filter(Boolean);
+
+    const exceptions = [];
+    L2_CHECK_DEFS.forEach(function(def){
+      const step = def[0], text = def[1];
+      const c = checks[step] || {};
+      if((c.result || '').toLowerCase() === 'fail'){
+        exceptions.push([step, text, c.note || '']);
+      }
+    });
+
+    return '<div class="kv">' +
+      kvRow('L2 ID', meta.l2Id || '(unknown)') +
+      kvRow('Created', meta.createdAt || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRow('Shop Drawing ID', header.drawingId || '') +
+      kvRow('Drawing Revision Date', header.revisionDate || '') +
+      kvRow('Inspector / Initials', header.inspector || '') +
+      '</div><h3>Section 3: Installation Verification Checklist</h3>' +
+      (checkRows.length ? renderTable(['Step','Checklist Item','Result','Remarks'], checkRows) : '<div class="muted">(No Checklist entries saved)</div>') +
+      '<h3>Exceptions Summary</h3>' +
+      (exceptions.length ? renderTable(['Step','Exception','Remarks'], exceptions) : '<div class="muted">No failed items.</div>');
+  }
+
+  function renderPrefod(doc){
+    if(!doc) return '<div class="muted">No saved Pre-FOD checklist data found.</div>';
+
+    const meta = doc.meta || {};
+    const items = doc.items || doc.checks || doc.rows || doc.entries || [];
+    const notes = doc.notes || doc.generalNotes || doc.comment || '';
+    const updatedAt = meta.updatedAt || meta.createdAt || doc.updatedAt || doc.createdAt || '';
+
+    const rows = [];
+
+    if(Array.isArray(items)){
+      items.forEach(function(item, idx){
+        if(item && typeof item === 'object'){
+          const step = item.step || item.id || item.number || String(idx + 1);
+          const label = item.label || item.text || item.description || item.name || '';
+          const result = normalizeResult(item.result || item.status || item.value || '');
+          const remark = item.note || item.notes || item.comment || '';
+          if(String(label).trim() || String(result).trim() || String(remark).trim()){
+            rows.push([step, label, result, remark]);
+          }
+        } else if(String(item || '').trim()){
+          rows.push([String(idx + 1), String(item), '', '']);
+        }
+      });
+    }
+
+    if(!rows.length){
+      for(const k in doc){
+        if(!Object.prototype.hasOwnProperty.call(doc, k)) continue;
+        if(['meta','items','checks','rows','entries','notes','generalNotes','comment'].includes(k)) continue;
+        const val = doc[k];
+        if(val && typeof val === 'object'){
+          const result = normalizeResult(val.result || val.status || val.value || '');
+          const note = val.note || val.notes || val.comment || '';
+          const label = val.label || val.text || val.description || k;
+          if(String(label).trim() || String(result).trim() || String(note).trim()){
+            rows.push([k, label, result, note]);
+          }
+        }
+      }
+    }
+
+    return '<div class="kv">' +
+      kvRow('Updated', updatedAt) +
+      kvRow('Notes', notes) +
+      '</div>' +
+      (rows.length
+        ? renderTable(['Step','Item','Result','Remarks'], rows)
+        : '<div class="muted">Checklist structure found, but no printable checklist entries were detected.</div>');
+  }
+
+  function readMegLog(eqId){
+    return findFirstJsonByKeys([
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log_v2',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_log',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg',
+      'nexus_' + (eqId || 'NO_EQ') + '_megohmmeter',
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_data'
+    ]);
+  }
+
+  function readMegEquip(eqId){
+    return findFirstJsonByKeys([
+      'nexus_' + (eqId || 'NO_EQ') + '_meg_equip_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equipment_meg_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equipment_meg',
+      'nexus_' + (eqId || 'NO_EQ') + '_equip_meg_v1',
+      'nexus_' + (eqId || 'NO_EQ') + '_equip_meg'
+    ]);
+  }
+
+  function readMegVanguard(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_meg_vanguard_export') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_meg_vanguard_v1') ||
+           null;
+  }
+
+  function readTorqueVanguard(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_export') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_vanguard_v1') ||
+           null;
+  }
+
+  function readTorqueForemanState(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_state_v1') ||
+           readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_foreman_v1') ||
+           null;
+  }
+
+  function readForemanVerificationLegacy(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_spotcheck_v1') || [];
+  }
+
+  function getFlukeType(session){
+    return String(session && (session.type || session.sessionType || session.category || session.side || session.name || session.label) || '').toLowerCase();
+  }
+
+  function getFlukeRows(session){
+    if(Array.isArray(session && session.rows)) return session.rows;
+    if(Array.isArray(session && session.readings)) return session.readings;
+    if(Array.isArray(session && session.data)) return session.data;
+    return [];
+  }
+
+  function renderFlukeSessionTables(title, sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="section-gap"><h3>' + safe(title) + '</h3><div class="muted">No Data</div></div>';
+    }
+
+    let html = '<div class="section-gap"><h3>' + safe(title) + '</h3>';
+
+    sessions.forEach(function(session, index){
+      const rows = getFlukeRows(session);
+      const createdAt = session.importedAt || session.createdAt || session.capturedAt || '';
+      const sessionId = session.id || session.sessionId || '';
+
+      html += '<div class="source-box"><div><b>Session ' + (index + 1) + '</b>' + (createdAt ? (' - ' + safe(createdAt)) : '') + '</div>' +
+        (sessionId ? ('<div class="muted mono" style="margin-top:4px;">sessionId: ' + safe(sessionId) + '</div>') : '') +
+        '</div>';
+
+      if(!rows.length){
+        html += '<div class="muted" style="margin-top:8px;">(No readings in session)</div>';
+        return;
+      }
+
+      html += renderTable(
+        ['Point / Time','Resistance','Unit','Voltage','Notes'],
+        rows.map(function(r){
+          const point = r.point || r.timestamp || r.phase || r.connection || r.label || r.name || '';
+          const value = (r.value ?? r.resistance ?? r.reading ?? r.measurement ?? r.result ?? '');
+          const unit = r.unit || r.units || 'MΩ';
+          const voltage = r.voltage || r.testVoltage || r.volts || '';
+          const notes = r.notes || r.note || r.comment || '';
+          return [point, value, unit, voltage, notes];
+        })
+      );
+    });
+
+    html += '</div>';
+    return html;
+  }
+
+  function renderFlukeSection(sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="muted">No saved Fluke Connect data found.</div>';
+    }
+
+    const line = sessions.filter(function(s){ return getFlukeType(s).includes('line'); });
+    const load = sessions.filter(function(s){ return getFlukeType(s).includes('load'); });
+    const other = sessions.filter(function(s){
+      const t = getFlukeType(s);
+      return !t.includes('line') && !t.includes('load');
+    });
+
+    return renderFlukeSessionTables('Line Testing', line) +
+      renderFlukeSessionTables('Load Testing', load) +
+      (other.length ? renderFlukeSessionTables('Additional Sessions', other) : '');
+  }  function getSnaponRows(session){
+    if(Array.isArray(session && session.rows)) return session.rows;
+    if(Array.isArray(session && session.events)) return session.events;
+    if(Array.isArray(session && session.data)) return session.data;
+    return [];
+  }
+
+  function renderSnaponSessionTables(title, sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="section-gap"><h3>' + safe(title) + '</h3><div class="muted">No Data</div></div>';
+    }
+
+    let html = '<div class="section-gap"><h3>' + safe(title) + '</h3>';
+
+    sessions.forEach(function(session, index){
+      const rows = getSnaponRows(session);
+      const createdAt = session.capturedAt || session.importedAt || session.createdAt || '';
+      const sessionId = session.id || session.sessionId || '';
+      const sourceName = session.fileName || session.source || 'Snap-on Import Session';
+
+      html += '<div class="source-box"><div><b>Session ' + (index + 1) + '</b> - ' + safe(sourceName) + (createdAt ? (' - ' + safe(createdAt)) : '') + '</div>' +
+        (sessionId ? ('<div class="muted mono" style="margin-top:4px;">sessionId: ' + safe(sessionId) + '</div>') : '') +
+        '</div>';
+
+      if(!rows.length){
+        html += '<div class="muted" style="margin-top:8px;">(No torque events in session)</div>';
+        return;
+      }
+
+      html += renderTable(
+        ['Timestamp','Actual Torque','Target Torque','Angle','Units','Notes'],
+        rows.map(function(r){
+          return [
+            r.timestamp || r.time || r.date || '',
+            r.actualTorque || r.torque || r.value || '',
+            r.targetTorque || r.target || '',
+            r.angle || '',
+            r.units || r.unit || '',
+            r.notes || r.note || r.comment || ''
+          ];
+        })
+      );
+    });
+
+    html += '</div>';
+    return html;
+  }
+
+  function renderSnaponSection(sessions){
+    if(!Array.isArray(sessions) || !sessions.length){
+      return '<div class="muted">No saved Snap-on / TorqueConnect import data found.</div>';
+    }
+
+    return renderSnaponSessionTables('Imported Torque Sessions', sessions);
+  }
+
+  function ccsIsFullySignedOff(eqId){
+    const eqk = (eqId || 'NO_EQ').trim() || 'NO_EQ';
+
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.isStepComplete === 'function' && window.NEXUS_VANGUARD.isStepComplete('ccs', eqk)) return true;
+      if(localStorage.getItem('nexus_' + eqk + '_ccs_signed_off') === '1') return true;
+    }catch(e){}
+
+    const docs = [
+      readJSON('nexus_' + eqk + '_ccs_vanguard_export'),
+      readJSON('nexus_' + eqk + '_ccs_two_tab_v1'),
+      readJSON('nexus_' + eqk + '_ccs_excel'),
+      readJSON('nexus_' + eqk + '_construction_check_sheet')
+    ].filter(Boolean);
+
+    return docs.some(function(doc){
+      return doc.finalSignoff ||
+        doc.signedOff ||
+        doc.complete === true ||
+        String(doc.status || '').toUpperCase() === 'COMPLETE';
+    });
+  }
+
+  function renderMegLog(doc){
+    if(!doc) return '<div class="muted">No saved Megohmmeter Test Log found.</div>';
+
+    const lineRows = doc.lineRows || doc.line || doc.lineSideRows || [];
+    const loadRows = doc.loadRows || doc.load || doc.loadSideRows || [];
+    const header = doc.header || doc.meta || {};
+    const status = doc.status || doc.overallStatus || '';
+
+    let html = '<div class="kv">' +
+      kvRow('Status', status) +
+      kvRow('Updated', doc.updatedAt || header.updatedAt || '') +
+      kvRow('Tester', header.tester || header.tech || header.technician || '') +
+      kvRow('Threshold', doc.threshold || header.threshold || '') +
+      '</div>';
+
+    html += '<h3>Line Side</h3>';
+    html += renderTable(
+      ['Conductor / Phase','Voltage','Resistance','Units','Result','Notes'],
+      asArray(lineRows).map(function(r){
+        return [
+          r.conductor || r.phase || r.point || r.name || '',
+          r.voltage || r.testVoltage || '',
+          r.resistance || r.value || r.reading || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
+
+    html += '<h3>Load Side</h3>';
+    html += renderTable(
+      ['Conductor / Phase','Voltage','Resistance','Units','Result','Notes'],
+      asArray(loadRows).map(function(r){
+        return [
+          r.conductor || r.phase || r.point || r.name || '',
+          r.voltage || r.testVoltage || '',
+          r.resistance || r.value || r.reading || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
+
+    return html;
+  }
+
+  function renderEquipmentMeg(doc){
+    if(!doc) return '<div class="muted">No saved Equipment Megohmmeter Test data found.</div>';
+
+    const rows = doc.rows || doc.items || doc.checks || [];
+    const meta = doc.meta || doc.header || {};
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || doc.overallStatus || '') +
+      kvRow('Updated', doc.updatedAt || meta.updatedAt || '') +
+      kvRow('Tester', meta.tester || meta.tech || meta.technician || '') +
+      '</div>';
+
+    html += renderTable(
+      ['Item','Reading','Units','Result','Notes'],
+      asArray(rows).map(function(r, idx){
+        return [
+          r.item || r.name || r.label || String(idx + 1),
+          r.reading || r.value || r.resistance || '',
+          r.units || r.unit || 'MΩ',
+          normalizeResult(r.result || r.status || r.passFail || ''),
+          r.notes || r.note || ''
+        ];
+      })
+    );
+
+    return html;
+  }
+
+  function renderMegVanguard(doc){
+    if(!doc) return '<div class="muted">No Meg Vanguard validation data found.</div>';
+
+    const issues = doc.issues || doc.validationIssues || [];
+    const rows = doc.rows || doc.results || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Issue Count', issues.length || doc.issueCount || '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    if(asArray(rows).length){
+      html += '<h3>Validation Rows</h3>' + renderTable(
+        ['Point','Result','Reading','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.point || r.step || r.label || r.name || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.reading || r.value || r.resistance || '',
+            r.notes || r.note || r.reason || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>Issues</h3>' + renderTable(
+        ['Status','Reason','Note'],
+        asArray(issues).map(function(i){
+          return [
+            i.status || i.type || '',
+            i.reason || i.message || '',
+            i.note || i.notes || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function renderTorqueVanguard(doc){
+    if(!doc) return '<div class="muted">No Torque Vanguard validation data found.</div>';
+
+    const rows = doc.rows || doc.torqueRows || doc.results || [];
+    const issues = doc.issues || doc.validationIssues || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Issue Count', issues.length || doc.issueCount || '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    if(asArray(rows).length){
+      html += '<h3>Torque Rows</h3>' + renderTable(
+        ['Connection','Required Torque','Actual Torque','Result','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.connection || r.point || r.label || r.name || r.location || '',
+            r.requiredTorque || r.targetTorque || r.spec || '',
+            r.actualTorque || r.torque || r.value || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.notes || r.note || r.reason || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>Issues</h3>' + renderTable(
+        ['Status','Reason','Note'],
+        asArray(issues).map(function(i){
+          return [
+            i.status || i.type || '',
+            i.reason || i.message || '',
+            i.note || i.notes || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function renderForemanVerification(doc, legacyRows){
+    const rows = asArray((doc && (doc.rows || doc.samples || doc.verifications)) || legacyRows || []);
+
+    if(!doc && !rows.length){
+      return '<div class="muted">No foreman verification data found.</div>';
+    }
+
+    let html = '<div class="kv">' +
+      kvRow('Status', (doc && (doc.status || doc.overallStatus)) || '') +
+      kvRow('Required', doc && doc.required === false ? 'NO' : 'YES') +
+      kvRow('Verified', doc && (doc.verified || doc.complete) ? 'YES' : '') +
+      kvRow('Updated', (doc && doc.updatedAt) || '') +
+      '</div>';
+
+    if(rows.length){
+      html += renderTable(
+        ['Sample','Connection','Result','Foreman','Notes'],
+        rows.map(function(r, idx){
+          return [
+            r.sample || r.id || String(idx + 1),
+            r.connection || r.point || r.label || r.location || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.foreman || r.verifiedBy || r.updatedBy || '',
+            r.notes || r.note || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function readTilt(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v2') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_torque_tilt_v1') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_tilt_test') ||
+      null;
+  }
+
+  function renderTilt(doc){
+    if(!doc) return '<div class="muted">No Tilt Test proof found.</div>';
+
+    const rows = doc.rows || doc.tests || doc.items || [];
+    const buttonState = doc.buttons || doc.buttonState || {};
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || doc.overallStatus || '') +
+      kvRow('Complete', doc.complete ? 'YES' : '') +
+      kvRow('Updated', doc.updatedAt || '') +
+      '</div>';
+
+    const buttonKeys = Object.keys(buttonState || {});
+    if(buttonKeys.length){
+      html += '<h3>Tilt Buttons / Proof Points</h3><div class="tilt-buttons">';
+      buttonKeys.forEach(function(k){
+        html += statusPill(k + ': ' + normalizeResult(buttonState[k]));
+      });
+      html += '</div>';
+    }
+
+    if(asArray(rows).length){
+      html += '<div class="tilt-grid">' + renderTable(
+        ['Test','Result','Notes'],
+        asArray(rows).map(function(r){
+          return [
+            r.test || r.name || r.label || '',
+            normalizeResult(r.result || r.status || r.passFail || ''),
+            r.notes || r.note || ''
+          ];
+        })
+      ) + '</div>';
+    }
+
+    return html;
+  }
+
+  function renderFpv(eqId){
+    const photo = readText('nexus_' + (eqId || 'NO_EQ') + '_fpv_photo') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finished_photo') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finishedProductPhoto');
+
+    const notes = readText('nexus_' + (eqId || 'NO_EQ') + '_fpv_notes') ||
+      readText('nexus_' + (eqId || 'NO_EQ') + '_finished_photo_notes');
+
+    let html = '<div class="kv">' +
+      kvRow('Status', photo ? 'PHOTO SAVED' : 'NO PHOTO SAVED') +
+      kvRow('Notes', notes || '') +
+      '</div>';
+
+    if(photo){
+      html += '<div class="source-box"><img src="' + safe(photo) + '" alt="Finished Product Verification Photo"></div>';
+    }
+
+    return html;
+  }
+
+  function readCcsExport(eqId){
+    return readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_vanguard_export') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_two_tab_v1') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_ccs_excel') ||
+      readJSON('nexus_' + (eqId || 'NO_EQ') + '_construction_check_sheet') ||
+      null;
+  }
+
+  function renderCcs(doc){
+    if(!doc) return '<div class="muted">No saved Construction Check Sheet data found.</div>';
+
+    const validation = doc.validation || {};
+    const steps = doc.steps || validation.rows || doc.rows || [];
+    const issues = validation.issues || doc.issues || [];
+
+    let html = '<div class="kv">' +
+      kvRow('Status', doc.status || validation.status || '') +
+      kvRow('Complete', doc.complete === true ? 'YES' : '') +
+      kvRow('Completed', firstNonBlank(doc.completedCount, validation.completedCount)) +
+      kvRow('Failed', firstNonBlank(doc.failedCount, validation.failedCount)) +
+      kvRow('Missing', firstNonBlank(doc.missingCount, validation.missingCount)) +
+      kvRow('Total', firstNonBlank(doc.totalCount, validation.totalCount, asArray(steps).length)) +
+      kvRow('Updated', doc.updatedAt || validation.updatedAt || '') +
+      '</div>';
+
+    if(asArray(steps).length){
+      html += '<h3>Checklist Steps</h3>' + renderTable(
+        ['Step','Title','Status','Source','Notes'],
+        asArray(steps).map(function(s, idx){
+          return [
+            s.displayStep || s.row || s.stepId || s.id || String(idx + 1),
+            s.title || s.stepDescription || s.description || s.name || '',
+            normalizeResult(s.status || s.passFail || s.result || ''),
+            s.source || '',
+            s.note || s.notes || ''
+          ];
+        })
+      );
+    }
+
+    if(asArray(issues).length){
+      html += '<h3>CCS Issues / Reviews</h3>' + renderTable(
+        ['Step','Status','Reason'],
+        asArray(issues).map(function(i){
+          return [
+            i.displayStep || i.step || i.row || '',
+            i.status || '',
+            i.reason || i.message || ''
+          ];
+        })
+      );
+    }
+
+    return html;
+  }
+
+  function readSessionList(keyName, eqId){
+    const all = readJSON(keyName) || [];
+    const arr = asArray(all);
+    if(!eqId) return arr;
+    return arr.filter(function(s){
+      const equipment = String((s && (s.equipment || s.eq || s.equipmentId)) || '').trim();
+      return !equipment || equipment === eqId;
+    });
+  }
+
+  function renderMeta(meta){
+    if(!meta) return '<div class="muted">No equipment setup metadata found.</div>';
+
+    return '<div class="kv">' +
+      kvRow('Equipment ID', meta.equipmentId || meta.eq || eq || '') +
+      kvRow('Equipment Name', meta.name || meta.equipmentName || '') +
+      kvRow('Building / Area', meta.building || meta.area || meta.location || '') +
+      kvRow('Customer / Project', meta.customer || meta.project || '') +
+      kvRow('Voltage', meta.voltage || '') +
+      kvRow('Fed From', meta.fedFrom || '') +
+      kvRow('Feeds', meta.feeds || '') +
+      kvRow('Updated', meta.updatedAt || '') +
+      kvRowLink('Construction Procore Link', meta.procoreConstructionUrl || meta.constructionUrl || '', 'Open Construction Link') +
+      kvRowLink('Energization Procore Link', meta.procoreEnergizationUrl || meta.energizationUrl || '', 'Open Energization Link') +
+      '</div>';
+  }
+
+  function renderPackageStatus(eqId){
+    const sections = [
+      ['RIF', isDone('rif')],
+      ['Phenolic', isDone('phenolic')],
+      ['Torque', isDone('torque')],
+      ['L2', isDone('l2')],
+      ['Meg', isDone('meg')],
+      ['Pre-FOD', isDone('prefod')],
+      ['FPV', isDone('fpv')],
+      ['CCS', isDone('ccs') || ccsIsFullySignedOff(eqId)]
+    ];
+
+    return renderTable(
+      ['Section','Completion'],
+      sections.map(function(s){
+        return [s[0], s[1] ? 'COMPLETE' : 'OPEN'];
+      })
+    );
+  }
+
+  function openSelectedProcore(){
+    const meta = loadEqMeta() || {};
+    const dest = destSel ? destSel.value : 'construction';
+    const url = dest === 'energization'
+      ? (meta.procoreEnergizationUrl || meta.energizationUrl || '')
+      : (meta.procoreConstructionUrl || meta.constructionUrl || '');
+
+    if(url){
+      window.open(url, '_blank', 'noopener');
+    }else{
+      alert('No Procore URL saved for this destination.');
+    }
+  }  function buildReport(){
+    if(!reportEl) return;
+
+    const meta = loadEqMeta();
+    const rif = findLatestRif(eq);
+    const l2 = findLatestL2(eq);
+    const prefod = findLatestPrefod(eq);
+    const megLog = readMegLog(eq);
+    const megEquip = readMegEquip(eq);
+    const megVanguard = readMegVanguard(eq);
+    const torqueVanguard = readTorqueVanguard(eq);
+    const foremanState = readTorqueForemanState(eq);
+    const foremanLegacy = readForemanVerificationLegacy(eq);
+    const tilt = readTilt(eq);
+    const ccs = readCcsExport(eq);
+    const flukeSessions = readSessionList('nexus.meg.fluke.sessions.v1', eq);
+    const snaponSessions = readSessionList('nexus.torque.sessions.v1', eq);
+
+    let html = '';
+
+    html += renderVanguardSummary(eq);
+    html += renderApprovedRequirementTraceability(eq);
+
+    html += '<h1 style="margin:0 0 6px;font-size:24px;">NEXUS Package Export</h1>';
+    html += '<div class="muted" style="margin-bottom:10px;">Generated: ' + safe(new Date().toLocaleString()) + '</div>';
+
+    html += sectionHeader('Equipment Summary');
+    html += renderMeta(meta);
+
+    html += sectionHeader('Package Completion Status');
+    html += renderPackageStatus(eq);
+
+    html += sectionHeader('Vanguard Evidence Chain', 'Requirement → field action → proof → approval trail');
+    html += renderVanguardEvidenceChain(eq);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Receipt Inspection Form', 'Digital No-Procore readout');
+    html += renderRifNoProcore(rif && rif.doc);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('L2 Installation Verification', 'Digital No-Procore readout');
+    html += renderL2NoProcore(l2 && l2.doc);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Megohmmeter Test Log', 'Line / Load megohmmeter testing');
+    html += renderMegLog(megLog);
+
+    html += sectionHeader('Equipment Megohmmeter Test', 'If applicable');
+    html += renderEquipmentMeg(megEquip);
+
+    html += sectionHeader('Meg Vanguard Validation');
+    html += renderMegVanguard(megVanguard);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Fluke Connect Megohmmeter Testing');
+    html += renderFlukeSection(flukeSessions);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Snap-on TorqueConnect Import Sessions');
+    html += renderSnaponSection(snaponSessions);
+
+    html += sectionHeader('Torque Vanguard Validation');
+    html += renderTorqueVanguard(torqueVanguard);
+
+    html += sectionHeader('Foreman Verification');
+    html += renderForemanVerification(foremanState, foremanLegacy);
+
+    html += sectionHeader('Tilt Test');
+    html += renderTilt(tilt);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Finished Product Verification Photo');
+    html += renderFpv(eq);
+
+    html += sectionHeader('Pre-FOD');
+    html += '<div class="kv">' +
+      kvRowLink('Pre-FOD Page', nexusUrl('prefod.html?eq=' + encodeURIComponent(eq || 'NO_EQ')), 'Open Pre-FOD') +
+      '</div>';
+    html += renderPrefod(prefod && prefod.doc);
+
+    html += '<div class="pagebreak"></div>';
+
+    html += sectionHeader('Construction Check Sheet');
+    html += renderCcs(ccs);
+
+    reportEl.innerHTML = html;
+    savePackageSnapshot();
+    updateUploadFileName();
+
+    try{
+      if(window.NEXUS_VANGUARD){
+        window.NEXUS_VANGUARD.setEvidence('packageExport', {
+          exists:true,
+          generatedAt:new Date().toISOString(),
+          selectedPiece:selectedPieceName(),
+          suggestedFileName:generatedUploadFileName()
+        });
+      }
+    }catch(e){}
+  }
+
+  function wireControls(){
+    const printBtn = document.getElementById('printBtn');
+    const printFullBtn = document.getElementById('printFullBtn');
+    const printPieceBtn = document.getElementById('printPieceBtn');
+    const copyUploadNameBtn = document.getElementById('copyUploadNameBtn');
+    const openProcoreBtn = document.getElementById('openProcoreBtn');
+    const pieceExportSel = document.getElementById('pieceExportSel');
+
+    if(printBtn){
+      printBtn.addEventListener('click', function(){
+        buildReport();
+        window.print();
+      });
+    }
+
+    if(printFullBtn){
+      printFullBtn.addEventListener('click', function(){
+        buildReport();
+        window.print();
+      });
+    }
+
+    if(printPieceBtn){
+      printPieceBtn.addEventListener('click', function(){
+        buildReport();
+        printSelectedPiece();
+      });
+    }
+
+    if(copyUploadNameBtn){
+      copyUploadNameBtn.addEventListener('click', copyUploadName);
+    }
+
+    if(openProcoreBtn){
+      openProcoreBtn.addEventListener('click', openSelectedProcore);
+    }
+
+    if(pieceExportSel){
+      pieceExportSel.addEventListener('change', updateUploadFileName);
+    }
+
+    if(destSel){
+      destSel.addEventListener('change', updateUploadFileName);
+    }
+  }
+
+  function init(){
+    try{
+      const eqNode = document.querySelector('[data-nx-eq]');
+      if(eqNode) eqNode.textContent = eq || '(none)';
+    }catch(e){}
+
+    if(!eq){
+      setLiveStatus('No equipment selected. Package export will show available fallback data only.');
+    }else{
+      setLiveStatus('Ready');
+    }
+
+    try{
+      if(window.NEXUS_VANGUARD){
+        window.NEXUS_VANGUARD.refresh();
+      }
+    }catch(e){}
+
+    buildReport();
+    wireControls();
+
+    if(eq){
+      subscribeFirebasePackage(eq);
+      startLocalAutoRefresh(eq);
+    }
+
+    updateUploadFileName();
+  }
+
+  window.NEXUS_PACKAGE_EXPORT_REBUILD = buildReport;
+  init();
+})();
+</script>
+
+<section id="vanguard-final-export"></section>
+
+<script>
+window.addEventListener('vanguard:loader:complete', function(){
+  if (window.NEXUS_PACKAGE_EXPORT_REBUILD) {
+    try { window.NEXUS_PACKAGE_EXPORT_REBUILD(); } catch(e) {}
+  }
+  if (window.VanguardFinalExport && typeof window.VanguardFinalExport.render === 'function') {
+    window.VanguardFinalExport.render('vanguard-final-export');
+  }
+});
+</script>
+
+</body>
+</html>

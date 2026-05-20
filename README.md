@@ -1,2 +1,2 @@
-# HyperCore3.0
-HyperCore ZIP 5/20/26
+# HyperCore 1.0
+Hyperscale Field-Level Data Consolidation

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NEXUS Vanguard Requirement Review</title>
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<style>
+  :root{--panel:rgba(8,12,28,.88);--line:rgba(255,255,255,.14);--text:#f6fbff;--muted:rgba(255,255,255,.78);--cyan:#29d3ff;--green:#33f0a3;--yellow:#ffcc4d;--red:#ff6a6a;--shadow:0 22px 60px rgba(0,0,0,.42)}
+  *{box-sizing:border-box} html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:var(--text);background:#7a0d0d} body{background-image:url('transformer.jpg');background-size:cover;background-position:center;background-attachment:fixed}.shell{max-width:1440px;margin:0 auto;padding:18px}.hero,.panel,.status,.side{background:var(--panel);border:1px solid var(--line);border-radius:22px;backdrop-filter:blur(16px);box-shadow:var(--shadow)}.hero{padding:20px 22px;margin-bottom:14px}.hero h1{margin:0 0 6px;font-size:34px;font-weight:900}.hero p{margin:0;color:var(--muted);font-size:14px;font-weight:800;line-height:1.45;max-width:980px}.toprow{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}.btn{padding:12px 16px;border-radius:999px;border:2px solid var(--cyan);background:#0b1228;color:#dff8ff;font-weight:900;font-size:14px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}.btn.good{border-color:var(--green);background:rgba(51,240,163,.16)}.btn.warn{border-color:var(--yellow);background:rgba(255,204,77,.16)}.btn.bad{border-color:var(--red);background:rgba(255,106,106,.15)}.btn.secondary{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#fff}.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.status{padding:16px}.k{font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;color:var(--muted)}.v{font-size:30px;font-weight:900;margin-top:7px}.panel{padding:18px}.side{padding:18px}.panel h2,.side h2{font-size:18px;margin:0 0 10px;font-weight:900}.hint{font-size:13px;color:var(--muted);font-weight:800;line-height:1.45}.req{padding:14px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.13);margin-bottom:10px}.reqtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.title{font-size:16px;font-weight:900}.meta{font-size:12px;font-weight:800;color:var(--muted);line-height:1.35;margin-top:5px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.tag{font-size:11px;font-weight:900;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);padding:6px 8px;border-radius:999px}.tag.good{border-color:rgba(51,240,163,.5)}.tag.warn{border-color:rgba(255,204,77,.5)}.tag.bad{border-color:rgba(255,106,106,.5)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.field{width:100%;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:11px 12px;font-size:14px;font-weight:800;background:rgba(255,255,255,.95);color:#111}.editgrid{display:grid;grid-template-columns:1fr 120px 90px;gap:8px;margin-top:12px}.locked{border-color:rgba(255,204,77,.55);background:rgba(255,204,77,.09)}.published{border-color:rgba(51,240,163,.55);background:rgba(51,240,163,.08)}.rejected{border-color:rgba(255,106,106,.55);background:rgba(255,106,106,.08)}.empty{padding:18px;border-radius:16px;border:1px dashed rgba(255,255,255,.2);background:rgba(255,255,255,.04);color:var(--muted);font-weight:800}.audit{display:grid;gap:8px}.audititem{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:12px;font-weight:800;line-height:1.35}.banner{padding:14px;border-radius:18px;margin-bottom:14px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-weight:900}.banner.good{border-color:rgba(51,240,163,.5);background:rgba(51,240,163,.13)}.banner.warn{border-color:rgba(255,204,77,.5);background:rgba(255,204,77,.12)}.banner.bad{border-color:rgba(255,106,106,.5);background:rgba(255,106,106,.12)}@media(max-width:1000px){.layout{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.editgrid{grid-template-columns:1fr}}@media(max-width:640px){.stats{grid-template-columns:1fr}.hero h1{font-size:28px}}
+</style>
+</head>
+<body data-vanguard-mode="full">
+<div class="shell">
+  <section class="hero">
+    <h1>Vanguard Requirement Review</h1>
+    <p>Engineer approval gate for document-driven requirements. AI can suggest; it cannot silently control field work. Field users get simple pass/fail steps. Customers get traceable finished-product documentation.</p>
+    <div class="toprow">
+      <a class="btn secondary" id="backControl" href="vanguard_control_center.html">Back to Control Center</a>
+      <a class="btn secondary" id="openEquipment" href="equipment.html">Open Equipment</a>
+      <a class="btn secondary" id="openExport" href="package_export.html">Open Package Export</a>
+      <button class="btn" id="refreshBtn">Refresh Review</button>
+      <button class="btn good" id="publishBtn">Publish Approved Rules</button>
+    </div>
+  </section>
+
+  <div id="gateBanner" class="banner warn">Loading Vanguard review gate...</div>
+
+  <div class="stats">
+    <div class="status"><div class="k">Total Requirements</div><div class="v" id="totalCount">0</div></div>
+    <div class="status"><div class="k">Approved</div><div class="v" id="approvedCount">0</div></div>
+    <div class="status"><div class="k">Pending Review</div><div class="v" id="pendingCount">0</div></div>
+    <div class="status"><div class="k">Rejected</div><div class="v" id="rejectedCount">0</div></div>
+  </div>
+
+  <div class="layout">
+    <main class="panel">
+      <h2>Engineer Review Queue</h2>
+      <p class="hint">Approve only what should become active workflow logic. Correct weak pulls before approval. Reject bad pulls. Nothing reaches field enforcement until approved rules are published.</p>
+      <div id="requirementList" style="margin-top:14px"></div>
+    </main>
+    <aside class="side">
+      <h2>Field / Office / Customer Split</h2>
+      <div class="audit">
+        <div class="audititem"><b>Field:</b> big status, simple next action, no AI clutter.</div>
+        <div class="audititem"><b>Office:</b> review, correct, approve, publish.</div>
+        <div class="audititem"><b>Customer:</b> requirement → evidence → approval traceability.</div>
+      </div>
+      <h2 style="margin-top:18px">Published Rule Summary</h2>
+      <div id="ruleSummary" class="audit"></div>
+    </aside>
+  </div>
+</div>
+
+<script data-vanguard-mode="full" src="assets/js/vanguard_loader.js"></script>
+<script>
+(function(){
+  'use strict';
+  function qs(){ try { return new URL(location.href).searchParams; } catch(e){ return new URLSearchParams(location.search || ''); } }
+  function clean(v){ return String(v == null ? '' : v).trim(); }
+  function esc(v){ return clean(v).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function review(){ return window.NEXUS_VANGUARD_REQUIREMENT_REVIEW || window.VanguardRequirementReview || null; }
+  function vg(){ return window.NEXUS_VANGUARD || window.Vanguard || null; }
+  function setLinks(){
+    var eq = clean(qs().get('eq') || (vg() && vg().getEq && vg().getEq()) || localStorage.getItem('nexus_active_eq') || '');
+    if(eq){
+      document.getElementById('openEquipment').href = 'equipment.html?eq=' + encodeURIComponent(eq);
+      document.getElementById('openExport').href = 'package_export.html?eq=' + encodeURIComponent(eq);
+    }
+  }
+  function reqStatus(req, map){
+    var r = map && map[req.id];
+    return r ? r.status : 'PENDING_REVIEW';
+  }
+  function render(){
+    setLinks();
+    var api = review();
+    if(!api){ document.getElementById('gateBanner').textContent = 'Vanguard Requirement Review module is still loading. Refresh if this remains visible.'; return; }
+    var s = api.summary();
+    var g = s.gate || {};
+    document.getElementById('totalCount').textContent = String(g.total || 0);
+    document.getElementById('approvedCount').textContent = String(g.approved || 0);
+    document.getElementById('pendingCount').textContent = String(g.pending || 0);
+    document.getElementById('rejectedCount').textContent = String(g.rejected || 0);
+    var banner = document.getElementById('gateBanner');
+    banner.className = 'banner ' + (g.status === 'PUBLISHED' || g.status === 'APPROVED' ? 'good' : (g.status === 'REJECTED' ? 'bad' : 'warn'));
+    banner.textContent = g.status === 'PUBLISHED'
+      ? 'APPROVED RULES PUBLISHED: field workflow can use reviewed requirements only.'
+      : (g.pending > 0 ? 'REVIEW REQUIRED: approve, correct, or reject pending requirements before field enforcement.' : 'READY: approved requirements can be published.');
+
+    var list = document.getElementById('requirementList');
+    var reqs = s.requirements || [];
+    var map = api.reviewMap();
+    if(!reqs.length){
+      list.innerHTML = '<div class="empty">No extracted requirements found yet. Load documents from Control Center or Equipment Setup, then return here for engineer approval.</div>';
+    } else {
+      list.innerHTML = reqs.map(function(req){
+        var st = reqStatus(req, map);
+        var cls = st === 'APPROVED' ? 'published' : (st === 'REJECTED' ? 'rejected' : 'locked');
+        return '<div class="req '+cls+'" data-id="'+esc(req.id)+'">'
+          + '<div class="reqtop"><div><div class="title">'+esc(req.requirementType || 'GENERAL')+' — '+esc(req.value || 'No requirement text')+'</div>'
+          + '<div class="meta">Source: '+esc(req.sourceDocument || 'Unknown')+' '+(req.page ? '• Page '+esc(req.page) : '')+' • Confidence '+esc(req.confidence)+'%</div>'
+          + '<div class="meta">Applies to: '+esc(req.appliesTo || 'Current equipment / project')+'</div></div>'
+          + '<div class="tag '+(st === 'APPROVED' ? 'good' : st === 'REJECTED' ? 'bad' : 'warn')+'">'+esc(st)+'</div></div>'
+          + '<div class="tags"><span class="tag">ID '+esc(req.id)+'</span><span class="tag">'+esc(req.units || 'No units')+'</span><span class="tag">'+esc(req.section || req.requirementType || 'General')+'</span></div>'
+          + '<div class="editgrid"><input class="field edit-value" value="'+esc(req.value)+'" aria-label="Requirement text"/><input class="field edit-units" value="'+esc(req.units || '')+'" aria-label="Units"/><input class="field edit-page" value="'+esc(req.page || '')+'" aria-label="Page"/></div>'
+          + '<div class="actions"><button class="btn good approve">Approve</button><button class="btn warn correct">Correct + Approve</button><button class="btn bad reject">Reject</button></div>'
+          + '</div>';
+      }).join('');
+    }
+
+    var rules = s.fieldRules || {};
+    var keys = Object.keys(rules).sort();
+    document.getElementById('ruleSummary').innerHTML = keys.length ? keys.map(function(k){
+      return '<div class="audititem"><b>'+esc(k)+':</b> '+esc((rules[k] || []).length)+' approved rule(s)</div>';
+    }).join('') : '<div class="audititem">No approved rules published yet.</div>';
+  }
+  function card(btn){ var el = btn; while(el && !el.classList.contains('req')) el = el.parentNode; return el; }
+  document.addEventListener('click', function(e){
+    var api = review(); if(!api) return;
+    if(e.target && e.target.id === 'refreshBtn') render();
+    if(e.target && e.target.id === 'publishBtn'){
+      var result = api.publishApprovedRules();
+      alert(result.ok ? ('Published '+result.count+' approved requirement rule(s).') : result.message);
+      render();
+    }
+    if(e.target && e.target.classList.contains('approve')){ var c=card(e.target); api.approve(c.getAttribute('data-id'), 'Approved from requirement review page.'); render(); }
+    if(e.target && e.target.classList.contains('reject')){ var c2=card(e.target); api.reject(c2.getAttribute('data-id'), 'Rejected from requirement review page.'); render(); }
+    if(e.target && e.target.classList.contains('correct')){
+      var c3=card(e.target); var id=c3.getAttribute('data-id');
+      api.correct(id, { id:id, value:c3.querySelector('.edit-value').value, units:c3.querySelector('.edit-units').value, page:c3.querySelector('.edit-page').value }, 'Corrected and approved from requirement review page.');
+      render();
+    }
+  });
+  window.addEventListener('vanguard:loader:complete', function(){ setTimeout(render, 50); });
+  window.addEventListener('vanguard:requirement-review-ready', render);
+  document.addEventListener('DOMContentLoaded', function(){ setTimeout(render, 350); });
+})();
+</script>
+</body>
+</html>

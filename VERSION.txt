@@ -1,0 +1,6 @@
+HyperCore / NEXUS Vanguard Release Candidate
+Version: RC-2026-05-20
+Build: vanguard-release-candidate
+Date: 2026-05-20
+Baseline: HyperCore2.0_vanguard_consolidated_cleanup.zip
+Firebase config/privacy hardening: Deferred by owner until functional deployment validation is complete.

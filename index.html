@@ -1,0 +1,2022 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <link rel="stylesheet" href="nexus-core.css" />
+  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<title>NEXUS</title>
+
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.20);
+    --panel2:rgba(0,0,0,0.35);
+    --line:rgba(255,255,255,0.18);
+    --ink:#fff;
+    --btn-bg:#0a0f24;
+    --btn-txt:#3ecbff;
+    --accent:#00c2ff;
+    --warn:#ffb800;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);}
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+
+  .topbar{
+    max-width:1200px;
+    margin:16px auto 0;
+    padding:0 18px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .brand{ font-weight:900; font-size:44px; letter-spacing:.02em; text-shadow:0 6px 22px rgba(0,0,0,.35); }
+  .tagline{ margin-top:6px; font-weight:800; opacity:.95; text-shadow:0 6px 22px rgba(0,0,0,.35); }
+  .ready-pill{
+    margin-top:4px;
+    padding:6px 14px;
+    border-radius:999px;
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.20);
+    font-weight:900;
+    font-size:14px;
+    align-self:flex-start;
+  }
+
+  .wrap{
+    max-width:1200px;
+    margin:12px auto 40px;
+    padding:0 18px;
+  }
+  .shell{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+    padding:18px;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap:16px;
+    margin-top:12px;
+  }
+  @media (max-width: 980px){
+    .grid{ grid-template-columns: 1fr; }
+    .brand{ font-size:36px; }
+  }
+
+  .card{
+    background:rgba(0,0,0,0.20);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:18px;
+    padding:16px;
+  }
+  .card h3{
+    margin:0 0 12px;
+    font-size:14px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-weight:900;
+    opacity:.95;
+  }
+
+  .field{ margin:12px 0; }
+  label{ display:block; font-weight:900; font-size:13px; margin:0 0 6px; opacity:.95; }
+  input, select{
+    width:100%;
+    padding:14px 14px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.20);
+    background:rgba(255,255,255,0.92);
+    color:#111;
+    font-weight:800;
+    font-size:16px;
+    outline:none;
+  }
+
+  .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .btn{
+    padding:12px 16px;
+    font-size:15px;
+    font-weight:900;
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    gap:10px;
+    min-width: 170px;
+  }
+  .btn.secondary{
+    background: rgba(0,0,0,0.18);
+    color:#fff;
+    border:2px solid rgba(255,255,255,0.30);
+  }
+
+  .hint{
+    margin-top:12px;
+    padding:12px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+    font-weight:800;
+    font-size:12px;
+    opacity:.95;
+    line-height:1.35;
+  }
+  code{
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.18);
+    padding:2px 6px;
+    border-radius:8px;
+    color:#fff;
+  }
+
+  /* ===== Equipment Image block ===== */
+  .img-block{ margin-top:12px; }
+  .img-status{ margin-top:8px; font-size:12px; font-weight:900; opacity:.9; line-height:1.35; }
+  #nexusEquipImagePreview{
+    display:none;
+    margin-top:10px;
+    width:100%;
+    max-height:220px;
+    object-fit:cover;
+    border-radius:12px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,0.18);
+    cursor:zoom-in;
+  }
+  .img-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+  .mini-btn{
+    padding:10px 14px;
+    border-radius:999px;
+    font-weight:900;
+    cursor:pointer;
+    border:2px solid rgba(255,255,255,0.35);
+    background: rgba(0,0,0,0.20);
+    color:#fff;
+  }
+  .mini-btn.warn{
+    border-color: rgba(255,184,0,0.90);
+    color:#111;
+    background: rgba(255,184,0,0.92);
+  }
+
+  /* ===== Torque Photo block (same UI style) ===== */
+  #nexusTorquePhotoPreview{
+    display:none;
+    margin-top:10px;
+    width:100%;
+    max-height:220px;
+    object-fit:cover;
+    border-radius:12px;
+    box-shadow:0 10px 22px rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,0.18);
+  }
+
+  /* ===== Phenolic section ===== */
+  .section-divider{
+    margin:18px 0 10px;
+    padding-top:14px;
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+  .section-title{
+    font-weight:900;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    font-size:13px;
+    opacity:.95;
+    margin:0 0 10px;
+  }
+
+  /* ===== Equipment Type helper ===== */
+  .subhint{
+    margin-top:8px;
+    font-size:12px;
+    font-weight:900;
+    opacity:.9;
+    line-height:1.35;
+  }
+  .locknote{
+    margin-top:8px;
+    padding:10px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+    font-weight:900;
+    font-size:12px;
+    opacity:.95;
+    line-height:1.35;
+  }
+  .locknote.warn{
+    border-color: rgba(255,184,0,0.55);
+    box-shadow: 0 0 0 2px rgba(255,184,0,0.18) inset;
+  }
+  .type-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+
+
+  /* ===== AI Documentation Fill / Conflict Review ===== */
+  .ai-panel{
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+  .ai-box{
+    margin-top:12px;
+    padding:12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.16);
+  }
+  .ai-box h4{
+    margin:0 0 8px;
+    font-size:13px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:900;
+    opacity:.96;
+  }
+  .ai-status-line{
+    font-weight:900;
+    font-size:13px;
+    line-height:1.35;
+  }
+  .ai-status-line.good{ color:#d8ffea; }
+  .ai-status-line.warn{ color:#fff3cf; }
+  .ai-status-line.bad{ color:#ffe7e7; }
+  .ai-list{
+    margin:8px 0 0 18px;
+    padding:0;
+    font-weight:800;
+    font-size:12px;
+    line-height:1.4;
+  }
+  .ai-list li{ margin:6px 0; }
+  .ai-kv{
+    display:grid;
+    grid-template-columns: 1fr;
+    gap:8px;
+  }
+  .ai-kv-row{
+    padding:10px 12px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    font-size:12px;
+    line-height:1.35;
+  }
+  .ai-kv-row b{ display:block; margin-bottom:4px; }
+  .ai-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(0,0,0,0.22);
+    font-weight:900;
+    font-size:12px;
+  }
+  .ai-pill.good{ border-color:rgba(45,255,155,0.60); color:#d8ffea; }
+  .ai-pill.warn{ border-color:rgba(255,184,0,0.70); color:#fff3cf; }
+  .ai-pill.bad{ border-color:rgba(255,91,91,0.75); color:#ffe7e7; }
+  .ai-source-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    margin-top:10px;
+  }
+  .source-choice{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:12px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,0.16);
+    background:rgba(0,0,0,0.18);
+  }
+  .source-choice input[type="radio"]{
+    width:auto;
+    margin-top:3px;
+    transform:scale(1.15);
+  }
+  .source-choice .title{
+    font-weight:900;
+    margin-bottom:4px;
+  }
+  .source-choice .sub{
+    font-size:12px;
+    font-weight:800;
+    opacity:.92;
+    line-height:1.35;
+  }
+
+  .footer{
+    max-width:1200px;
+    margin:22px auto 0;
+    padding:18px 12px;
+    text-align:center;
+    font-size:12px;
+    font-weight:900;
+    color:rgba(255,255,255,0.85);
+    background:rgba(0,0,0,0.35);
+    border-top:1px solid rgba(255,255,255,0.18);
+    border-radius:0 0 18px 18px;
+  }
+
+  /* ===== Equipment Image Modal ===== */
+  .equip-image-modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    z-index:9999;
+  }
+  .equip-image-modal.show{
+    display:block;
+  }
+  .equip-image-modal-backdrop{
+    position:absolute;
+    inset:0;
+    background:rgba(0,0,0,0.86);
+    backdrop-filter:blur(4px);
+  }
+  .equip-image-modal-panel{
+    position:relative;
+    width:min(96vw, 1400px);
+    height:min(92vh, 900px);
+    margin:3vh auto;
+    background:rgba(10,15,36,0.98);
+    border:1px solid rgba(255,255,255,0.16);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,0.45);
+  }
+  .equip-image-modal-toolbar{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    padding:12px 14px;
+    border-bottom:1px solid rgba(255,255,255,0.14);
+    background:rgba(255,255,255,0.04);
+  }
+  .equip-image-tool-btn{
+    min-width:52px;
+    height:40px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:18px;
+    font-weight:900;
+  }
+  .equip-image-modal-stage{
+    width:100%;
+    height:calc(100% - 65px);
+    overflow:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    cursor:grab;
+  }
+  .equip-image-modal-stage:active{
+    cursor:grabbing;
+  }
+  #equipImageModalImg{
+    max-width:none;
+    max-height:none;
+    transform-origin:center center;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+
+  /* ===========================================================
+     NEXUS Vanguard Provisioning / Firebase Live Sync Panel
+     =========================================================== */
+  .vx-index-panel{
+    margin-top:16px;
+    padding:14px;
+    border-radius:18px;
+    background:rgba(0,0,0,0.22);
+    border:1px solid rgba(255,255,255,0.18);
+    color:#fff;
+  }
+  .vx-index-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .vx-index-title{
+    font-size:14px;
+    font-weight:1000;
+    letter-spacing:.10em;
+    text-transform:uppercase;
+  }
+  .vx-index-sub{
+    margin-top:5px;
+    font-size:12px;
+    font-weight:850;
+    opacity:.92;
+    line-height:1.35;
+  }
+  .vx-index-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:150px;
+    padding:10px 12px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,.20);
+    background:rgba(255,255,255,.08);
+    font-weight:1000;
+    text-align:center;
+  }
+  .vx-index-badge.ok{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.45);color:#dfffee;}
+  .vx-index-badge.warn{background:rgba(255,184,0,.18);border-color:rgba(255,184,0,.45);color:#fff4c7;}
+  .vx-index-badge.info{background:rgba(0,229,255,.12);border-color:rgba(0,229,255,.40);color:#dffaff;}
+  .vx-index-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:12px;
+  }
+  @media(max-width:900px){ .vx-index-grid{grid-template-columns:1fr;} }
+  .vx-index-box{
+    min-height:72px;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.16);
+    background:rgba(0,0,0,.18);
+    padding:11px 12px;
+  }
+  .vx-index-box b{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    opacity:.82;
+    margin-bottom:6px;
+  }
+  .vx-index-box span{
+    display:block;
+    font-size:16px;
+    font-weight:1000;
+    line-height:1.25;
+    word-break:break-word;
+  }
+
+</style>
+
+<link rel="stylesheet" href="assets/css/nexus-core.css">
+</head>
+
+<body>
+  <div class="nexus-page">
+
+<div class="topbar">
+  <div>
+    <div class="brand">NEXUS</div>
+    <div class="tagline">Mission Critical Construction Data Centralization</div>
+  </div>
+  <div class="ready-pill">Ready</div>
+</div>
+
+<div class="wrap">
+  <div class="shell">
+    <div class="grid">
+      <!-- LEFT: OPEN EQUIPMENT -->
+      <div class="card">
+        <h3>Open Equipment</h3>
+
+        <div class="field">
+          <label for="eqInput">Equipment ID</label>
+          <input id="eqInput" type="text" placeholder="TR-001" value="TR-001" />
+        </div>
+
+        <!-- Equipment Type (CCS template selector) -->
+        <div class="field">
+          <label for="equipmentTypeSelect">Equipment Type (Construction Check Sheet Template)</label>
+          <select id="equipmentTypeSelect">
+            <option value="transformer">Transformer</option>
+            <option value="switchgear">Switchgear</option>
+            <option value="panelboard">Panelboard</option>
+            <option value="busway">Busway</option>
+            <option value="ups">UPS</option>
+            <option value="ats">ATS</option>
+            <option value="generator">Generator</option>
+          </select>
+
+          <div class="subhint">
+            This selection controls which CCS file opens from the Equipment Page. Transformer maps to <code>construction_check_sheet_import.html</code>.
+          </div>
+
+          <div id="equipmentTypeLockNote" class="locknote" style="display:none;"></div>
+
+          <div class="type-actions">
+            <button id="unlockTypeBtn" class="mini-btn warn" type="button">Unlock Type Editing</button>
+            <button id="relockTypeBtn" class="mini-btn" type="button">Re-Lock</button>
+          </div>
+
+          <div class="subhint">
+            Unlock is stored per-equipment. Use only when you must change templates without rebuilding equipment.
+          </div>
+        </div>
+
+        <!-- Equipment Image Upload -->
+        <div class="img-block">
+          <label for="nexusEquipImageInput">Equipment Image</label>
+          <input id="nexusEquipImageInput" type="file" accept="image/*" capture="environment" />
+          <img id="nexusEquipImagePreview" alt="Equipment image preview" />
+          <div id="nexusEquipImageStatus" class="img-status"></div>
+          <div class="img-actions">
+            <button id="nexusEquipImageClearBtn" class="mini-btn" type="button">Clear Image</button>
+          </div>
+        </div>
+
+
+        <div class="field">
+          <label for="bldgInput">Building #</label>
+          <input id="bldgInput" type="text" placeholder="Bldg-01" value="Bldg-01" />
+        </div>
+
+        <div class="field">
+          <label for="phaseSelect">Phase</label>
+          <select id="phaseSelect">
+            <option value="">Select...</option>
+            <option value="Phase 1">Phase 1</option>
+            <option value="Phase 2">Phase 2</option>
+            <option value="Phase 3">Phase 3</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="podSelect">POD</label>
+          <select id="podSelect">
+            <option value="">Select...</option>
+            <option value="POD A">POD A</option>
+            <option value="POD B">POD B</option>
+            <option value="POD C">POD C</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="procoreEquipUrl">Procore Equipment URL</label>
+          <input id="procoreEquipUrl" type="text" placeholder="Paste Procore equipment link" />
+        </div>
+
+        <div class="field">
+          <label for="procoreEnergUrl">Procore Energization URL</label>
+          <input id="procoreEnergUrl" type="text" placeholder="Paste Procore energization link" />
+        </div>
+
+        <!-- =========================
+             PHENOLIC SECTION
+             ========================= -->
+        <div class="section-divider"></div>
+        <div class="section-title">Phenolic</div>
+
+        <div class="field">
+          <label for="phenolicColorCode">Color Code</label>
+          <select id="phenolicColorCode">
+            <option value="">Select...</option>
+            <option value="bms_blue">BLUE — BMS</option>
+            <option value="fire_red">RED — Fire Alarm</option>
+            <option value="bus_a_orange">ORANGE — A Bus</option>
+            <option value="bus_b_green">GREEN — B Bus</option>
+            <option value="bus_d_cyan">CYAN — D Bus</option>
+            <option value="bus_e_yellow_white">YELLOW (white) — E Bus</option>
+            <option value="catcher_pink">PINK — CATCHER / C Bus</option>
+            <option value="nonpod_gray">GRAY — Non-Pod Specific</option>
+            <option value="global_black">BLACK — Global / Room</option>
+            <option value="house_brown">BROWN — House Services</option>
+            <option value="epms_yellow_black">YELLOW (black) — EPMS</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="phenolicFedFrom">FED FROM</label>
+          <input id="phenolicFedFrom" type="text" placeholder="Example: PDP-1A / SWBD-1 / etc." />
+        </div>
+
+        <div class="field">
+          <label for="phenolicEquipId">Phenolic Equipment ID (center line)</label>
+          <input id="phenolicEquipId" type="text" placeholder="Defaults to Equipment ID if blank" />
+        </div>
+
+        <div class="field">
+          <label for="phenolicFeeds">FEEDS</label>
+          <input id="phenolicFeeds" type="text" placeholder="Example: RTU-1 / Panel A / etc." />
+        </div>
+
+        <div class="btnrow">
+          <button class="btn" id="openEquipmentBtn" type="button">Open Equipment Page</button>
+          <button class="btn secondary" id="generateQrBtn" type="button">Generate QR</button>
+          <a class="btn secondary" id="equipmentStepsBtn" href="#">Equipment Steps</a>
+          <a class="btn" href="vanguard_control_center.html">Project Control Center</a>
+        </div>
+
+        <div class="hint">
+          QR codes should encode a URL like: <code>equipment.html?eq=TR-001</code><br>
+          Scanning a QR should land on the equipment page and keep <code>eq</code> through every task.
+        </div>
+
+        <div class="vx-index-panel" id="vxIndexPanel">
+          <div class="vx-index-top">
+            <div>
+              <div class="vx-index-title">Vanguard Equipment Registry</div>
+              <div class="vx-index-sub" id="vxIndexSub">Equipment setup will publish local/Firebase metadata when saved or opened.</div>
+            </div>
+            <div class="vx-index-badge info" id="vxIndexBadge">INITIALIZING</div>
+          </div>
+          <div class="vx-index-grid">
+            <div class="vx-index-box"><b>Active Equipment</b><span id="vxIndexEq">—</span></div>
+            <div class="vx-index-box"><b>Readiness</b><span id="vxIndexReadiness">Waiting</span></div>
+            <div class="vx-index-box"><b>Last Sync</b><span id="vxIndexLastSync">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: QUICK LINKS -->
+      <div class="card">
+        <h3>Quick Links</h3>
+        <div class="btnrow">
+          <button class="btn secondary" id="qrGeneratorLink" type="button">QR Generator</button>
+          <button class="btn secondary" id="scanQrLink" type="button">Scan QR</button>
+          <button class="btn secondary" id="submissionHistoryLink" type="button">Submission History</button>
+        </div>
+
+        <div class="hint">
+          If you arrived here from a QR code (with <code>?eq=</code>), you will be redirected to the correct equipment page automatically.
+        </div>
+
+        <div class="ai-panel">
+          <h3>AI Documentation Fill</h3>
+
+          <div class="btnrow">
+            <button class="btn" id="aiPopulateBtn" type="button">AI Populate from Documentation</button>
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <label for="aiDocInput">Documentation Files for Vanguard Fill</label>
+            <input id="aiDocInput" type="file" multiple accept=".pdf,.txt,.csv,.md,.json,.html,.htm,.xml,.png,.jpg,.jpeg,.webp,.tif,.tiff,.bmp" />
+          </div>
+
+          <div class="field" style="margin-top:12px;">
+            <label for="aiBackendUrlInput">Vanguard Backend URL</label>
+            <input id="aiBackendUrlInput" type="text" placeholder="Example: http://localhost:8787" />
+          </div>
+
+          <div class="hint">
+            Enter Equipment ID, Building, Phase, and POD first. Vanguard uses uploaded/project documentation through the backend when available, with browser extraction fallback for simple text-based files. It fills remaining fields, shows inconsistencies, and keeps a learning record when engineer overrides happen.
+          </div>
+
+          <div class="ai-box">
+            <div class="ai-status-line" id="aiStatusLine">Waiting for AI populate.</div>
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="ai-pill" id="aiConfidencePill">Confidence: —</span>
+              <span class="ai-pill" id="aiReadinessPill">Publish Readiness: Waiting</span>
+            </div>
+          </div>
+
+          <div class="ai-box" id="aiConflictsBox" style="display:none;">
+            <h4>Conflicts / Inconsistencies</h4>
+            <ul class="ai-list" id="aiConflictsList"></ul>
+          </div>
+
+          <div class="ai-box" id="aiMissingBox" style="display:none;">
+            <h4>Missing Information</h4>
+            <ul class="ai-list" id="aiMissingList"></ul>
+          </div>
+
+          <div class="ai-box" id="aiSourcesBox" style="display:none;">
+            <h4>Source References</h4>
+            <div class="ai-kv" id="aiSourcesGrid"></div>
+          </div>
+
+          <div class="ai-box">
+            <h4>Torque Photo Source</h4>
+            <div class="ai-source-grid">
+              <label class="source-choice">
+                <input type="radio" name="torquePhotoSource" id="torqueSourceDocumentation" value="documentation" checked />
+                <div>
+                  <div class="title">AI Derived from Documentation</div>
+                  <div class="sub">Uses the image and reference found in submittals / drawings when available.</div>
+                </div>
+              </label>
+
+              <label class="source-choice">
+                <input type="radio" name="torquePhotoSource" id="torqueSourceEngineer" value="engineer_override" />
+                <div>
+                  <div class="title">Engineer Photo Override</div>
+                  <div class="sub">Engineer-selected image overrides the AI-derived documentation image.</div>
+                </div>
+              </label>
+            </div>
+
+            <div class="field" style="margin-top:12px;">
+              <label for="nexusTorquePhotoInput">Engineer Photo Override</label>
+              <input id="nexusTorquePhotoInput" type="file" accept="image/*" capture="environment" />
+              <img id="nexusTorquePhotoPreview" alt="Torque photo preview" />
+              <div id="nexusTorquePhotoStatus" class="img-status"></div>
+              <div class="img-actions">
+                <button id="nexusTorquePhotoClearBtn" class="mini-btn" type="button">Clear Override</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+    </div>
+  </div>
+</div>
+
+<!-- Equipment Image Modal -->
+<div id="equipImageModal" class="equip-image-modal" aria-hidden="true">
+  <div class="equip-image-modal-backdrop" id="equipImageModalBackdrop"></div>
+
+  <div class="equip-image-modal-panel" role="dialog" aria-modal="true" aria-label="Equipment Image Viewer">
+    <div class="equip-image-modal-toolbar">
+      <button type="button" class="equip-image-tool-btn" id="equipImageZoomOutBtn">−</button>
+      <button type="button" class="equip-image-tool-btn" id="equipImageZoomResetBtn">100%</button>
+      <button type="button" class="equip-image-tool-btn" id="equipImageZoomInBtn">+</button>
+      <button type="button" class="equip-image-tool-btn" id="equipImageCloseBtn">✕</button>
+    </div>
+
+    <div class="equip-image-modal-stage" id="equipImageModalStage">
+      <img
+        id="equipImageModalImg"
+        src=""
+        alt="Equipment image enlarged preview"
+        draggable="false"
+      />
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="nexus-firebase-live-sync.js"></script>
+<script src="vanguard_registry.js"></script>
+<script src="assets/js/vanguard_loader.js" data-vanguard-mode="minimal"></script>
+<script src="assets/js/vanguard_requirement_extractor.js"></script>
+<script src="assets/js/vanguard_extraction_engine.js"></script>
+<script src="assets/js/vanguard_backend_client.js"></script>
+<script src="assets/js/vanguard_document_mapper.js"></script>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const incomingEq = (qs.get("eq") || "").trim();
+  if (incomingEq){
+    // If you want auto-redirect when landing with ?eq=, enable this:
+    // location.href = `equipment.html?eq=${encodeURIComponent(incomingEq)}`;
+  }
+
+  const eqInput = document.getElementById("eqInput");
+  const equipmentTypeSelect = document.getElementById("equipmentTypeSelect");
+  const equipmentTypeLockNote = document.getElementById("equipmentTypeLockNote");
+  const unlockTypeBtn = document.getElementById("unlockTypeBtn");
+  const relockTypeBtn = document.getElementById("relockTypeBtn");
+
+  const bldgInput = document.getElementById("bldgInput");
+  const phaseSelect = document.getElementById("phaseSelect");
+  const podSelect = document.getElementById("podSelect");
+  const procoreEquipUrl = document.getElementById("procoreEquipUrl");
+  const procoreEnergUrl = document.getElementById("procoreEnergUrl");
+
+  const aiPopulateBtn = document.getElementById("aiPopulateBtn");
+  const aiStatusLine = document.getElementById("aiStatusLine");
+  const aiConfidencePill = document.getElementById("aiConfidencePill");
+  const aiReadinessPill = document.getElementById("aiReadinessPill");
+  const aiConflictsBox = document.getElementById("aiConflictsBox");
+  const aiConflictsList = document.getElementById("aiConflictsList");
+  const aiMissingBox = document.getElementById("aiMissingBox");
+  const aiMissingList = document.getElementById("aiMissingList");
+  const aiSourcesBox = document.getElementById("aiSourcesBox");
+  const aiSourcesGrid = document.getElementById("aiSourcesGrid");
+  const aiDocInput = document.getElementById("aiDocInput");
+  const aiBackendUrlInput = document.getElementById("aiBackendUrlInput");
+  const torqueSourceDocumentation = document.getElementById("torqueSourceDocumentation");
+  const torqueSourceEngineer = document.getElementById("torqueSourceEngineer");
+
+  // Phenolic controls
+  const phenolicColorCode = document.getElementById("phenolicColorCode");
+  const phenolicFedFrom   = document.getElementById("phenolicFedFrom");
+  const phenolicEquipId   = document.getElementById("phenolicEquipId");
+  const phenolicFeeds     = document.getElementById("phenolicFeeds");
+
+  const openEquipmentBtn = document.getElementById("openEquipmentBtn");
+  const generateQrBtn = document.getElementById("generateQrBtn");
+  const equipmentStepsBtn = document.getElementById("equipmentStepsBtn");
+
+  const qrGeneratorLink = document.getElementById("qrGeneratorLink");
+  const scanQrLink = document.getElementById("scanQrLink");
+  const submissionHistoryLink = document.getElementById("submissionHistoryLink");
+
+  function getEq(){ return (eqInput.value || "").trim(); }
+  function metaKey(eq){ return `nexus_meta_${eq || "NO_EQ"}`; }
+
+  const vxIndexBadge = document.getElementById("vxIndexBadge");
+  const vxIndexSub = document.getElementById("vxIndexSub");
+  const vxIndexEq = document.getElementById("vxIndexEq");
+  const vxIndexReadiness = document.getElementById("vxIndexReadiness");
+  const vxIndexLastSync = document.getElementById("vxIndexLastSync");
+
+  function nowISO(){ return new Date().toISOString(); }
+  function cleanEq(value){ return String(value || "NO_EQ").trim().replace(/[.#$\[\]\/]/g, "_") || "NO_EQ"; }
+  function setVxIndex(kind, text, subtext){
+    if(vxIndexBadge){
+      vxIndexBadge.className = "vx-index-badge " + (kind || "info");
+      vxIndexBadge.textContent = text || "READY";
+    }
+    if(vxIndexSub) vxIndexSub.textContent = subtext || "";
+  }
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+  function writeJSON(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+  }
+  function getVanguardReadiness(meta){
+    const missing = [];
+    if(!getEq()) missing.push("Equipment ID");
+    if(!((bldgInput && bldgInput.value) || "").trim()) missing.push("Building");
+    if(!((phaseSelect && phaseSelect.value) || "").trim()) missing.push("Phase");
+    if(!((podSelect && podSelect.value) || "").trim()) missing.push("POD");
+    if(!((procoreEquipUrl && procoreEquipUrl.value) || "").trim()) missing.push("Procore equipment URL");
+    if(!((procoreEnergUrl && procoreEnergUrl.value) || "").trim()) missing.push("Procore energization URL");
+
+    const doc = meta && meta.aiDocData ? meta.aiDocData : null;
+    const conflicts = doc && Array.isArray(doc.conflicts) ? doc.conflicts : [];
+    const aiMissing = doc && Array.isArray(doc.missing) ? doc.missing : [];
+
+    if(conflicts.length) return { status:"REVIEW", label:"Review Conflicts", missing, conflicts, aiMissing };
+    if(missing.length || aiMissing.length) return { status:"PARTIAL", label:"Missing Info", missing, conflicts, aiMissing };
+    return { status:"READY", label:"Ready", missing, conflicts, aiMissing };
+  }
+  function buildVanguardEquipmentRecord(eq){
+    const meta = loadMeta(eq);
+    const readiness = getVanguardReadiness(meta);
+    const rec = readEquip(eq);
+
+    const torquePhoto = meta.torquePhoto || {};
+    const activeTorquePhoto =
+      torquePhoto.source === "engineer_override"
+        ? (torquePhoto.overrideImage || "")
+        : (torquePhoto.documentationImage || "");
+
+    return {
+      eq: eq || "NO_EQ",
+      id: eq || "NO_EQ",
+      equipmentId: eq || "NO_EQ",
+      equipmentType: normalizeType(equipmentTypeSelect?.value) || normalizeType(meta.equipmentType) || "transformer",
+      building: ((bldgInput && bldgInput.value) || "").trim(),
+      phase: ((phaseSelect && phaseSelect.value) || "").trim(),
+      pod: ((podSelect && podSelect.value) || "").trim(),
+      procoreEquipUrl: ((procoreEquipUrl && procoreEquipUrl.value) || "").trim(),
+      procoreEnergizationUrl: ((procoreEnergUrl && procoreEnergUrl.value) || "").trim(),
+      phenolic: {
+        colorCode: (phenolicColorCode.value || "").trim(),
+        fedFrom: (phenolicFedFrom.value || "").trim(),
+        equipId: (phenolicEquipId.value || "").trim() || (eq || ""),
+        feeds: (phenolicFeeds.value || "").trim()
+      },
+      images: {
+        equipmentImage: rec.imageDataUrl || "",
+        torquePhotoActive: activeTorquePhoto || "",
+        torquePhotoSource: torquePhoto.source || "documentation",
+        torqueDocumentationImage: torquePhoto.documentationImage || "",
+        torqueEngineerOverrideImage: torquePhoto.overrideImage || ""
+      },
+      ai: {
+        readiness: readiness,
+        docData: meta.aiDocData || null,
+        overrides: Array.isArray(meta.aiOverrides) ? meta.aiOverrides : [],
+        sources: meta.aiDocData && meta.aiDocData.sources ? meta.aiDocData.sources : {},
+        conflicts: readiness.conflicts || [],
+        missing: (readiness.missing || []).concat(readiness.aiMissing || [])
+      },
+      package: readJSON(`nexus_${eq || "NO_EQ"}_package_readiness_v1`, null),
+      createdAt: meta.createdAt || nowISO(),
+      updatedAt: nowISO(),
+      source: "index.html"
+    };
+  }
+  function publishLocalVanguardRecord(eq, rec){
+    if(!eq || !rec) return;
+
+    try{
+      localStorage.setItem("nexus_active_eq", eq);
+      localStorage.setItem("nexus_active_equipment", eq);
+    }catch(e){}
+
+    writeJSON(`nexus_vanguard_equipment_${eq}`, rec);
+    writeJSON(`nexus_${eq}_equipment_registry_v1`, rec);
+    writeJSON(`nexus_${eq}_vanguard_setup`, rec);
+
+    const projectRaw = readJSON("nexus_project_equipment", {});
+    let project;
+    if(Array.isArray(projectRaw)){
+      project = projectRaw.filter(r => String(r && (r.eq || r.id || "")).toUpperCase() !== String(eq).toUpperCase());
+      project.push(rec);
+    }else if(projectRaw && typeof projectRaw === "object"){
+      project = Object.assign({}, projectRaw, { [eq]: rec, [String(eq).toUpperCase()]: rec });
+    }else{
+      project = { [eq]: rec };
+    }
+    writeJSON("nexus_project_equipment", project);
+
+    const setupEvent = {
+      eq,
+      section:"setup",
+      status: rec.ai && rec.ai.readiness ? rec.ai.readiness.status : "REVIEW",
+      readiness: rec.ai && rec.ai.readiness ? rec.ai.readiness : null,
+      updatedAt: rec.updatedAt
+    };
+
+    const systemKey = `nexus_${eq}_vanguard_system`;
+    const sys = readJSON(systemKey, {}) || {};
+    sys.setup = setupEvent;
+    writeJSON(systemKey, sys);
+  }
+  async function publishFirebaseVanguardRecord(eq, rec){
+    if(!eq || !window.NexusLiveSync || typeof window.NexusLiveSync.save !== "function") return false;
+    try{
+      await window.NexusLiveSync.save(eq, "equipmentRegistry", rec);
+      await window.NexusLiveSync.save(eq, "setup", rec);
+      await window.NexusLiveSync.save(eq, "equipmentMeta", {
+        eq: rec.eq,
+        equipmentType: rec.equipmentType,
+        building: rec.building,
+        phase: rec.phase,
+        pod: rec.pod,
+        procoreEquipUrl: rec.procoreEquipUrl,
+        procoreEnergizationUrl: rec.procoreEnergizationUrl,
+        updatedAt: rec.updatedAt
+      });
+      return true;
+    }catch(e){
+      console.warn("Vanguard equipment Firebase publish failed:", e);
+      return false;
+    }
+  }
+  function logVanguardSetup(eq, rec){
+    try{
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
+        window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
+          section:"setup",
+          status: rec.ai && rec.ai.readiness ? rec.ai.readiness.status : "REVIEW",
+          message:"Equipment setup registry updated.",
+          readiness: rec.ai && rec.ai.readiness ? rec.ai.readiness : null,
+          updatedAt: rec.updatedAt
+        });
+      }
+    }catch(e){}
+  }
+  async function publishVanguardEquipment(reason){
+    const eq = getEq();
+    if(!eq){
+      if(vxIndexEq) vxIndexEq.textContent = "—";
+      if(vxIndexReadiness) vxIndexReadiness.textContent = "Waiting";
+      setVxIndex("warn", "NO EQUIPMENT", "Enter an Equipment ID to publish Vanguard setup data.");
+      return null;
+    }
+
+    const rec = buildVanguardEquipmentRecord(eq);
+    publishLocalVanguardRecord(eq, rec);
+    logVanguardSetup(eq, rec);
+    const ok = await publishFirebaseVanguardRecord(eq, rec);
+
+    const readiness = rec.ai && rec.ai.readiness ? rec.ai.readiness : {status:"REVIEW",label:"Review"};
+    if(vxIndexEq) vxIndexEq.textContent = eq;
+    if(vxIndexReadiness) vxIndexReadiness.textContent = readiness.label || readiness.status;
+    if(vxIndexLastSync) vxIndexLastSync.textContent = new Date(rec.updatedAt).toLocaleTimeString();
+
+    if(readiness.status === "READY"){
+      setVxIndex("ok", "READY", ok ? "Equipment registry published to Firebase and local Vanguard stores." : "Equipment registry published locally. Firebase not detected.");
+    }else{
+      setVxIndex("warn", readiness.status, ok ? "Equipment registry published; review missing/conflict items." : "Equipment registry published locally; review missing/conflict items.");
+    }
+
+    return rec;
+  }
+  window.NEXUS_INDEX_PUBLISH_VANGUARD = publishVanguardEquipment;
+
+  function loadMeta(eq){
+    try{
+      const raw = localStorage.getItem(metaKey(eq));
+      if (raw) return JSON.parse(raw);
+    }catch(e){}
+    return {};
+  }
+
+  function normalizeType(v){
+    return (v || "").toString().trim().toLowerCase();
+  }
+
+  // Per-equipment unlock flag for editing equipmentType even after progress
+  function typeUnlockKey(eq){ return `nexus_${eq || "NO_EQ"}_equipmentType_unlock`; }
+  function isTypeUnlocked(eq){ return localStorage.getItem(typeUnlockKey(eq)) === "1"; }
+  function setTypeUnlocked(eq, on){
+    if(!eq) return;
+    if(on) localStorage.setItem(typeUnlockKey(eq), "1");
+    else localStorage.removeItem(typeUnlockKey(eq));
+  }
+
+  function hasAnyProgress(eq){
+    if(!eq) return false;
+
+    const signedKey = `nexus_${eq}_ccs_signed_off`;
+    if (localStorage.getItem(signedKey) === "1") return true;
+
+    const stepPrefix = `nexus_${eq}_step_`;
+    for (let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (!k) continue;
+      if (k.indexOf(stepPrefix) === 0) return true;
+    }
+
+    // Conservative extra checks (won't break anything if keys don't exist)
+    const extraPrefixes = [
+      `nexus_${eq}_torque_`,
+      `nexus_${eq}_meg_`,
+      `nexus_${eq}_prefod_`,
+      `nexus_${eq}_rif_`,
+      `nexus_${eq}_l2_`
+    ];
+    for (let i=0; i<localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (!k) continue;
+      for (const p of extraPrefixes){
+        if (k.indexOf(p) === 0) return true;
+      }
+    }
+
+    return false;
+  }
+
+  function applyEquipmentTypeLock(eq){
+    if (!equipmentTypeSelect) return;
+
+    const progress = hasAnyProgress(eq);
+    const unlocked = isTypeUnlocked(eq);
+    const locked = progress && !unlocked;
+
+    equipmentTypeSelect.disabled = locked;
+
+    if (equipmentTypeLockNote){
+      if (locked){
+        equipmentTypeLockNote.classList.add("warn");
+        equipmentTypeLockNote.style.display = "block";
+        equipmentTypeLockNote.textContent =
+          "Equipment Type is locked because progress already exists for this equipment. Use “Unlock Type Editing” only if you must change templates without rebuilding.";
+      } else if (progress && unlocked){
+        equipmentTypeLockNote.classList.add("warn");
+        equipmentTypeLockNote.style.display = "block";
+        equipmentTypeLockNote.textContent =
+          "UNLOCKED: You can change Equipment Type even though progress exists. Changing templates mid-work can cause mismatched data—use carefully.";
+      } else {
+        equipmentTypeLockNote.classList.remove("warn");
+        equipmentTypeLockNote.style.display = "none";
+        equipmentTypeLockNote.textContent = "";
+      }
+    }
+
+    if (unlockTypeBtn) unlockTypeBtn.disabled = !eq;
+    if (relockTypeBtn) relockTypeBtn.disabled = !eq;
+  }
+
+  function saveMeta(eq){
+    if(!eq) return;
+
+    const meta = loadMeta(eq);
+
+    const next = {
+      ...meta,
+      equipmentType: normalizeType(equipmentTypeSelect?.value) || normalizeType(meta.equipmentType) || "transformer",
+      building: ((bldgInput && bldgInput.value) || "").trim(),
+      phase: ((phaseSelect && phaseSelect.value) || "").trim(),
+      pod: ((podSelect && podSelect.value) || "").trim(),
+      procoreEquipUrl: ((procoreEquipUrl && procoreEquipUrl.value) || "").trim(),
+      procoreEnergizationUrl: ((procoreEnergUrl && procoreEnergUrl.value) || "").trim(),
+      phenolic: {
+        ...(meta.phenolic || {}),
+        colorCode: (phenolicColorCode.value || "").trim(),
+        fedFrom: (phenolicFedFrom.value || "").trim(),
+        equipId: (phenolicEquipId.value || "").trim(),
+        feeds: (phenolicFeeds.value || "").trim()
+      },
+      aiDocData: meta.aiDocData || null,
+      aiOverrides: Array.isArray(meta.aiOverrides) ? meta.aiOverrides : [],
+      torquePhoto: {
+        ...(meta.torquePhoto || {}),
+        source: (torqueSourceEngineer && torqueSourceEngineer.checked) ? "engineer_override" : "documentation"
+      },
+      updatedAt: Date.now()
+    };
+
+    localStorage.setItem(metaKey(eq), JSON.stringify(next));
+    publishVanguardEquipment("saveMeta");
+  }
+
+  function loadMetaIntoFields(eq){
+    const meta = loadMeta(eq);
+
+    // Default to transformer since the original CCS is transformer-based
+    const type = normalizeType(meta.equipmentType) || "transformer";
+    if (equipmentTypeSelect) equipmentTypeSelect.value = type;
+
+    if (bldgInput && meta.building != null) bldgInput.value = meta.building || bldgInput.value;
+    if (phaseSelect && meta.phase != null) phaseSelect.value = meta.phase || "";
+    if (podSelect && meta.pod != null) podSelect.value = meta.pod || "";
+    if (procoreEquipUrl && meta.procoreEquipUrl != null) procoreEquipUrl.value = meta.procoreEquipUrl || "";
+    if (procoreEnergUrl && meta.procoreEnergizationUrl != null) procoreEnergUrl.value = meta.procoreEnergizationUrl || "";
+
+    const p = meta.phenolic || {};
+    if (p.colorCode != null) phenolicColorCode.value = p.colorCode || "";
+    if (p.fedFrom != null) phenolicFedFrom.value = p.fedFrom || "";
+    if (p.equipId != null) phenolicEquipId.value = p.equipId || "";
+    if (p.feeds != null) phenolicFeeds.value = p.feeds || "";
+
+    const tp = meta.torquePhoto || {};
+    if (torqueSourceEngineer) torqueSourceEngineer.checked = (tp.source === "engineer_override");
+    if (torqueSourceDocumentation) torqueSourceDocumentation.checked = (tp.source !== "engineer_override");
+
+    renderAiDocPanels(eq, meta);
+    applyEquipmentTypeLock(eq);
+  }
+
+  // Unlock / Relock controls
+  if (unlockTypeBtn){
+    unlockTypeBtn.addEventListener("click", ()=>{
+      const eq = getEq();
+      if(!eq) return alert("Enter Equipment ID first.");
+      const ok = confirm(
+        "Unlock Equipment Type editing for this equipment?\n\n" +
+        "Warning: changing templates mid-work can cause mismatched CCS/torque expectations.\n\n" +
+        "Press OK to unlock."
+      );
+      if(!ok) return;
+      setTypeUnlocked(eq, true);
+      applyEquipmentTypeLock(eq);
+    });
+  }
+  if (relockTypeBtn){
+    relockTypeBtn.addEventListener("click", ()=>{
+      const eq = getEq();
+      if(!eq) return alert("Enter Equipment ID first.");
+      setTypeUnlocked(eq, false);
+      applyEquipmentTypeLock(eq);
+    });
+  }
+
+  // persist meta on changes (includes equipmentType + phenolic fields; nothing removed)
+  [
+    eqInput,
+    equipmentTypeSelect,
+    bldgInput,phaseSelect,podSelect,procoreEquipUrl,procoreEnergUrl,
+    phenolicColorCode, phenolicFedFrom, phenolicEquipId, phenolicFeeds
+  ].forEach(el=>{
+    if (!el) return;
+    el.addEventListener("change", ()=>{
+      const eq = getEq();
+      if (eq){
+        if (el === equipmentTypeSelect) maybeTrackManualOverride("equipmentType", normalizeType(equipmentTypeSelect.value));
+        if (el === procoreEquipUrl) maybeTrackManualOverride("procoreEquipUrl", (procoreEquipUrl.value || "").trim());
+        if (el === procoreEnergUrl) maybeTrackManualOverride("procoreEnergizationUrl", (procoreEnergUrl.value || "").trim());
+        if (el === phenolicColorCode) maybeTrackManualOverride("phenolicColorCode", (phenolicColorCode.value || "").trim());
+        if (el === phenolicEquipId) maybeTrackManualOverride("phenolicEquipId", (phenolicEquipId.value || "").trim());
+        if (el === phenolicFedFrom) maybeTrackManualOverride("phenolicFedFrom", (phenolicFedFrom.value || "").trim());
+        if (el === phenolicFeeds) maybeTrackManualOverride("phenolicFeeds", (phenolicFeeds.value || "").trim());
+      }
+      saveMeta(eq);
+      if (el === equipmentTypeSelect) applyEquipmentTypeLock(eq);
+    });
+    el.addEventListener("input", ()=>{
+      const eq = getEq();
+      if(eq) saveMeta(eq);
+    });
+  });
+
+  // when eq changes, load meta for that eq
+  eqInput.addEventListener("change", ()=>{
+    const eq = getEq();
+    loadMetaIntoFields(eq);
+    loadPreviewForCurrentEq();
+    loadTorquePreviewForCurrentEq();
+    refreshEquipmentStepsLink();
+  });
+  eqInput.addEventListener("input", ()=>{
+    const eq = getEq();
+    applyEquipmentTypeLock(eq);
+    loadPreviewForCurrentEq();
+    loadTorquePreviewForCurrentEq();
+    refreshEquipmentStepsLink();
+  });
+
+  // buttons
+  openEquipmentBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return alert("Enter Equipment ID first.");
+    saveMeta(eq);
+    publishVanguardEquipment("openEquipment");
+    location.href = `equipment.html?eq=${encodeURIComponent(eq)}`;
+  });
+
+  generateQrBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return alert("Enter Equipment ID first.");
+    saveMeta(eq);
+    publishVanguardEquipment("generateQr");
+    location.href = `qr.html?eq=${encodeURIComponent(eq)}`;
+  });
+
+  function refreshEquipmentStepsLink(){
+    equipmentStepsBtn.href = `equipment_steps.html?eq=${encodeURIComponent(getEq() || "TR-001")}`;
+  }
+  refreshEquipmentStepsLink();
+
+  qrGeneratorLink.addEventListener("click", ()=> location.href = "qr.html");
+  scanQrLink.addEventListener("click", ()=> location.href = "scan_qr.html");
+  submissionHistoryLink.addEventListener("click", ()=> location.href = "submission_history.html");
+
+  // ===== Equipment Image (GitHub-first localStorage) =====
+  const fileInput = document.getElementById("nexusEquipImageInput");
+  const preview = document.getElementById("nexusEquipImagePreview");
+  const status = document.getElementById("nexusEquipImageStatus");
+  const clearBtn = document.getElementById("nexusEquipImageClearBtn");
+
+  function equipKey(eq){ return `nexus_equipment_${eq}`; }
+
+  function readEquip(eq){
+    try{ return JSON.parse(localStorage.getItem(equipKey(eq)) || "{}"); }
+    catch(e){ return {}; }
+  }
+
+  function writeEquip(eq, patch){
+    const cur = readEquip(eq);
+    const merged = { ...cur, ...patch, _updatedAt: Date.now() };
+    localStorage.setItem(equipKey(eq), JSON.stringify(merged));
+    try{ publishVanguardEquipment("writeEquip"); }catch(e){}
+    return merged;
+  }
+
+  function setStatus(msg){ status.textContent = msg || ""; }
+
+  function show(url){
+    if(!url) return;
+    preview.src = url;
+    preview.style.display = "block";
+  }
+
+  function hide(){
+    preview.removeAttribute("src");
+    preview.style.display = "none";
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result || ""));
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function loadPreviewForCurrentEq(){
+    const eq = getEq();
+    if(!eq){
+      hide();
+      setStatus("Enter Equipment ID to save an image.");
+      return;
+    }
+    const rec = readEquip(eq);
+    if(rec.imageDataUrl){
+      show(rec.imageDataUrl);
+      setStatus("Loaded saved image for this equipment (GitHub mode: this device).");
+    } else {
+      hide();
+      setStatus("No image saved yet for this equipment.");
+    }
+  }
+
+  fileInput.addEventListener("change", async (e)=>{
+    const eq = getEq();
+    if(!eq){ alert("Enter Equipment ID first."); fileInput.value=""; return; }
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    setStatus("Saving image…");
+    const dataUrl = await fileToDataUrl(file);
+    writeEquip(eq, { imageDataUrl: dataUrl });
+    show(dataUrl);
+    setStatus("Saved. This will show on form.html for the same ?eq= value.");
+  });
+
+  clearBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return;
+    const cur = readEquip(eq);
+    delete cur.imageDataUrl;
+    cur._updatedAt = Date.now();
+    localStorage.setItem(equipKey(eq), JSON.stringify(cur));
+    fileInput.value = "";
+    hide();
+    setStatus("Cleared image for this equipment (this device).");
+  });
+
+  // Firebase-ready hook later
+  window.NEXUS_setEquipmentImageUrlFromFirebase = function(url){
+    const eq = getEq();
+    if(!eq || !url) return;
+    writeEquip(eq, { imageDataUrl: url });
+    show(url);
+    setStatus("Image set from Firebase (and cached locally).");
+  };
+
+  // ===== AI documentation helpers + torque photo source =====
+  function trackAiOverride(eq, field, aiValue, userValue){
+    if(!eq) return;
+    if(String(aiValue ?? "") === String(userValue ?? "")) return;
+
+    const meta = loadMeta(eq);
+    const list = Array.isArray(meta.aiOverrides) ? meta.aiOverrides : [];
+    list.push({
+      field,
+      aiValue: aiValue == null ? "" : String(aiValue),
+      userValue: userValue == null ? "" : String(userValue),
+      role: (window.NEXUS && typeof window.NEXUS.getRole === "function") ? window.NEXUS.getRole() : "unknown",
+      at: new Date().toISOString()
+    });
+    meta.aiOverrides = list;
+    localStorage.setItem(metaKey(eq), JSON.stringify(meta));
+  }
+
+  function setAiList(target, items){
+    if(!target) return;
+    target.innerHTML = "";
+    (items || []).forEach(item => {
+      const li = document.createElement("li");
+      li.textContent = item;
+      target.appendChild(li);
+    });
+  }
+
+  function setAiSources(map){
+    if(!aiSourcesGrid) return;
+    aiSourcesGrid.innerHTML = "";
+    const entries = Object.entries(map || {});
+    entries.forEach(([field, ref]) => {
+      const row = document.createElement("div");
+      row.className = "ai-kv-row";
+      row.innerHTML = `<b>${field}</b><div>${ref}</div>`;
+      aiSourcesGrid.appendChild(row);
+    });
+  }
+
+  function updateReadiness(meta){
+    const doc = meta && meta.aiDocData ? meta.aiDocData : null;
+    const conflicts = doc && Array.isArray(doc.conflicts) ? doc.conflicts : [];
+    const missing = doc && Array.isArray(doc.missing) ? doc.missing : [];
+    if(aiReadinessPill){
+      if(!doc){
+        aiReadinessPill.className = "ai-pill";
+        aiReadinessPill.textContent = "Publish Readiness: Waiting";
+      }else if(conflicts.length){
+        aiReadinessPill.className = "ai-pill bad";
+        aiReadinessPill.textContent = "Publish Readiness: Review Conflicts";
+      }else if(missing.length){
+        aiReadinessPill.className = "ai-pill warn";
+        aiReadinessPill.textContent = "Publish Readiness: Missing Info";
+      }else{
+        aiReadinessPill.className = "ai-pill good";
+        aiReadinessPill.textContent = "Publish Readiness: Ready";
+      }
+    }
+  }
+
+  function renderAiDocPanels(eq, metaArg){
+    const meta = metaArg || loadMeta(eq);
+    const doc = meta.aiDocData || null;
+
+    if(aiStatusLine){
+      aiStatusLine.className = "ai-status-line";
+      if(!doc){
+        aiStatusLine.textContent = "Waiting for AI populate.";
+      }else{
+        aiStatusLine.textContent = doc.statusText || "AI populate complete.";
+        aiStatusLine.classList.add((doc.conflicts || []).length ? "warn" : ((doc.missing || []).length ? "warn" : "good"));
+      }
+    }
+
+    if(aiConfidencePill){
+      const confidence = doc && doc.confidence ? doc.confidence : "—";
+      aiConfidencePill.className = "ai-pill " + (confidence === "High" ? "good" : (confidence === "Medium" ? "warn" : ""));
+      aiConfidencePill.textContent = `Confidence: ${confidence}`;
+    }
+
+    const conflicts = doc && Array.isArray(doc.conflicts) ? doc.conflicts : [];
+    const missing = doc && Array.isArray(doc.missing) ? doc.missing : [];
+    const sources = doc && doc.sources ? doc.sources : {};
+
+    if(aiConflictsBox) aiConflictsBox.style.display = conflicts.length ? "block" : "none";
+    if(aiMissingBox) aiMissingBox.style.display = missing.length ? "block" : "none";
+    if(aiSourcesBox) aiSourcesBox.style.display = Object.keys(sources).length ? "block" : "none";
+
+    setAiList(aiConflictsList, conflicts);
+    setAiList(aiMissingList, missing);
+    setAiSources(sources);
+    updateReadiness(meta);
+  }
+
+  function textIncludes(text, pattern){
+    return String(text || "").toLowerCase().indexOf(String(pattern || "").toLowerCase()) !== -1;
+  }
+
+  function firstMatch(text, regex){
+    const m = String(text || "").match(regex);
+    return m ? (m[1] || m[0] || "").trim() : "";
+  }
+
+  function docName(doc){
+    return doc.filename || doc.name || doc.sourceDocument || doc.document || "Project documentation";
+  }
+
+  function docText(doc){
+    if(!doc) return "";
+    return String(
+      (doc.extraction && doc.extraction.text) ||
+      doc.extractedText ||
+      doc.text ||
+      doc.rawText ||
+      ""
+    );
+  }
+
+  function docRequirements(doc){
+    if(!doc) return [];
+    const list = [];
+    if(Array.isArray(doc.requirements)) list.push(...doc.requirements);
+    if(Array.isArray(doc.localRequirements)) list.push(...doc.localRequirements);
+    if(Array.isArray(doc.aiRequirements)) list.push(...doc.aiRequirements);
+    return list;
+  }
+
+  function uniqueBySignature(items){
+    const seen = new Set();
+    const out = [];
+    (items || []).forEach((item)=>{
+      const sig = JSON.stringify({
+        t: item.requirementType || item.type || item.section || "",
+        v: item.value || item.requirement || item.text || item.exactText || "",
+        s: item.sourceDocument || item.document || item.file || ""
+      }).toLowerCase();
+      if(seen.has(sig)) return;
+      seen.add(sig);
+      out.push(item);
+    });
+    return out;
+  }
+
+  function deriveEquipmentTypeFromDocs(text, fallback){
+    const t = String(text || "").toLowerCase();
+    if(t.includes("switchgear")) return "switchgear";
+    if(t.includes("panelboard") || t.includes("panel board")) return "panelboard";
+    if(t.includes("transformer") || /\bxfrm\b|\bxfmr\b/i.test(text)) return "transformer";
+    if(t.includes("ups") || t.includes("uninterruptible power")) return "ups";
+    if(t.includes("generator")) return "generator";
+    if(t.includes("automatic transfer switch") || /\bats\b/i.test(text)) return "ats";
+    if(t.includes("busway") || t.includes("bus duct")) return "busway";
+    return fallback || "";
+  }
+
+  function derivePhenolicColor(phaseVal, text){
+    const t = String(text || "").toLowerCase();
+    if(t.includes("orange") || t.includes("bus a")) return "bus_a_orange";
+    if(t.includes("brown") || t.includes("bus b")) return "bus_b_brown";
+    if(t.includes("yellow") || t.includes("bus c")) return "bus_c_yellow";
+    if(phaseVal === "Phase 1") return "bus_a_orange";
+    return "";
+  }
+
+  function collectStoredDocuments(){
+    const docs = [];
+    try{
+      if(window.VanguardExtractionEngine && typeof window.VanguardExtractionEngine.loadDocs === "function"){
+        docs.push(...(window.VanguardExtractionEngine.loadDocs() || []));
+      }
+    }catch(e){}
+    try{
+      if(window.VanguardDocumentLibrary && typeof window.VanguardDocumentLibrary.load === "function"){
+        docs.push(...(window.VanguardDocumentLibrary.load() || []));
+      }
+    }catch(e){}
+    try{
+      if(window.VanguardDocumentIntake && typeof window.VanguardDocumentIntake.load === "function"){
+        docs.push(...(window.VanguardDocumentIntake.load() || []));
+      }
+    }catch(e){}
+    return docs;
+  }
+
+  async function runVanguardDocumentFill(eq){
+    const rec = readEquip(eq);
+    const phaseVal = ((phaseSelect && phaseSelect.value) || "").trim();
+    const podVal = ((podSelect && podSelect.value) || "").trim();
+    const selectedType = normalizeType((equipmentTypeSelect && equipmentTypeSelect.value) || "");
+    const backendUrl = ((aiBackendUrlInput && aiBackendUrlInput.value) || "").trim();
+    const client = window.VanguardBackendClient || window.NEXUS_VANGUARD_BACKEND_CLIENT || null;
+
+    if(client && backendUrl && typeof client.setBaseUrl === "function"){
+      client.setBaseUrl(backendUrl);
+    }
+
+    let mode = "stored-documents";
+    let documents = [];
+    const uploadedFiles = aiDocInput && aiDocInput.files && aiDocInput.files.length ? aiDocInput.files : null;
+
+    if(uploadedFiles && client && typeof client.extractDocuments === "function"){
+      const extraction = await client.extractDocuments(uploadedFiles);
+      mode = extraction.mode || "backend";
+      if(!extraction.ok){
+        throw new Error(extraction.error || extraction.reason || "Vanguard document extraction failed.");
+      }
+      documents = extraction.documents || [];
+    } else if(uploadedFiles && window.VanguardExtractionEngine && typeof window.VanguardExtractionEngine.extractFiles === "function"){
+      documents = await window.VanguardExtractionEngine.extractFiles(uploadedFiles);
+      mode = "browser-extraction";
+    } else {
+      documents = collectStoredDocuments();
+      mode = documents.length ? "stored-documents" : "no-documents";
+    }
+
+    const combinedText = documents.map(docText).filter(Boolean).join("\n\n--- DOCUMENT BREAK ---\n\n");
+    const allReqs = uniqueBySignature(documents.flatMap(docRequirements));
+    const sourceNames = documents.map(docName).filter(Boolean);
+    const sourceLabel = sourceNames.length ? sourceNames.slice(0, 5).join(", ") + (sourceNames.length > 5 ? ` +${sourceNames.length - 5} more` : "") : "No extracted documents";
+
+    if(window.VanguardDocumentMapper && typeof window.VanguardDocumentMapper.setRequirements === "function"){
+      try{ window.VanguardDocumentMapper.setRequirements(allReqs); }catch(e){ console.warn("Vanguard requirement mapping failed:", e); }
+    }
+
+    const mapperConflicts = window.VanguardDocumentMapper && typeof window.VanguardDocumentMapper.detectConflicts === "function"
+      ? window.VanguardDocumentMapper.detectConflicts(allReqs)
+      : [];
+
+    const conflicts = [];
+    documents.forEach((doc)=>{
+      if(Array.isArray(doc.aiConflicts)){
+        doc.aiConflicts.forEach(c=> conflicts.push(typeof c === "string" ? c : (c.message || c.type || JSON.stringify(c))));
+      }
+    });
+    mapperConflicts.forEach(c=> conflicts.push(c.message || JSON.stringify(c)));
+
+    const missing = [];
+    const sources = {};
+    const derivedType = deriveEquipmentTypeFromDocs(combinedText, selectedType || "transformer");
+    const procoreUrls = combinedText.match(/https?:\/\/\S*procore\S*/ig) || [];
+    const firstUrl = procoreUrls[0] ? procoreUrls[0].replace(/[),.;]+$/, "") : "";
+    const secondUrl = procoreUrls[1] ? procoreUrls[1].replace(/[),.;]+$/, "") : "";
+    const fedFrom = firstMatch(combinedText, /(?:fed\s*from|source|supply)\s*[:\-]?\s*([^\n\r]{2,80})/i);
+    const feeds = firstMatch(combinedText, /(?:feeds|load\s*served)\s*[:\-]?\s*([^\n\r]{2,100})/i);
+    const phenolicCode = derivePhenolicColor(phaseVal, combinedText);
+
+    if(documents.length){
+      sources["Document Set"] = sourceLabel;
+    }
+    if(derivedType){ sources["Equipment Type"] = "Derived from extracted project documents or current engineer selection."; }
+    if(fedFrom){ sources["Phenolic FED FROM"] = "Extracted from document text containing fed-from/source wording."; }
+    if(feeds){ sources["Phenolic FEEDS"] = "Extracted from document text containing feeds/load-served wording."; }
+    if(phenolicCode){ sources["Phenolic Color Code"] = "Mapped from document color/bus wording or current phase selection."; }
+    if(firstUrl){ sources["Procore Equipment URL"] = "Extracted from Procore URL found in documentation."; }
+    if(secondUrl){ sources["Procore Energization URL"] = "Extracted from second Procore URL found in documentation."; }
+    if(allReqs.length){ sources["Vanguard Requirements"] = `${allReqs.length} requirement(s) extracted and mapped to Vanguard.`; }
+
+    if(!documents.length){ missing.push("No documentation files were uploaded and no stored Vanguard document library was found."); }
+    if(documents.length && !combinedText && !allReqs.length){ missing.push("Documents were received, but no extractable text or requirements were returned. OCR/backend may be required for scanned documents."); }
+    if(!firstUrl && !(procoreEquipUrl && procoreEquipUrl.value)){ missing.push("Procore Equipment URL not found in extracted documentation."); }
+    if(!secondUrl && !(procoreEnergUrl && procoreEnergUrl.value)){ missing.push("Procore Energization URL not found in extracted documentation."); }
+    if(!fedFrom && !(phenolicFedFrom && phenolicFedFrom.value)){ missing.push("Phenolic FED FROM was not found in extracted documentation."); }
+    if(!feeds && !(phenolicFeeds && phenolicFeeds.value)){ missing.push("Phenolic FEEDS was not found in extracted documentation."); }
+    if(!rec.imageDataUrl){ missing.push("No documentation-derived torque image candidate is available yet."); }
+
+    const confidenceScore = Math.max(0, Math.min(100,
+      (documents.length ? 25 : 0) +
+      (combinedText ? 20 : 0) +
+      (allReqs.length ? 25 : 0) +
+      (derivedType ? 10 : 0) +
+      (firstUrl ? 5 : 0) +
+      (fedFrom ? 5 : 0) +
+      (feeds ? 5 : 0) +
+      (conflicts.length ? -15 : 5)
+    ));
+
+    const confidence = confidenceScore >= 75 ? "High" : confidenceScore >= 45 ? "Medium" : "Low";
+
+    const data = {
+      statusText: `Vanguard document fill complete (${mode}). Review missing items and conflicts before publishing.`,
+      confidence,
+      confidenceScore,
+      mode,
+      fields: {
+        equipmentType: derivedType,
+        procoreEquipUrl: ((procoreEquipUrl && procoreEquipUrl.value) || "").trim() || firstUrl,
+        procoreEnergizationUrl: ((procoreEnergUrl && procoreEnergUrl.value) || "").trim() || secondUrl,
+        phenolicColorCode: (phenolicColorCode.value || "").trim() || phenolicCode,
+        phenolicEquipId: (phenolicEquipId.value || "").trim() || eq,
+        phenolicFedFrom: (phenolicFedFrom.value || "").trim() || fedFrom,
+        phenolicFeeds: (phenolicFeeds.value || "").trim() || feeds
+      },
+      sources,
+      conflicts,
+      missing,
+      requirements: allReqs,
+      documents: documents.map((doc)=>({
+        id: doc.id || "",
+        name: docName(doc),
+        status: doc.status || (doc.extraction && doc.extraction.status) || "",
+        method: doc.extractionMethod || (doc.extraction && doc.extraction.method) || "",
+        requirementCount: docRequirements(doc).length
+      })),
+      torquePhoto: {
+        documentationImage: rec.imageDataUrl || "",
+        documentationReference: rec.imageDataUrl ? "Existing equipment documentation image selected as torque reference candidate." : ""
+      },
+      createdAt: new Date().toISOString()
+    };
+
+    try{
+      const historyKey = `nexus_${eq}_vanguard_document_fill_history`;
+      const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+      history.push(data);
+      localStorage.setItem(historyKey, JSON.stringify(history.slice(-25)));
+    }catch(e){}
+
+    return data;
+  }
+
+
+  function syncVanguardDocumentState(eq, result, source){
+    if(!eq || !result) return;
+    const sysKey = `nexus_${eq}_vanguard_system`;
+    const docKey = `nexus_${eq}_vanguard_documents`;
+    const current = readJSON(sysKey, {}) || {};
+    const documents = Array.isArray(result.documents) ? result.documents : [];
+    const requirements = Array.isArray(result.requirements) ? result.requirements : [];
+    const conflicts = Array.isArray(result.conflicts) ? result.conflicts.map((c, idx)=>({ id:`CONF-${idx+1}`, message:String(c), status:"OPEN", source:source || "equipment_setup" })) : [];
+    const sources = documents.map((doc, idx)=>({
+      id: doc.id || `DOC-${idx+1}`,
+      title: doc.name || doc.fileName || doc.title || `Document ${idx+1}`,
+      type: doc.method || doc.status || "DOCUMENT",
+      status: doc.status || "PARSED",
+      requirementCount: doc.requirementCount || 0,
+      updatedAt: result.createdAt || nowISO()
+    }));
+    const nextDocs = Object.assign({}, current.documents || {}, {
+      sources,
+      requirements,
+      conflicts,
+      selectedRequirements: requirements,
+      confidenceScore: Number(result.confidenceScore || 0),
+      lastMappedAt: nowISO(),
+      source: source || "equipment_setup"
+    });
+    const next = Object.assign({}, current, {
+      equipmentId: eq,
+      documents: nextDocs,
+      updatedAt: nowISO()
+    });
+    writeJSON(sysKey, next);
+    writeJSON(docKey, nextDocs);
+    if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.updateState === "function"){
+      try{ window.NEXUS_VANGUARD.updateState({ equipmentId:eq, documents:nextDocs }, "equipment-setup:document-fill"); }catch(e){}
+    }
+  }
+
+  function applyAiDocResult(eq, result){
+    if(!eq || !result) return;
+    const meta = loadMeta(eq);
+
+    const prevAi = (meta.aiDocData && meta.aiDocData.fields) ? meta.aiDocData.fields : {};
+
+    if(result.fields.equipmentType){
+      if(equipmentTypeSelect.value && equipmentTypeSelect.value !== result.fields.equipmentType){
+        trackAiOverride(eq, "equipmentType", prevAi.equipmentType || "", equipmentTypeSelect.value);
+      }
+      equipmentTypeSelect.value = result.fields.equipmentType;
+    }
+    if(result.fields.procoreEquipUrl && procoreEquipUrl) procoreEquipUrl.value = result.fields.procoreEquipUrl;
+    if(result.fields.procoreEnergizationUrl && procoreEnergUrl) procoreEnergUrl.value = result.fields.procoreEnergizationUrl;
+    if(result.fields.phenolicColorCode) phenolicColorCode.value = result.fields.phenolicColorCode;
+    if(result.fields.phenolicEquipId) phenolicEquipId.value = result.fields.phenolicEquipId;
+    if(result.fields.phenolicFedFrom) phenolicFedFrom.value = result.fields.phenolicFedFrom;
+    if(result.fields.phenolicFeeds) phenolicFeeds.value = result.fields.phenolicFeeds;
+
+    meta.aiDocData = result;
+    meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, {
+      source: (meta.torquePhoto && meta.torquePhoto.source) || "documentation",
+      documentationImage: result.torquePhoto && result.torquePhoto.documentationImage || "",
+      documentationReference: result.torquePhoto && result.torquePhoto.documentationReference || ""
+    });
+
+    localStorage.setItem(metaKey(eq), JSON.stringify(meta));
+    saveMeta(eq);
+    syncActiveTorquePhoto(eq);
+    renderAiDocPanels(eq, loadMeta(eq));
+    syncVanguardDocumentState(eq, result, "index.html");
+    publishVanguardEquipment("aiDocResult");
+  }
+
+  function syncActiveTorquePhoto(eq){
+    if(!eq) return;
+    const meta = loadMeta(eq);
+    const tp = meta.torquePhoto || {};
+    const source = tp.source === "engineer_override" ? "engineer_override" : "documentation";
+    let active = "";
+    if(source === "engineer_override") active = tp.overrideImage || "";
+    else active = tp.documentationImage || "";
+    if(active) localStorage.setItem(torqueKey(eq), active);
+    else localStorage.removeItem(torqueKey(eq));
+    loadTorquePreviewForCurrentEq();
+  }
+
+  if(aiPopulateBtn){
+    aiPopulateBtn.addEventListener("click", async ()=>{
+      const eq = getEq();
+      if(!eq) return alert("Enter Equipment ID first.");
+      const building = (((bldgInput && bldgInput.value) || "")).trim();
+      const phase = (((phaseSelect && phaseSelect.value) || "")).trim();
+      const pod = (((podSelect && podSelect.value) || "")).trim();
+      if(!building || !phase || !pod){
+        return alert("Enter Building, Phase, and POD before running Vanguard document fill.");
+      }
+
+      aiPopulateBtn.disabled = true;
+      aiStatusLine.textContent = "Vanguard is reading documentation and mapping requirements…";
+      aiStatusLine.className = "ai-status-line warn";
+
+      try{
+        const result = await runVanguardDocumentFill(eq);
+        applyAiDocResult(eq, result);
+      }catch(err){
+        console.error("Vanguard document fill failed:", err);
+        aiStatusLine.textContent = "Vanguard document fill failed: " + (err && err.message ? err.message : err);
+        aiStatusLine.className = "ai-status-line bad";
+      }finally{
+        aiPopulateBtn.disabled = false;
+      }
+    });
+  }
+
+  function maybeTrackManualOverride(field, value){
+    const eq = getEq();
+    if(!eq) return;
+    const meta = loadMeta(eq);
+    const aiFields = meta.aiDocData && meta.aiDocData.fields ? meta.aiDocData.fields : null;
+    if(!aiFields) return;
+    if(!(field in aiFields)) return;
+    trackAiOverride(eq, field, aiFields[field], value);
+  }
+
+  if(torqueSourceDocumentation){
+    torqueSourceDocumentation.addEventListener("change", ()=>{
+      const eq = getEq();
+      if(!eq) return;
+      const meta = loadMeta(eq);
+      meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, { source: "documentation" });
+      localStorage.setItem(metaKey(eq), JSON.stringify(meta));
+      syncActiveTorquePhoto(eq);
+      saveMeta(eq);
+    });
+  }
+  if(torqueSourceEngineer){
+    torqueSourceEngineer.addEventListener("change", ()=>{
+      const eq = getEq();
+      if(!eq) return;
+      const meta = loadMeta(eq);
+      meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, { source: "engineer_override" });
+      localStorage.setItem(metaKey(eq), JSON.stringify(meta));
+      syncActiveTorquePhoto(eq);
+      saveMeta(eq);
+    });
+  }
+
+  // ===== Torque Photo (active source resolves to nexus_${eq}_torque_photo) =====
+  const torqueInput = document.getElementById("nexusTorquePhotoInput");
+  const torquePreview = document.getElementById("nexusTorquePhotoPreview");
+  const torqueStatus = document.getElementById("nexusTorquePhotoStatus");
+  const torqueClearBtn = document.getElementById("nexusTorquePhotoClearBtn");
+
+  function torqueKey(eq){ return `nexus_${eq}_torque_photo`; }
+
+  function setTorqueStatus(msg){ torqueStatus.textContent = msg || ""; }
+
+  function showTorque(url){
+    if(!url) return;
+    torquePreview.src = url;
+    torquePreview.style.display = "block";
+  }
+
+  function hideTorque(){
+    torquePreview.removeAttribute("src");
+    torquePreview.style.display = "none";
+  }
+
+  function loadTorquePreviewForCurrentEq(){
+    const eq = getEq();
+    if(!eq){
+      hideTorque();
+      setTorqueStatus("Enter Equipment ID to manage torque photo source.");
+      return;
+    }
+
+    const meta = loadMeta(eq);
+    const tp = meta.torquePhoto || {};
+    const source = tp.source === "engineer_override" ? "engineer_override" : "documentation";
+    if (torqueSourceEngineer) torqueSourceEngineer.checked = (source === "engineer_override");
+    if (torqueSourceDocumentation) torqueSourceDocumentation.checked = (source !== "engineer_override");
+
+    const active = source === "engineer_override" ? (tp.overrideImage || "") : (tp.documentationImage || "");
+    if(active){
+      showTorque(active);
+      setTorqueStatus(source === "engineer_override"
+        ? "Engineer photo override is active for this equipment."
+        : ("AI documentation image is active" + (tp.documentationReference ? ` • ${tp.documentationReference}` : ".")));
+    } else {
+      hideTorque();
+      setTorqueStatus(source === "engineer_override"
+        ? "No engineer override image saved yet."
+        : "No AI-derived documentation image found yet.");
+    }
+  }
+
+  torqueInput.addEventListener("change", async (e)=>{
+    const eq = getEq();
+    if(!eq){ alert("Enter Equipment ID first."); torqueInput.value=""; return; }
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    setTorqueStatus("Saving engineer override image…");
+    const dataUrl = await fileToDataUrl(file);
+    const meta = loadMeta(eq);
+    meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, {
+      source: "engineer_override",
+      overrideImage: dataUrl
+    });
+    localStorage.setItem(metaKey(eq), JSON.stringify(meta));
+    if (torqueSourceEngineer) torqueSourceEngineer.checked = true;
+    syncActiveTorquePhoto(eq);
+    setTorqueStatus("Saved engineer override. Torque page will use this image.");
+  });
+
+  torqueClearBtn.addEventListener("click", ()=>{
+    const eq = getEq();
+    if(!eq) return;
+    const meta = loadMeta(eq);
+    meta.torquePhoto = Object.assign({}, meta.torquePhoto || {}, {
+      overrideImage: ""
+    });
+    localStorage.setItem(metaKey(eq), JSON.stringify(meta));
+    syncActiveTorquePhoto(eq);
+    torqueInput.value = "";
+    setTorqueStatus("Cleared engineer override image.");
+  });
+
+  // ===== Equipment Image Modal =====
+
+  const equipImageModal = document.getElementById("equipImageModal");
+  const equipImageModalBackdrop = document.getElementById("equipImageModalBackdrop");
+  const equipImageModalStage = document.getElementById("equipImageModalStage");
+  const equipImageModalImg = document.getElementById("equipImageModalImg");
+  const equipImageZoomInBtn = document.getElementById("equipImageZoomInBtn");
+  const equipImageZoomOutBtn = document.getElementById("equipImageZoomOutBtn");
+  const equipImageZoomResetBtn = document.getElementById("equipImageZoomResetBtn");
+  const equipImageCloseBtn = document.getElementById("equipImageCloseBtn");
+
+  let equipImageScale = 1;
+
+  function applyEquipImageZoom(){
+    equipImageModalImg.style.transform = `scale(${equipImageScale})`;
+    equipImageZoomResetBtn.textContent = `${Math.round(equipImageScale * 100)}%`;
+  }
+
+  function openEquipImageModal(){
+    const liveSrc = preview && preview.src ? preview.src : "";
+    if (!liveSrc) return;
+
+    equipImageModalImg.src = liveSrc;
+    equipImageModal.classList.add("show");
+    equipImageModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+
+    equipImageScale = 1;
+    applyEquipImageZoom();
+    equipImageModalStage.scrollTop = 0;
+    equipImageModalStage.scrollLeft = 0;
+  }
+
+  function closeEquipImageModal(){
+    equipImageModal.classList.remove("show");
+    equipImageModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  preview.addEventListener("click", ()=>{
+    if (preview.style.display === "none" || !preview.src) return;
+    openEquipImageModal();
+  });
+
+  equipImageCloseBtn.addEventListener("click", closeEquipImageModal);
+  equipImageModalBackdrop.addEventListener("click", closeEquipImageModal);
+
+  equipImageZoomInBtn.addEventListener("click", ()=>{
+    equipImageScale = Math.min(equipImageScale + 0.2, 5);
+    applyEquipImageZoom();
+  });
+
+  equipImageZoomOutBtn.addEventListener("click", ()=>{
+    equipImageScale = Math.max(equipImageScale - 0.2, 0.4);
+    applyEquipImageZoom();
+  });
+
+  equipImageZoomResetBtn.addEventListener("click", ()=>{
+    equipImageScale = 1;
+    applyEquipImageZoom();
+  });
+
+  document.addEventListener("keydown", (e)=>{
+    if (!equipImageModal.classList.contains("show")) return;
+
+    if (e.key === "Escape") closeEquipImageModal();
+    if (e.key === "+" || e.key === "=") {
+      equipImageScale = Math.min(equipImageScale + 0.2, 5);
+      applyEquipImageZoom();
+    }
+    if (e.key === "-") {
+      equipImageScale = Math.max(equipImageScale - 0.2, 0.4);
+      applyEquipImageZoom();
+    }
+  });
+
+  equipImageModalStage.addEventListener("wheel", (e)=>{
+    if (!equipImageModal.classList.contains("show")) return;
+    if (!e.ctrlKey) return;
+    e.preventDefault();
+
+    if (e.deltaY < 0) {
+      equipImageScale = Math.min(equipImageScale + 0.15, 5);
+    } else {
+      equipImageScale = Math.max(equipImageScale - 0.15, 0.4);
+    }
+    applyEquipImageZoom();
+  }, { passive:false });
+
+  // init: if URL has eq, set it; load meta + images
+  if(aiBackendUrlInput && window.VanguardBackendClient && typeof window.VanguardBackendClient.baseUrl === "function"){
+    aiBackendUrlInput.value = window.VanguardBackendClient.baseUrl() || "";
+  }
+
+  if (incomingEq){
+    eqInput.value = incomingEq;
+  }
+  loadMetaIntoFields(getEq());
+  loadPreviewForCurrentEq();
+  syncActiveTorquePhoto(getEq());
+  loadTorquePreviewForCurrentEq();
+  renderAiDocPanels(getEq(), loadMeta(getEq()));
+  refreshEquipmentStepsLink();
+  publishVanguardEquipment("init");
+})();
+</script>
+
+  </div>
+</body>
+</html>
