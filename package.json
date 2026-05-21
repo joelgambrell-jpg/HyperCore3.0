@@ -1,0 +1,23 @@
+{
+  "name": "nexus-vanguard-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "NEXUS Vanguard document extraction, OCR, and AI requirement mapping backend.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "check": "node --check server.js && node scripts/smoke-test.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "@fastify/multipart": "^9.0.3",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.1",
+    "openai": "^4.77.0",
+    "pdf-parse": "^1.1.1",
+    "tesseract.js": "^5.1.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {}
+}
