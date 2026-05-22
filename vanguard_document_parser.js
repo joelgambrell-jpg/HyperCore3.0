@@ -97,6 +97,7 @@
 
     var panel = board.closest('.panel') || board.parentNode;
     var state = { viewAll:false, query:'' };
+    var applyQueued = false;
 
     var style = document.createElement('style');
     style.textContent = '.pkg-search-wrap{display:grid;gap:10px;margin:10px 0 12px}.pkg-search-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.pkg-search-input{flex:1;min-width:240px;padding:13px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.94);color:#111;font-size:15px;font-weight:900}.pkg-count{font-size:12px;font-weight:1000;color:rgba(255,255,255,.78)}.pkg-help{font-size:12px;font-weight:800;color:rgba(255,255,255,.72);line-height:1.35}.pkg-highlight{outline:2px solid rgba(41,211,255,.45);box-shadow:0 0 0 4px rgba(41,211,255,.12)}';
@@ -115,30 +116,39 @@
     function rowText(row){ return (row.textContent || '').toLowerCase(); }
 
     function apply(){
+      applyQueued = false;
       var q = String(state.query || '').trim().toLowerCase();
       var rows = allRows();
-      var matches = rows.filter(function(row){ return !q || rowText(row).indexOf(q) !== -1; });
-      rows.forEach(function(row){ row.style.display = 'none'; row.classList.remove('pkg-highlight'); });
+      var matches = q ? rows.filter(function(row){ return rowText(row).indexOf(q) !== -1; }) : rows;
+      var visible = q ? matches : (state.viewAll ? rows : rows.slice(0, 6));
+      var visibleSet = new Set(visible);
 
-      var visible;
-      if (q) visible = matches;
-      else visible = state.viewAll ? rows : rows.slice(0, 6);
+      rows.forEach(function(row){
+        var show = visibleSet.has(row);
+        if ((row.style.display !== 'none') !== show) row.style.display = show ? '' : 'none';
+        if (q) row.classList.toggle('pkg-highlight', show);
+        else row.classList.remove('pkg-highlight');
+      });
 
-      visible.forEach(function(row){ row.style.display = ''; if(q) row.classList.add('pkg-highlight'); });
       if (count) {
         count.textContent = q ? (matches.length + ' match(es) for "' + state.query + '"') : (rows.length + ' equipment record(s)' + (state.viewAll ? ' shown' : ' — showing first ' + Math.min(6, rows.length)));
       }
       if (toggle) toggle.textContent = state.viewAll ? 'Hide All' : 'View All';
     }
 
-    var observer = new MutationObserver(function(){ apply(); });
+    function requestApply(){
+      if (applyQueued) return;
+      applyQueued = true;
+      window.requestAnimationFrame(apply);
+    }
+
+    var observer = new MutationObserver(requestApply);
     observer.observe(board, { childList:true, subtree:false });
 
-    input.addEventListener('input', function(){ state.query = input.value; apply(); });
-    toggle.addEventListener('click', function(){ state.viewAll = !state.viewAll; apply(); });
+    input.addEventListener('input', function(){ state.query = input.value; requestApply(); });
+    toggle.addEventListener('click', function(){ state.viewAll = !state.viewAll; requestApply(); });
 
-    setTimeout(apply, 0);
-    setInterval(apply, 2500);
+    requestApply();
   }
 
   var api={__installed:true,parseFiles:parseFiles,getProjectDocuments:getProjectDocuments,publishRequirementMap:publishRequirementMap,createHiddenFileInput:createHiddenFileInput,installDropZone:installDropZone,extractRequirements:extractRequirements,installSearchablePackageBoard:installSearchablePackageBoard};
