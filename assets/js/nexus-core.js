@@ -67,28 +67,18 @@
     const fromUrl = safeText(qs.get("eq")).trim();
     if (fromUrl) return fromUrl;
 
-    const candidates = [
-      "nexus_active_eq",
-      "nexus_current_eq",
-      "nexus_selected_eq",
-      "nexus_eq",
-      "eq"
-    ];
-
+    const candidates = ["nexus_active_eq", "nexus_current_eq", "nexus_selected_eq", "nexus_eq", "eq"];
     for (const key of candidates) {
       const v = safeText(readText(key, "")).trim();
       if (v) return v;
     }
-
     return "";
   }
 
   function persistEq(eq) {
     const value = safeText(eq).trim();
     if (!value) return;
-
-    ["nexus_active_eq","nexus_current_eq","nexus_selected_eq","nexus_eq","eq"]
-      .forEach(k => writeText(k, value));
+    ["nexus_active_eq", "nexus_current_eq", "nexus_selected_eq", "nexus_eq", "eq"].forEach(k => writeText(k, value));
   }
 
   function normalizeRole(role) {
@@ -165,7 +155,6 @@
         return false;
       }
     } catch(e){}
-
     const eq = getEq();
     location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
     return false;
@@ -174,11 +163,9 @@
   function forceEqOnLinks(root) {
     const eq = getEq();
     if (!eq) return;
-
-    (root || document).querySelectorAll("a[href]").forEach(a=>{
+    (root || document).querySelectorAll("a[href]").forEach(a => {
       let href = a.getAttribute("href");
       if (!href || href.startsWith("#") || href.startsWith("http")) return;
-
       try {
         const url = new URL(href, location.href);
         if (!url.searchParams.get("eq")) {
@@ -190,30 +177,72 @@
   }
 
   function syncRoleSelects(role){
-    document.querySelectorAll("#nxRoleSelect").forEach(sel=>{
-      sel.value = role;
-    });
+    document.querySelectorAll("#nxRoleSelect").forEach(sel => { sel.value = role; });
   }
 
   function updateSessionBanner(){
     const eq = getEq();
     const role = getRole();
     const status = getStatus();
-
-    document.querySelectorAll("[data-nx-eq]").forEach(el=>el.textContent = eq || "(none)");
-    document.querySelectorAll("[data-nx-role]").forEach(el=>el.textContent = role);
-    document.querySelectorAll("[data-nx-status]").forEach(el=>el.textContent = status);
-
+    document.querySelectorAll("[data-nx-eq]").forEach(el => el.textContent = eq || "(none)");
+    document.querySelectorAll("[data-nx-role]").forEach(el => el.textContent = role);
+    document.querySelectorAll("[data-nx-status]").forEach(el => el.textContent = status);
     syncRoleSelects(role);
+  }
+
+  function controlCenterStabilityGuard(){
+    try {
+      const isControlCenter = /vanguard_control_center/i.test(location.pathname || "") || !!document.getElementById("vxDropZone");
+      if (!isControlCenter) return;
+
+      document.documentElement.style.overflowY = "auto";
+      document.documentElement.style.height = "auto";
+      document.body.style.overflowY = "auto";
+      document.body.style.height = "auto";
+      document.body.style.minHeight = "100vh";
+
+      const duplicateIntake = document.getElementById("vanguard-finishline-intake");
+      if (duplicateIntake && duplicateIntake.parentNode) duplicateIntake.parentNode.removeChild(duplicateIntake);
+
+      const backendInput = document.getElementById("vgBackendUrl");
+      if (backendInput) {
+        const backendPanel = backendInput.closest("div[style]");
+        const topActions = document.querySelector(".top-actions");
+        if (backendPanel) {
+          backendPanel.style.cssText = "padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);font-family:Arial,Helvetica,sans-serif;color:#f6fbff;";
+          if (topActions && backendPanel.parentNode !== topActions) topActions.appendChild(backendPanel);
+        }
+      }
+
+      const zeroIds = ["heroDocCount", "heroMappedCount", "heroConflictCount", "statMapped", "statReview", "statReady", "activeQueueCount", "approvedToday"];
+      zeroIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && /^(12|47|6|31|4|9)$/.test(String(el.textContent || "").trim())) el.textContent = "0";
+      });
+      const health = document.getElementById("statHealth");
+      if (health && String(health.textContent || "").trim() === "92%") health.textContent = "0%";
+
+      const status = document.getElementById("vxLiveStatus");
+      if (status && /Reading local Vanguard project state/i.test(status.textContent || "")) {
+        status.textContent = "Control Center loaded. Reading local Vanguard state. Firebase will attach when available.";
+      }
+    } catch (e) {
+      console.warn("Control Center stability guard failed:", e);
+    }
   }
 
   function init(){
     persistEq(getEq());
     updateSessionBanner();
     forceEqOnLinks(document);
+    controlCenterStabilityGuard();
 
     window.addEventListener("focus", updateSessionBanner);
     window.addEventListener("storage", updateSessionBanner);
+    window.addEventListener("load", controlCenterStabilityGuard);
+    window.addEventListener("vanguard:loader:complete", controlCenterStabilityGuard);
+    setTimeout(controlCenterStabilityGuard, 250);
+    setTimeout(controlCenterStabilityGuard, 1200);
   }
 
   const NEXUS = {
@@ -233,7 +262,8 @@
     back,
     updateSessionBanner,
     readJSON,
-    writeJSON
+    writeJSON,
+    controlCenterStabilityGuard
   };
 
   window.NEXUS = window.NEXUS || {};
@@ -245,5 +275,4 @@
   } else {
     init();
   }
-
 })();
