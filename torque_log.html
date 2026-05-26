@@ -12,7 +12,7 @@
   :root{--bg:#b60000;--panel:rgba(255,255,255,0.20);--line:rgba(255,255,255,0.20);--accent:#00c2ff;--btn-bg:#0a0f24;--btn-txt:#3ecbff;--ok:#00ff66;--bad:#ff3b3b;}
   *{box-sizing:border-box}
   html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
-  body{background-image:url("transformer.jpg");background-repeat:no-repeat;background-position:center center;background-size:cover;background-attachment:fixed;}
+  body{background:linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),url("transformer.jpg") center center / cover no-repeat fixed !important;}
   .nx-header-wrap{background:rgba(0,0,0,0.35);border-bottom:1px solid rgba(255,255,255,0.18);backdrop-filter:blur(8px)}
   .nx-header{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center}
   .nx-header img{height:54px;width:auto;object-fit:contain}
@@ -598,7 +598,6 @@
   }
 </style>
 
-<link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 
 <body>
@@ -893,6 +892,7 @@
   </div><!-- /container -->
 </div><!-- /nexus-page -->
 
+<script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script src="nexus-firebase-live-sync.js"></script>
@@ -964,7 +964,14 @@
   const stepBtn=document.getElementById("stepCompleteBtn");
 
   function stepKey(id){return `nexus_${eq||"NO_EQ"}_step_${id}`;}
-  function done(){return !!(eq && localStorage.getItem(stepKey(stepId))==="1");}
+  function done(){
+    try{
+      if(window.NEXUS_WORKFLOW && eq){
+        return window.NEXUS_WORKFLOW.getStepStatus(eq, stepId) === true;
+      }
+    }catch(e){}
+    return !!(eq && localStorage.getItem(stepKey(stepId))==="1");
+  }
   function refreshStep(){
     if(!stepBtn) return;
     const isDone = done();
@@ -1857,8 +1864,18 @@
     }
 
     const complete = isTorquePageComplete();
-    if(complete) localStorage.setItem(stepKey(stepId), "1");
-    else localStorage.removeItem(stepKey(stepId));
+
+    try{
+      if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.setStepComplete === "function"){
+        window.NEXUS_WORKFLOW.setStepComplete(eq, stepId, complete);
+      }else{
+        if(complete) localStorage.setItem(stepKey(stepId), "1");
+        else localStorage.removeItem(stepKey(stepId));
+      }
+    }catch(e){
+      if(complete) localStorage.setItem(stepKey(stepId), "1");
+      else localStorage.removeItem(stepKey(stepId));
+    }
 
     refreshStep();
   }
@@ -3532,7 +3549,8 @@
   }
 
   loadLocal();
-  nxStartLiveListener();
+  /* Firebase live listener intentionally disabled during localStorage-first stabilization to prevent save/listen recursion. */
+  /* nxStartLiveListener(); */
   if(getPopulatedPrimaryRows().length < 1){ aiPrefillRows(); }
   updateVanguardPayload();
   renderSystemBanner();
