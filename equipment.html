@@ -3531,54 +3531,176 @@ body{
 </script>
 
 
+<script src="assets/js/nexus-equipment-registry.js"></script>
+<script src="assets/js/nexus-workflow-state.js"></script>
+<script src="assets/js/nexus-core.js"></script>
+<script src="assets/js/nexus-firebase-bridge.js"></script>
+
 <script>
 (function(){
-  const qs = new URLSearchParams(location.search);
-  const eq = (qs.get("eq") || "").trim();
-
-  const badge = document.getElementById("vxOrchBadge");
-  const sub = document.getElementById("vxOrchSub");
-  const packageStatusEl = document.getElementById("vxPackageStatus");
-  const completeCountEl = document.getElementById("vxCompleteCount");
-  const issueCountEl = document.getElementById("vxIssueCount");
-  const lastUpdateEl = document.getElementById("vxLastUpdate");
-
-  if (badge) {
-    badge.className = "vx-orch-badge review";
-    badge.textContent = "LOCAL MODE";
+  function getEq(){
+    try{
+      const qs = new URLSearchParams(location.search);
+      return (qs.get("eq") || "").trim();
+    }catch(e){
+      return "";
+    }
   }
 
-  if (sub) {
-    sub.textContent = "Vanguard live sync is disabled on this page. Local equipment workflow is active.";
+  function setText(id, value){
+    const el = document.getElementById(id);
+    if(el) el.textContent = value;
   }
 
-  if (packageStatusEl) packageStatusEl.textContent = "LOCAL";
-  if (completeCountEl) completeCountEl.textContent = "—";
-  if (issueCountEl) issueCountEl.textContent = "—";
-  if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString();
+  function setBadge(cls, value){
+    const badge = document.getElementById("vxOrchBadge");
+    if(!badge) return;
+    badge.className = "vx-orch-badge " + cls;
+    badge.textContent = value;
+  }
+
+  function getWorkflowProgress(eq){
+    if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.getProgress === "function"){
+      try{
+        return window.NEXUS_WORKFLOW.getProgress(eq);
+      }catch(e){}
+    }
+
+    const steps = ["rif","phenolic","torque","l2","meg","prefod","fpv","ccs"];
+    let complete = 0;
+
+    steps.forEach(function(step){
+      let done = false;
+
+      if(step === "ccs"){
+        done =
+          localStorage.getItem("nexus_" + eq + "_ccs_signed_off") === "1" ||
+          localStorage.getItem("nexus_" + eq + "_step_ccs") === "1";
+      }else if(step === "meg"){
+        done =
+          localStorage.getItem("nexus_" + eq + "_step_meg") === "1" ||
+          (
+            localStorage.getItem("nexus_" + eq + "_step_megohmmeter_line") === "1" &&
+            localStorage.getItem("nexus_" + eq + "_step_megohmmeter_load") === "1"
+          );
+      }else if(step === "fpv"){
+        done =
+          localStorage.getItem("nexus_" + eq + "_step_fpv") === "1" ||
+          localStorage.getItem("nexus_" + eq + "_step_fpv_photo") === "1";
+      }else{
+        done = localStorage.getItem("nexus_" + eq + "_step_" + step) === "1";
+      }
+
+      if(done) complete += 1;
+    });
+
+    const total = steps.length;
+    return {
+      equipment:eq,
+      total:total,
+      complete:complete,
+      remaining:Math.max(0, total - complete),
+      percent:total ? Math.round((complete / total) * 100) : 0
+    };
+  }
+
+  function getWorkflowReadiness(eq){
+    if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.getPackageReadiness === "function"){
+      try{
+        return window.NEXUS_WORKFLOW.getPackageReadiness(eq);
+      }catch(e){}
+    }
+
+    const progress = getWorkflowProgress(eq);
+    return {
+      equipment:eq,
+      status:progress.complete >= progress.total ? "READY" : "REVIEW",
+      progress:progress
+    };
+  }
+
+  function renderLocalWorkflow(){
+    const eq = getEq();
+    const progress = getWorkflowProgress(eq);
+    const readiness = getWorkflowReadiness(eq);
+    const status = readiness.status || "REVIEW";
+
+    const sub = document.getElementById("vxOrchSub");
+    if(sub){
+      sub.textContent = "Local workflow state engine active. Firebase/Vanguard AI can safely read this state when re-enabled.";
+    }
+
+    if(status === "READY"){
+      setBadge("pass", "READY FOR ENERGIZATION");
+    }else{
+      setBadge("review", "LOCAL REVIEW");
+    }
+
+    setText("vxPackageStatus", status);
+    setText("vxCompleteCount", progress.complete + "/" + progress.total);
+    setText("vxIssueCount", String(progress.remaining));
+    setText("vxLastUpdate", new Date().toLocaleTimeString());
+
+    setText("progressText", "Progress: " + progress.percent + "%");
+    setText("progressCount", progress.complete + "/" + progress.total);
+
+    const fill = document.getElementById("progressFill");
+    if(fill) fill.style.width = progress.percent + "%";
+
+    const hint = document.getElementById("progressHint");
+    if(hint){
+      hint.innerHTML =
+        "<div>Completed: " + progress.complete + "</div>" +
+        "<div>Remaining Work Items: " + progress.remaining + "</div>";
+    }
+
+    const energizationBtn = document.getElementById("energizationBtn");
+    if(energizationBtn){
+      const ready = status === "READY";
+      energizationBtn.classList.toggle("locked", !ready);
+      energizationBtn.classList.toggle("unlocked", ready);
+      energizationBtn.setAttribute("aria-disabled", ready ? "false" : "true");
+      energizationBtn.href = ready && eq ? "energization.html?eq=" + encodeURIComponent(eq) : "#";
+    }
+  }
 
   window.NEXUS_back = function(){
+    const eq = getEq();
+
     try{
-      if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+      if(document.referrer && document.referrer.indexOf(location.host) !== -1){
         history.back();
         return false;
       }
     }catch(e){}
 
-    location.href = "index.html" + (eq ? `?eq=${encodeURIComponent(eq)}` : "");
+    location.href = "index.html" + (eq ? "?eq=" + encodeURIComponent(eq) : "");
     return false;
   };
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", renderLocalWorkflow);
+  }else{
+    renderLocalWorkflow();
+  }
+
+  window.addEventListener("storage", function(ev){
+    const eq = getEq();
+    if(!ev || !ev.key || !eq) return;
+    if(ev.key.indexOf("nexus_" + eq) === 0){
+      renderLocalWorkflow();
+    }
+  });
+
+  window.addEventListener("nexus-workflow-change", renderLocalWorkflow);
+  window.addEventListener("focus", renderLocalWorkflow);
+  window.addEventListener("pageshow", renderLocalWorkflow);
 })();
 </script>
 
 <footer class="nx-footer">
   © 2026 Nexus Data Science LLC — All Rights Reserved
 </footer>
-
-<script src="assets/js/nexus-equipment-registry.js"></script>
-<script src="assets/js/nexus-workflow-state.js"></script>
-<script src="assets/js/nexus-core.js"></script>
-<script src="assets/js/nexus-firebase-bridge.js"></script>
 
   </div>
 </body>
