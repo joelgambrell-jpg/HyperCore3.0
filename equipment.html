@@ -158,7 +158,7 @@ MOBILE / IPAD
   }
 }
   :root{
-    --bg:#b050505;
+    --bg:#050505;
     --panel:rgba(255,255,255,0.20);
     --panel2:rgba(0,0,0,0.35);
     --line:rgba(255,255,255,0.22);
@@ -3524,10 +3524,6 @@ MOBILE / IPAD
 <script src="assets/js/vanguard_loader.js" data-vanguard-mode="minimal"></script>
 
 <script>
-/* ===========================================================
-   NEXUS Vanguard Live Orchestration Layer
-   VanguardCore-driven equipment page bridge. Existing localStorage keys remain backward compatible.
-   =========================================================== */
 (function(){
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
@@ -3548,7 +3544,7 @@ MOBILE / IPAD
     { id:"torque", label:"Torque", btn:"torqueBtn", keys:[`nexus_${eq||"NO_EQ"}_step_torque`] },
     { id:"l2", label:"L2", btn:"l2Btn", keys:[`nexus_${eq||"NO_EQ"}_step_l2`] },
     { id:"prefod", label:"Pre-FOD", btn:"prefodBtn", keys:[`nexus_${eq||"NO_EQ"}_step_prefod`] },
-    { id:"fpv", label:"FPV", btn:"finishedPhotoBtn", keys:[`nexus_${eq||"NO_EQ"}_step_fpv_photo`] }
+    { id:"fpv", label:"FPV", btn:"finishedPhotoBtn", keys:[`nexus_${eq||"NO_EQ"}_step_fpv_photo`, `nexus_${eq||"NO_EQ"}_step_fpv`] }
   ];
 
   const CORE_STEP_ID = {
@@ -3563,6 +3559,9 @@ MOBILE / IPAD
     fpv_photo:"fpv",
     energization:"energization"
   };
+
+  let __vxPublishing = false;
+  let __vxLastHash = "";
 
   function getCore(){
     return window.NEXUS_VANGUARD || window.Vanguard || (window.NEXUS && window.NEXUS.Vanguard) || null;
@@ -3593,19 +3592,26 @@ MOBILE / IPAD
   }
 
   function nowISO(){ return new Date().toISOString(); }
-  function safeKeyEq(){ return (eq || "NO_EQ").replace(/[.#$\[\]\/]/g, "_"); }
+
+  function safeKeyEq(){
+    return (eq || "NO_EQ").replace(/[.#$\[\]\/]/g, "_");
+  }
+
   function readJSON(key, fallback){
     try{
       const raw = localStorage.getItem(key);
       return raw ? JSON.parse(raw) : fallback;
     }catch(e){ return fallback; }
   }
+
   function writeJSON(key, value){
     try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
   }
+
   function hasKey(keys){
     return keys.some(k => localStorage.getItem(k) === "1");
   }
+
   function statusClass(status){
     const s = String(status || "").toUpperCase();
     if(["COMPLETE","PASS","READY"].includes(s)) return "pass";
@@ -3613,6 +3619,7 @@ MOBILE / IPAD
     if(["REVIEW","UNVALIDATED","MISSING","PARTIAL","LOCKED"].includes(s)) return "review";
     return "missing";
   }
+
   function normalizeStatus(status){
     const s = String(status || "").toUpperCase();
     if(["COMPLETE","PASS"].includes(s)) return "COMPLETE";
@@ -3620,6 +3627,7 @@ MOBILE / IPAD
     if(["REVIEW","UNVALIDATED","PARTIAL","LOCKED","MISSING"].includes(s)) return s;
     return s || "MISSING";
   }
+
   function stepStatusFromPayload(stepId){
     const clean = eq || "NO_EQ";
     const coreStatus = coreStepStatus(stepId);
@@ -3678,6 +3686,7 @@ MOBILE / IPAD
     if(normalized.includes("PARTIAL")) return "PARTIAL";
     return "MISSING";
   }
+
   function collectIssues(){
     const clean = eq || "NO_EQ";
     const out = [];
@@ -3715,27 +3724,33 @@ MOBILE / IPAD
 
     return out;
   }
+
   function setBadge(cls, text){
     if(!badge) return;
     badge.className = "vx-orch-badge " + cls;
     badge.textContent = text;
   }
+
   function applyButtonStates(snapshot){
     const state = snapshot.coreState || coreState();
     const workflow = state && state.workflow ? state.workflow : null;
+
     STEP_DEFS.forEach(step => {
       const btn = document.getElementById(step.btn);
       if(!btn) return;
+
       const st = snapshot.steps[step.id] || "MISSING";
       const mapped = coreStepId(step.id);
       const gate = coreCanAdvance(step.id);
       const active = workflow && workflow.currentStep === mapped;
       const locked = st !== "COMPLETE" && gate && gate.allowed === false;
+
       btn.classList.toggle("complete", st === "COMPLETE");
       btn.classList.toggle("locked", locked);
       btn.classList.toggle("vx-next-action-glow", !!active && st !== "COMPLETE" && !locked);
       btn.setAttribute("data-vanguard-status", st);
       btn.setAttribute("data-vanguard-core-step", mapped);
+
       if(locked){
         btn.setAttribute("aria-disabled", "true");
         btn.title = "Vanguard blocked: " + ((gate.blockers || []).map(b => b.label || b.code || b.step).join(", ") || st);
@@ -3745,23 +3760,28 @@ MOBILE / IPAD
       }
     });
   }
+
   function applyEnergization(snapshot){
     const btn = document.getElementById("energizationBtn");
     if(!btn) return;
+
     let ready = snapshot.packageStatus === "READY";
     const core = getCore();
+
     if(core && typeof core.getReadiness === "function"){
       try{
         const r = core.getReadiness(eq || "NO_EQ");
         if(r && typeof r.ready === "boolean") ready = !!r.ready;
       }catch(e){}
     }
+
     btn.classList.toggle("locked", !ready);
     btn.classList.toggle("unlocked", ready);
     btn.setAttribute("aria-disabled", ready ? "false" : "true");
     btn.href = ready ? `energization.html?eq=${encodeURIComponent(eq || "")}` : "#";
     btn.title = ready ? "Vanguard ready for energization." : "Vanguard has not cleared all required workflow gates.";
   }
+
   function render(snapshot){
     const statuses = Object.values(snapshot.steps);
     const complete = statuses.filter(s => s === "COMPLETE").length;
@@ -3778,6 +3798,7 @@ MOBILE / IPAD
     const pCount = document.getElementById("progressCount");
     const pFill = document.getElementById("progressFill");
     const pHint = document.getElementById("progressHint");
+
     if(pText) pText.textContent = `Progress: ${percent}%`;
     if(pCount) pCount.textContent = `${complete}/${total}`;
     if(pFill) pFill.style.width = percent + "%";
@@ -3803,9 +3824,11 @@ MOBILE / IPAD
         const st = snapshot.steps[s.id];
         return `<span class="vx-step-chip ${statusClass(st)}">${s.label}: ${st}</span>`;
       }).join("");
+
       const issueText = issues.length
         ? `<div style="margin-top:8px;">Issues: ${issues.slice(0,6).map(i => `${i.section}: ${i.reason}`).join(" • ")}${issues.length > 6 ? " • +" + (issues.length-6) + " more" : ""}</div>`
         : `<div style="margin-top:8px;">No blocking validation issues detected.</div>`;
+
       const activeText = snapshot.activeStep ? `<div style="margin-top:8px;">Active Vanguard step: <b>${snapshot.activeStep}</b></div>` : "";
       listEl.innerHTML = chips + activeText + issueText;
     }
@@ -3813,11 +3836,14 @@ MOBILE / IPAD
     applyButtonStates(snapshot);
     applyEnergization(snapshot);
   }
+
   function buildSnapshot(firebaseData){
     const core = getCore();
+
     if(core && typeof core.refresh === "function"){
       try{ core.refresh(); }catch(e){}
     }
+
     const state = coreState();
     const steps = {};
     STEP_DEFS.forEach(step => steps[step.id] = stepStatusFromPayload(step.id));
@@ -3838,6 +3864,7 @@ MOBILE / IPAD
 
     const issues = collectIssues();
     const statusValues = Object.values(steps);
+
     let packageStatus = "REVIEW";
     if(statusValues.includes("FAIL") || statusValues.includes("BLOCKED")) packageStatus = "BLOCKED";
     else if(statusValues.every(s => s === "COMPLETE")) packageStatus = "READY";
@@ -3857,13 +3884,16 @@ MOBILE / IPAD
       updatedAt: nowISO()
     };
   }
+
   async function publish(snapshot){
     const clean = safeKeyEq();
+
     writeJSON(`nexus_${clean}_package_readiness_v1`, snapshot);
     writeJSON(`nexus_${clean}_vanguard_equipment_summary`, snapshot);
 
     const systemKey = `nexus_${clean}_vanguard_system`;
     const sys = readJSON(systemKey, {}) || {};
+
     sys.package = {
       status: snapshot.packageStatus,
       issueCount: snapshot.issueCount,
@@ -3871,24 +3901,50 @@ MOBILE / IPAD
       totalCount: snapshot.totalCount,
       updatedAt: snapshot.updatedAt
     };
+
     writeJSON(systemKey, sys);
 
     if(window.NexusLiveSync && typeof window.NexusLiveSync.save === "function" && eq){
-      try{
-        await window.NexusLiveSync.save(eq, "equipmentSummary", snapshot);
-        await window.NexusLiveSync.save(eq, "packageReadiness", snapshot);
-      }catch(e){
-        console.warn("Equipment Vanguard live sync failed:", e);
-      }
+      await window.NexusLiveSync.save(eq, "equipmentSummary", snapshot);
+      await window.NexusLiveSync.save(eq, "packageReadiness", snapshot);
     }
   }
+
+  function shouldPublish(snapshot){
+    const nextHash = JSON.stringify({
+      packageStatus: snapshot.packageStatus,
+      steps: snapshot.steps,
+      issueCount: snapshot.issueCount,
+      completeCount: snapshot.completeCount,
+      totalCount: snapshot.totalCount
+    });
+
+    if(__vxPublishing) return false;
+    if(nextHash === __vxLastHash) return false;
+
+    __vxLastHash = nextHash;
+    return true;
+  }
+
   function refreshVanguard(firebaseData){
     const snapshot = buildSnapshot(firebaseData);
+
     render(snapshot);
-    publish(snapshot);
+
+    if(shouldPublish(snapshot)){
+      __vxPublishing = true;
+
+      Promise.resolve(publish(snapshot))
+        .catch(function(e){
+          console.warn("Vanguard publish failed:", e);
+        })
+        .finally(function(){
+          __vxPublishing = false;
+        });
+    }
 
     try{
-      if(window.NEXUS_VANGUARD){
+      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.updateState === "function"){
         window.NEXUS_VANGUARD.updateState({
           equipmentId: eq || "NO_EQ",
           package: {
@@ -3923,18 +3979,23 @@ MOBILE / IPAD
   }
 
   let unsub = null;
-  if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
-    try{
-      unsub = window.NexusLiveSync.listen(eq, function(data){
-        refreshVanguard(data || null);
-      });
-    }catch(e){
-      console.warn("Equipment live listener failed:", e);
-      refreshVanguard(null);
+
+  function startLiveListener(){
+    if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
+      try{
+        unsub = window.NexusLiveSync.listen(eq, function(data){
+          refreshVanguard(data || null);
+        });
+        return;
+      }catch(e){
+        console.warn("Equipment live listener failed:", e);
+      }
     }
-  } else {
+
     refreshVanguard(null);
   }
+
+  startLiveListener();
 
   window.addEventListener("storage", function(ev){
     if(!eq || !ev || !ev.key) return;
@@ -3943,13 +4004,14 @@ MOBILE / IPAD
     }
   });
 
-  window.addEventListener("vanguard:loader:complete", function(){ refreshVanguard(null); });
-
-  setInterval(function(){ refreshVanguard(null); }, 5000);
+  window.addEventListener("vanguard:loader:complete", function(){
+    refreshVanguard(null);
+  });
 
   window.addEventListener("beforeunload", function(){
     try{ if(typeof unsub === "function") unsub(); }catch(e){}
   });
+
 })();
 </script>
 
@@ -3962,6 +4024,7 @@ MOBILE / IPAD
         return false;
       }
     }catch(e){}
+
     const qs = new URLSearchParams(location.search);
     const eq = qs.get("eq");
     location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
@@ -3973,8 +4036,6 @@ MOBILE / IPAD
 <footer class="nx-footer">
   © 2026 Nexus Data Science LLC — All Rights Reserved
 </footer>
-
-
 
 <script src="assets/js/nexus-equipment-registry.js"></script>
 <script src="assets/js/nexus-core.js"></script>
