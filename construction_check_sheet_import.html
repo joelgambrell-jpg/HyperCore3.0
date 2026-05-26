@@ -6,7 +6,6 @@
 
 <link rel="stylesheet" href="nexus-core.css" />
 <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-<link rel="stylesheet" href="assets/css/nexus-core.css" />
 
 <title>Construction Check Sheet</title>
 
@@ -33,10 +32,9 @@
     background:var(--bg);
   }
   body{
-    background-image:url("transformer.jpg");
-    background-size:cover;
-    background-position:center;
-    background-attachment:fixed;
+    background:
+      linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+      url("transformer.jpg") center center / cover no-repeat fixed !important;
   }
 
   .nx-header-wrap{
@@ -995,6 +993,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script src="assets/js/ccs_excel_importer.js"></script>
@@ -1125,6 +1124,22 @@
   function validationKey(){ return `nexus_${eqSafe}_ccs_vanguard_validation`; }
   function signedKey(){ return `nexus_${eqSafe}_ccs_signed_off`; }
   function stepKey(){ return `nexus_${eqSafe}_step_ccs`; }
+
+  function setWorkflowCompleteState(done){
+    try{
+      if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.setStepComplete === "function"){
+        window.NEXUS_WORKFLOW.setStepComplete(eqSafe, "ccs", !!done);
+      }else{
+        if(done) localStorage.setItem(stepKey(), "1");
+        else localStorage.removeItem(stepKey());
+      }
+    }catch(e){
+      try{
+        if(done) localStorage.setItem(stepKey(), "1");
+        else localStorage.removeItem(stepKey());
+      }catch(_e){}
+    }
+  }
 
   function readJSON(k,fallback){
     try{
@@ -1739,9 +1754,10 @@
     writeJSON(validationKey(), payload.validation);
 
     if(isComplete()){
-      localStorage.setItem(stepKey(), "1");
+      localStorage.setItem(signedKey(), "1");
+      setWorkflowCompleteState(true);
     }else{
-      localStorage.removeItem(stepKey());
+      setWorkflowCompleteState(false);
       localStorage.removeItem(signedKey());
       state.finalSignoff = null;
     }
@@ -2023,7 +2039,7 @@
     state.expanded = true;
     state.finalSignoff = null;
     localStorage.removeItem(signedKey());
-    localStorage.removeItem(stepKey());
+    setWorkflowCompleteState(false);
 
     clearAddForm();
     if(addPanel) addPanel.classList.remove("show");
@@ -2059,7 +2075,7 @@
     state.expanded = true;
     state.finalSignoff = null;
     localStorage.removeItem(signedKey());
-    localStorage.removeItem(stepKey());
+    setWorkflowCompleteState(false);
 
     save("manual_step_added_below");
   }
@@ -2110,7 +2126,7 @@
     normalizeStepOrder();
     state.finalSignoff = null;
     localStorage.removeItem(signedKey());
-    localStorage.removeItem(stepKey());
+    setWorkflowCompleteState(false);
     save("manual_step_deleted");
   }
 
@@ -2550,7 +2566,7 @@
     }
 
     localStorage.removeItem(signedKey());
-    localStorage.removeItem(stepKey());
+    setWorkflowCompleteState(false);
     return true;
   }
 
@@ -2623,7 +2639,7 @@
     };
 
     localStorage.removeItem(signedKey());
-    localStorage.removeItem(stepKey());
+    setWorkflowCompleteState(false);
 
     await save("two_tab_excel_import");
   }
@@ -2705,7 +2721,7 @@
     };
 
     localStorage.setItem(signedKey(), "1");
-    localStorage.setItem(stepKey(), "1");
+    setWorkflowCompleteState(true);
     save("final_signoff");
   });
 
@@ -2744,15 +2760,8 @@
       console.warn("CCS Firebase attach failed:", e);
       firebaseConnected = false;
     }
-  }else if(window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
-    try{
-      window.NexusLiveSync.listen(eq, function(data){
-        firebaseConnected = !!data;
-        render();
-      });
-    }catch(e){
-      firebaseConnected = false;
-    }
+  }else if(false && window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
+    /* Disabled during localStorage-first stabilization to prevent listener/render/save loops. */
   }
 
   save("loaded");
