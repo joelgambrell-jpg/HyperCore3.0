@@ -3,236 +3,574 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NEXUS – Snap-on Torque Export Embed</title>
 
 <link rel="stylesheet" href="../nexus-core.css" />
-<link rel="stylesheet" href="../assets/css/nexus-core.css" />
+<link rel="stylesheet" href="../nexus-core.print.css" media="print" />
+
+<title>Snap-on ConnecTorq Import (Torque)</title>
 
 <style>
-/* Make this embed visually compatible inside Package Export */
+:root{
+  --bg:#b60000;
+  --panel:rgba(255,255,255,0.20);
+  --panel2:rgba(0,0,0,0.35);
+  --line:rgba(255,255,255,0.18);
+  --accent:#00c2ff;
+}
+
+*{ box-sizing:border-box; }
+
 body{
   margin:0;
-  font-family: Arial, sans-serif;
-  color:#111;
-  background: transparent;
+  padding:0;
+  font-family:Arial, Helvetica, sans-serif !important;
+  color:#fff;
+  background:
+    linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+    url("../transformer.jpg") center center / cover no-repeat fixed;
 }
-.section{
-  background: rgba(255,255,255,0.92);
-  border-radius: 12px;
-  padding: 14px;
-  border: 1px solid rgba(0,0,0,0.12);
+
+.nx-header-wrap{
+  background: rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(8px);
 }
-.hdr{
+
+.nx-header{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+}
+
+.nx-header img{
+  height: 54px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.nx-footer{
+  margin-top: 40px;
+  padding: 18px 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.35);
+  border-top: 1px solid rgba(255,255,255,0.18);
+}
+
+.container{
+  max-width:1100px;
+  margin:40px auto;
+  background:var(--panel);
+  padding:26px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,0.16);
+  backdrop-filter:blur(10px);
+  box-shadow:0 14px 40px rgba(0,0,0,.30);
+}
+
+.top-row{
   display:flex;
-  align-items:flex-start;
+  align-items:center;
   justify-content:space-between;
   gap:12px;
   flex-wrap:wrap;
+  margin-bottom:10px;
 }
-.hdr h2{
-  margin:0;
-  font-size:16px;
-  font-weight:900;
-}
-.meta{
-  margin-top:4px;
-  font-size:12px;
-  font-weight:700;
-  color:#444;
-}
-.pills{
-  margin-top:10px;
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
+
 .pill{
   display:inline-flex;
   align-items:center;
-  padding:6px 10px;
+  gap:8px;
+  padding:10px 14px;
   border-radius:999px;
-  border:1px solid rgba(0,0,0,0.18);
-  font-size:12px;
+  font-weight:900;
+  background: rgba(20,20,20,0.35);
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.back{
+  color:#fff;
+  text-decoration:none;
+  font-weight:900;
+  display:inline-block;
+  background: rgba(20,20,20,0.35);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 10px 14px;
+  border-radius: 999px;
+}
+
+h1{
+  margin:10px 0 6px;
+  font-size:30px;
+  font-weight:900;
+}
+
+.sub{
+  font-size:14px;
   font-weight:800;
-  background:#fff;
+  color: rgba(255,255,255,0.88);
+  margin-bottom:14px;
+  line-height:1.35;
 }
-.list{
-  margin-top:12px;
+
+.grid{
   display:grid;
-  gap:10px;
+  grid-template-columns: 1fr 1fr;
+  gap:14px;
+  margin-top:12px;
 }
-.item{
-  border:1px solid rgba(0,0,0,0.12);
+
+@media (max-width: 820px){
+  .grid{
+    grid-template-columns: 1fr;
+  }
+}
+
+.field label{
+  display:block;
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  opacity:.95;
+  margin:8px 0 6px;
+}
+
+.field input[type="text"],
+.field input[type="file"]{
+  width:100%;
+  padding:14px 14px;
   border-radius:12px;
-  padding:10px;
-  background:#fff;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.92);
+  color:#111;
+  font-size:15px;
+  font-weight:800;
 }
-.itemTop{
+
+.btn-row{
   display:flex;
-  justify-content:space-between;
   gap:12px;
   flex-wrap:wrap;
+  margin-top:14px;
 }
-.itemTitle{
+
+.btn-pill{
+  appearance:none;
+  border-radius:999px;
+  padding:14px 18px;
+  font-size:15px;
   font-weight:900;
+  cursor:pointer;
+  border:1px solid rgba(255,255,255,0.22);
+  background: rgba(20,20,20,0.35);
+  color:#fff;
+}
+
+.btn-pill.primary{
+  color:#3ecbff;
+  background:#0a0f24;
+  border:2px solid var(--accent);
+  box-shadow: 0 0 16px rgba(0,194,255,0.25);
+}
+
+.glass-block{
+  margin-top:18px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.section-title{
   font-size:13px;
+  font-weight:1000;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  opacity:.95;
+  margin:0 0 10px;
 }
-.itemSub{
-  margin-top:2px;
-  color:#444;
+
+.small{
   font-size:12px;
-  font-weight:700;
+  font-weight:800;
+  opacity:.9;
+  line-height:1.35;
 }
-.mono{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size:12px;
-  color:#333;
-  margin-top:4px;
-}
-.tableWrap{
-  margin-top:10px;
+
+.table-wrap{
   overflow:auto;
-  border-radius:10px;
-  border:1px solid rgba(0,0,0,0.12);
+  border-radius:12px;
+  border: 1px solid rgba(255,255,255,0.14);
 }
+
 table{
   width:100%;
   border-collapse:collapse;
-  min-width: 760px;
+  min-width:900px;
+  background: rgba(255,255,255,0.06);
 }
+
 th,td{
-  padding:7px 8px;
-  border-bottom:1px solid rgba(0,0,0,0.08);
-  font-size:12px;
+  padding:10px 10px;
+  border-bottom:1px solid rgba(255,255,255,0.10);
+  font-size:13px;
+  font-weight:800;
 }
+
 th{
   text-align:left;
-  background: rgba(0,0,0,0.04);
-  font-weight:900;
+  font-weight:1000;
+  background: rgba(0,0,0,0.25);
 }
-.smallNote{
+
+#status{
   margin-top:10px;
-  font-size:11px;
-  font-weight:700;
-  color:#555;
+  font-weight:900;
 }
 </style>
 </head>
 
 <body>
-<div class="section" id="root">
-  <div class="hdr">
-    <div>
-      <h2>Snap-on ConnecTorq Torque Logs</h2>
-      <div class="meta" id="metaLine">Loading…</div>
-    </div>
-    <div class="pills">
-      <span class="pill" id="pillEq">Equipment: —</span>
-      <span class="pill" id="pillJob">Building: —</span>
-      <span class="pill" id="pillCount">Sessions: 0</span>
-    </div>
-  </div>
+<div class="nexus-page">
 
-  <div class="list" id="list"></div>
-
-  <div class="smallNote">
-    Source: localStorage key <span class="mono">nexus.torque.sessions.v1</span>
+<div class="nx-header-wrap">
+  <div class="nx-header">
+    <img src="../nexus.png" alt="NEXUS" />
   </div>
 </div>
 
+<div class="container">
+
+  <div class="top-row">
+    <a class="back" href="#" onclick="return NEXUS_back();">← Back to Torque</a>
+    <span class="pill">Snap-on ConnecTorq Import</span>
+  </div>
+
+  <h1>Snap-on ConnecTorq Import</h1>
+
+  <div class="sub">
+    Import a Snap-on ConnecTorq CSV and route the imported torque records directly into the Torque Log and Package Export torque section.
+  </div>
+
+  <div class="grid">
+    <div class="field">
+      <label>Building (Job)</label>
+      <input id="jobId" type="text" />
+    </div>
+
+    <div class="field">
+      <label>Equipment</label>
+      <input id="equipmentId" type="text" />
+    </div>
+  </div>
+
+  <div class="field" style="margin-top:10px;">
+    <label>ConnecTorq CSV</label>
+    <input id="file" type="file" accept=".csv,text/csv,text/plain" />
+
+    <div class="small" style="margin-top:8px;">
+      Parsed torque data will become part of the Torque Application workflow evidence chain.
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-pill" id="parseBtn" type="button">Parse & Preview</button>
+    <button class="btn-pill primary" id="saveBtn" type="button" disabled>Save to Torque</button>
+    <button class="btn-pill" id="clearBtn" type="button">Clear</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div id="previewBlock" class="glass-block" style="display:none;">
+    <div class="section-title">Preview</div>
+
+    <div class="table-wrap">
+      <table id="previewTable">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Connection</th>
+            <th>Target</th>
+            <th>Actual</th>
+            <th>Units</th>
+            <th>Pass/Fail</th>
+            <th>Technician</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer class="nx-footer">
+  © 2026 NEXUS Data Science — All Rights Reserved
+</footer>
+
 <script>
 (function(){
+
+  const STORAGE_KEY = "nexus.torque.snapon.sessions.v1";
+  let parsedRows = [];
+
   function qs(name){
-    try{ return (new URL(location.href)).searchParams.get(name) || ""; }
-    catch(e){ return ""; }
-  }
-  function safeJsonParse(s){
-    try{ return JSON.parse(s); }catch(e){ return null; }
-  }
-  function fmt(v){
-    try{
-      if (!v) return "";
-      var d = new Date(v);
-      if (isNaN(d.getTime())) return String(v);
-      return d.toLocaleString();
-    }catch(e){ return String(v || ""); }
+    return new URLSearchParams(location.search).get(name) || "";
   }
 
-  var eq = (qs("eq") || qs("equipmentId") || "").trim();
-  var job = (qs("building") || qs("job") || qs("jobId") || "").trim();
+  function esc(v){
+    return String(v || "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;");
+  }
 
-  // Fallbacks if embed is used without params
-  if (!eq) eq = (localStorage.getItem("nexus_active_eq") || "").trim();
-  if (!job) job = (localStorage.getItem("nexus_active_building") || "").trim();
+  function setStatus(msg, err){
+    const el = document.getElementById("status");
+    el.textContent = msg || "";
+    el.style.color = err ? "#ffd4d4" : "#ffffff";
+  }
 
-  document.getElementById("pillEq").textContent = "Equipment: " + (eq || "—");
-  document.getElementById("pillJob").textContent = "Building: " + (job || "—");
+  function parseCsvLine(line){
+    let result = [];
+    let current = "";
+    let inQuotes = false;
 
-  var key = "nexus.torque.sessions.v1";
-  var all = safeJsonParse(localStorage.getItem(key) || "[]");
-  if (!Array.isArray(all)) all = [];
+    for(let i=0;i<line.length;i++){
 
-  // Sessions stored by your importer include: jobId, equipmentId, sourceFileName, capturedAt, passCount, failCount, events[]
-  var sessions = all.filter(function(s){
-    if (!s || typeof s !== "object") return false;
-    if (eq && String(s.equipmentId || "").trim() !== eq) return false;
+      const ch = line[i];
+      const next = line[i+1];
 
-    // If job/building provided, match it against s.jobId
-    if (job){
-      var sj = String(s.jobId || "").trim();
-      if (sj !== job) return false;
+      if(ch === '"'){
+
+        if(inQuotes && next === '"'){
+          current += '"';
+          i++;
+        }else{
+          inQuotes = !inQuotes;
+        }
+
+      }else if(ch === "," && !inQuotes){
+
+        result.push(current);
+        current = "";
+
+      }else{
+        current += ch;
+      }
     }
-    return true;
-  }).sort(function(a,b){
-    return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+
+    result.push(current);
+
+    return result.map(v => (v || "").trim());
+  }
+
+  function buildRow(cols){
+
+    return {
+      timestamp: cols[0] || "",
+      connection: cols[1] || "",
+      target: cols[2] || "",
+      actual: cols[3] || "",
+      units: cols[4] || "ft-lb",
+      passFail: cols[5] || "",
+      technician: cols[6] || "",
+      notes: cols[7] || ""
+    };
+  }
+
+  function renderPreview(rows){
+
+    const block = document.getElementById("previewBlock");
+    const tbody = document.querySelector("#previewTable tbody");
+
+    tbody.innerHTML = rows.map(r => `
+      <tr>
+        <td>${esc(r.timestamp)}</td>
+        <td>${esc(r.connection)}</td>
+        <td>${esc(r.target)}</td>
+        <td>${esc(r.actual)}</td>
+        <td>${esc(r.units)}</td>
+        <td>${esc(r.passFail)}</td>
+        <td>${esc(r.technician)}</td>
+        <td>${esc(r.notes)}</td>
+      </tr>
+    `).join("");
+
+    block.style.display = "block";
+  }
+
+  function readSessions(){
+
+    try{
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    }catch(e){
+      return [];
+    }
+  }
+
+  function writeSessions(v){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(v));
+  }
+
+  function saveRows(rows){
+
+    const eq =
+      document.getElementById("equipmentId").value.trim() ||
+      qs("eq") ||
+      "NO_EQ";
+
+    const building =
+      document.getElementById("jobId").value.trim() ||
+      qs("jobId") ||
+      "";
+
+    const sessions = readSessions();
+
+    const payload = {
+      id: "SNAPON-" + Date.now(),
+      equipment: eq,
+      building: building,
+      importedAt: new Date().toISOString(),
+      source: "snapon_connectorq_csv",
+      rows: rows
+    };
+
+    sessions.push(payload);
+
+    writeSessions(sessions);
+
+    localStorage.setItem(
+      "nexus_" + eq + "_snapon_torque_import",
+      JSON.stringify(payload)
+    );
+
+    localStorage.setItem(
+      "nexus_" + eq + "_torque_import_source",
+      "snapon_connectorq"
+    );
+
+    setStatus("Saved " + rows.length + " torque rows.", false);
+  }
+
+  document.getElementById("parseBtn").addEventListener("click", async function(){
+
+    try{
+
+      const file =
+        document.getElementById("file").files[0];
+
+      if(!file){
+        setStatus("Select a CSV file first.", true);
+        return;
+      }
+
+      const text = await file.text();
+
+      const lines = text
+        .replace(/\r\n/g,"\n")
+        .replace(/\r/g,"\n")
+        .split("\n")
+        .map(v => v.trim())
+        .filter(Boolean);
+
+      if(lines.length < 2){
+        setStatus("CSV does not contain usable rows.", true);
+        return;
+      }
+
+      const data = lines.slice(1);
+
+      parsedRows = [];
+
+      data.forEach(line => {
+
+        const cols = parseCsvLine(line);
+        const row = buildRow(cols);
+
+        if(
+          row.timestamp ||
+          row.connection ||
+          row.actual
+        ){
+          parsedRows.push(row);
+        }
+
+      });
+
+      if(!parsedRows.length){
+        setStatus("No usable rows found.", true);
+        return;
+      }
+
+      renderPreview(parsedRows);
+
+      document.getElementById("saveBtn").disabled = false;
+
+      setStatus(
+        "Parsed " + parsedRows.length + " torque rows.",
+        false
+      );
+
+    }catch(err){
+
+      console.error(err);
+
+      setStatus(
+        "Parse failed.",
+        true
+      );
+    }
+
   });
 
-  document.getElementById("pillCount").textContent = "Sessions: " + sessions.length;
-  document.getElementById("metaLine").textContent =
-    sessions.length ? "Rendered " + sessions.length + " saved session(s)." : "No saved sessions found for this equipment/building.";
+  document.getElementById("saveBtn").addEventListener("click", function(){
 
-  var list = document.getElementById("list");
-  if (!sessions.length){
-    list.innerHTML = '<div class="item"><div class="itemTitle">No Snap-on torque logs attached yet.</div><div class="itemSub">Import a ConnecTorq CSV on the Snap-on Import page.</div></div>';
-    return;
-  }
+    if(!parsedRows.length){
+      setStatus("Nothing to save.", true);
+      return;
+    }
 
-  function renderEventsTable(events){
-    if (!Array.isArray(events) || !events.length) return "";
-    var cols = ["timestamp","actualTorque","targetTorque","angle","units","passFail"];
-    var thead = "<tr>" + cols.map(function(c){ return "<th>" + c + "</th>"; }).join("") + "</tr>";
-    var rows = events.map(function(e){
-      return "<tr>" + cols.map(function(c){
-        var v = (e && e[c] != null) ? e[c] : "";
-        return "<td>" + String(v) + "</td>";
-      }).join("") + "</tr>";
-    }).join("");
-    return '<div class="tableWrap"><table>' + thead + rows + "</table></div>";
-  }
+    saveRows(parsedRows);
 
-  list.innerHTML = sessions.map(function(s, idx){
-    var title = (s.source || "SNAPON_CONNECTORQ") + " • " + (s.eventCount || 0) + " events • " + (s.passCount || 0) + " pass / " + (s.failCount || 0) + " fail";
-    var sub = (s.sourceFileName || "CSV") + " • capturedAt " + fmt(s.capturedAt || s.createdAt);
-    var idLine = "sessionId: " + (s.id || ("local-" + idx));
+  });
 
-    // For export, include a reasonable amount of events:
-    // - include first 25 events to avoid huge PDFs
-    var events = Array.isArray(s.events) ? s.events.slice(0,25) : [];
-    var table = renderEventsTable(events);
+  document.getElementById("clearBtn").addEventListener("click", function(){
 
-    return ''
-      + '<div class="item">'
-      + '  <div class="itemTop">'
-      + '    <div>'
-      + '      <div class="itemTitle">' + title + '</div>'
-      + '      <div class="itemSub">' + sub + '</div>'
-      + '      <div class="mono">' + idLine + '</div>'
-      + '    </div>'
-      + '  </div>'
-      + table
-      + '</div>';
-  }).join("");
+    parsedRows = [];
+
+    document.getElementById("previewBlock").style.display = "none";
+
+    document.getElementById("saveBtn").disabled = true;
+
+    setStatus("");
+
+  });
+
+  window.NEXUS_back = function(){
+
+    const eq =
+      qs("eq") ||
+      qs("equipmentId");
+
+    location.href = eq
+      ? "../torque_log.html?eq=" + encodeURIComponent(eq)
+      : "../torque_log.html";
+
+    return false;
+  };
+
 })();
 </script>
+
 </body>
 </html>
