@@ -21,8 +21,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
 <title>Phenolic Display</title>
 
 <style>
@@ -37,19 +37,44 @@
     --accent:#00c2ff;
     --ok:#2dff9b;
   }
+
   *{box-sizing:border-box;}
-  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);}
+
+  html,
   body{
-    background-image:url("transformer.jpg");
-    background-repeat:no-repeat;
-    background-position:center center;
-    background-size:cover;
-    background-attachment:fixed;
+    margin:0;
+    min-height:100%;
+    font-family:Arial,Helvetica,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
   }
 
-  .nx-header-wrap{background: rgba(0,0,0,0.35);border-bottom: 1px solid rgba(255,255,255,0.18);backdrop-filter: blur(8px);}
-  .nx-header{max-width: 1100px;margin: 0 auto;padding: 14px 18px;display: flex;align-items: center;}
-  .nx-header img{height: 54px;width: auto;max-width: 100%;object-fit: contain;}
+  body{
+    background:
+      linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+      url("transformer.jpg") center center / cover no-repeat fixed !important;
+  }
+
+  .nx-header-wrap{
+    background: rgba(0,0,0,0.35);
+    border-bottom: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+  }
+
+  .nx-header{
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+  }
+
+  .nx-header img{
+    height: 54px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
 
   .page{
     max-width:1100px;
@@ -107,13 +132,13 @@
     user-select:none;
     gap:10px;
   }
+
   .btn.secondary{
     background: rgba(0,0,0,0.18);
     color:#fff;
     border:2px solid rgba(255,255,255,0.30);
   }
 
-  /* STANDARD: Step complete visual (matches form.html/app.js behavior) */
   .btn.complete{
     background:#00ff66 !important;
     color:#002b14 !important;
@@ -133,7 +158,6 @@
     line-height:1.35;
   }
 
-  /* ===== Phenolic label preview ===== */
   .phenolic-wrap{
     margin-top:16px;
     display:flex;
@@ -159,6 +183,7 @@
     margin: 6px 0;
     word-break: break-word;
   }
+
   .phen-line.small{ font-size: 22px; }
   .phen-line.big{ font-size: 30px; }
 
@@ -177,6 +202,7 @@
     gap:10px;
     flex-wrap:wrap;
   }
+
   .chip{
     padding:6px 10px;
     border-radius:999px;
@@ -201,11 +227,6 @@
 <body>
   <div class="nexus-page">
 
-       body{
-  background:
-    linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
-    url("transformer.jpg") center center / cover no-repeat fixed !important;
-}
 <div id="nxSessionBanner" class="nx-session-banner">
   <div class="nx-left">
     <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
@@ -252,8 +273,6 @@
     <div class="btnrow" style="display:flex;gap:10px;flex-wrap:wrap;">
       <a class="btn secondary" id="backToEquipment" href="#">← Back to Equipment</a>
       <a class="btn secondary" id="backToSetup" href="index.html">Edit in Setup</a>
-
-      <!-- STANDARDIZED: Single Step Complete toggle (matches form/app pages) -->
       <button class="btn" id="stepCompleteBtn" type="button">Mark Step Complete</button>
     </div>
 
@@ -284,6 +303,7 @@
   const eq = (qs.get("eq") || "").trim();
 
   function metaKey(eq){ return `nexus_meta_${eq || "NO_EQ"}`; }
+
   function loadMeta(eq){
     try{
       const raw = localStorage.getItem(metaKey(eq));
@@ -292,21 +312,17 @@
     return {};
   }
 
-  // NOTE: gravoply kept as string IDs (no leading '#')
   const PHENOLIC_CODES = {
     bms_blue:             { label:"BLUE — BMS",                    bg:"#1b4fd6", fg:"#ffffff", gravoply:"17353" },
     fire_red:             { label:"RED — Fire Alarm",              bg:"#c01616", fg:"#ffffff", gravoply:"17506" },
-
     bus_a_orange:         { label:"ORANGE — A Bus",                bg:"#f57c00", fg:"#ffffff", gravoply:"17047" },
     bus_b_green:          { label:"GREEN — B Bus",                 bg:"#168a3a", fg:"#ffffff", gravoply:"17442" },
     bus_d_cyan:           { label:"CYAN — D Bus",                  bg:"#00bcd4", fg:"#ffffff", gravoply:"45901" },
     bus_e_yellow_white:   { label:"YELLOW (white) — E Bus",        bg:"#ffd400", fg:"#ffffff", gravoply:"17366" },
     catcher_pink:         { label:"PINK — CATCHER / C Bus",        bg:"#e91e63", fg:"#ffffff", gravoply:"32725" },
-
     nonpod_gray:          { label:"GRAY — Non-Pod Specific",        bg:"#6f7b86", fg:"#ffffff", gravoply:"29584" },
     global_black:         { label:"BLACK — Global / Room",         bg:"#111111", fg:"#ffffff", gravoply:"17319" },
     house_brown:          { label:"BROWN — House Services",        bg:"#6b3f1a", fg:"#ffffff", gravoply:"17388" },
-
     epms_yellow_black:    { label:"YELLOW (black) — EPMS",         bg:"#ffd400", fg:"#111111", gravoply:"17366" }
   };
 
@@ -361,20 +377,15 @@
 })();
 </script>
 
-<!-- STANDARDIZED: Step Complete button logic (matches form/app pages) -->
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
   const STEP_ID = "phenolic";
 
-  // Storage keys used by equipment.html (matches your pattern)
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
 
-  // =========================
-  // Firebase sync (optional)
-  // =========================
   async function fbSetStep(eqId, stepId, isDone){
     try{
       if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
@@ -395,6 +406,7 @@
   }
 
   let fbUnsub = null;
+
   async function fbListenStep(eqId, stepId){
     try{
       if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
@@ -417,12 +429,8 @@
     }
   }
 
-  // =========================
-  // Step Complete button
-  // =========================
   const stepBtn = document.getElementById("stepCompleteBtn");
 
-  // Hide immediately until we decide state (prevents flash on load)
   if (stepBtn) stepBtn.style.display = "none";
 
   function usable(){ return !!(eq && STEP_ID); }
@@ -444,7 +452,6 @@
   function refreshStepBtn(){
     if (!stepBtn) return;
 
-    // Show on this page (Phenolic is now a completable step)
     stepBtn.style.display = "inline-flex";
     stepBtn.disabled = !usable();
     stepBtn.title = usable() ? "" : "Missing eq in URL";
@@ -463,7 +470,6 @@
     });
   }
 
-  // keep in sync
   refreshStepBtn();
   window.addEventListener("storage", refreshStepBtn);
   window.addEventListener("focus", refreshStepBtn);
