@@ -6,8 +6,6 @@
 
 <link rel="stylesheet" href="nexus-core.css" />
 <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-<link rel="stylesheet" href="assets/css/nexus-core.css">
-
 <title>Package Readiness</title>
 
 <style>
@@ -289,6 +287,7 @@
 
 <footer class="nx-footer">© 2026 NEXUS Data Science — All Rights Reserved</footer>
 
+<script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 
@@ -322,70 +321,22 @@
   const energizationBtn = document.getElementById("energizationBtn");
   const refreshBtn = document.getElementById("refreshBtn");
 
-  if(eqLine){
-    eqLine.textContent = eq
-      ? ("Equipment: " + eq)
-      : "Equipment: (missing)";
-  }
-
-  if(exportBtn){
-    exportBtn.href = eq
-      ? ("package_export.html?eq=" + encodeURIComponent(eq))
-      : "package_export.html";
-  }
-
-  if(equipmentBtn){
-    equipmentBtn.href = eq
-      ? ("equipment.html?eq=" + encodeURIComponent(eq))
-      : "equipment.html";
-  }
-
-  if(energizationBtn){
-    energizationBtn.href = eq
-      ? ("energization.html?eq=" + encodeURIComponent(eq))
-      : "energization.html";
-  }
-
-  const steps = [
-    {
-      id:"rif",
-      name:"Receipt Inspection Form"
-    },
-    {
-      id:"phenolic",
-      name:"Phenolic Display"
-    },
-    {
-      id:"torque",
-      name:"Torque Application"
-    },
-    {
-      id:"l2",
-      name:"L2 Installation Verification"
-    },
-    {
-      id:"meg",
-      name:"Megohmmeter Testing"
-    },
-    {
-      id:"prefod",
-      name:"Pre-FOD"
-    },
-    {
-      id:"fpv",
-      name:"Finished Product Verification"
-    },
-    {
-      id:"ccs",
-      name:"Construction Check Sheet"
-    }
+  const fallbackSteps = [
+    { id:"rif", label:"Receipt Inspection" },
+    { id:"phenolic", label:"Phenolic Display" },
+    { id:"torque", label:"Torque Application" },
+    { id:"l2", label:"L2 Verification" },
+    { id:"meg", label:"Megohmmeter Testing" },
+    { id:"prefod", label:"Pre-FOD" },
+    { id:"fpv", label:"Finished Product Verification" },
+    { id:"ccs", label:"Construction Check Sheet" }
   ];
 
   function nowTime(){
     return new Date().toLocaleTimeString();
   }
 
-  function stepComplete(step){
+  function localStepComplete(step){
 
     if(step === "ccs"){
       return (
@@ -414,6 +365,58 @@
     return localStorage.getItem(`nexus_${eqSafe}_step_${step}`) === "1";
   }
 
+  function getWorkflowSteps(){
+
+    if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.getAllSteps === "function"){
+      try{
+        return window.NEXUS_WORKFLOW.getAllSteps(eqSafe).map(function(step){
+          return {
+            id: step.id,
+            label: step.label || step.id,
+            complete: !!step.complete
+          };
+        });
+      }catch(e){
+        console.warn("NEXUS_WORKFLOW getAllSteps failed:", e);
+      }
+    }
+
+    return fallbackSteps.map(function(step){
+      return {
+        id: step.id,
+        label: step.label,
+        complete: localStepComplete(step.id)
+      };
+    });
+  }
+
+  function getReadiness(){
+
+    if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.getPackageReadiness === "function"){
+      try{
+        return window.NEXUS_WORKFLOW.getPackageReadiness(eqSafe);
+      }catch(e){
+        console.warn("NEXUS_WORKFLOW readiness failed:", e);
+      }
+    }
+
+    const steps = getWorkflowSteps();
+    const total = steps.length;
+    const complete = steps.filter(function(step){ return step.complete; }).length;
+
+    return {
+      equipment: eqSafe,
+      status: complete === total ? "READY" : "REVIEW",
+      progress: {
+        equipment: eqSafe,
+        total,
+        complete,
+        remaining: total - complete,
+        percent: total ? Math.round((complete / total) * 100) : 0
+      }
+    };
+  }
+
   function badgeClass(status){
 
     if(status === "COMPLETE"){
@@ -431,106 +434,138 @@
     return "badge info";
   }
 
+  function setLinks(){
+
+    if(eqLine){
+      eqLine.textContent = eq
+        ? ("Equipment: " + eq)
+        : "Equipment: (missing)";
+    }
+
+    if(exportBtn){
+      exportBtn.href = eq
+        ? ("package_export.html?eq=" + encodeURIComponent(eq))
+        : "package_export.html";
+    }
+
+    if(equipmentBtn){
+      equipmentBtn.href = eq
+        ? ("equipment.html?eq=" + encodeURIComponent(eq))
+        : "equipment.html";
+    }
+
+    if(energizationBtn){
+      energizationBtn.href = eq
+        ? ("energization.html?eq=" + encodeURIComponent(eq))
+        : "energization.html";
+    }
+
+  }
+
   function render(){
 
-    let complete = 0;
-    let failed = 0;
+    const readiness = getReadiness();
+    const progress = readiness.progress || {};
+    const steps = getWorkflowSteps();
 
-    grid.innerHTML = "";
-    issueList.innerHTML = "";
+    const complete = Number(progress.complete || 0);
+    const total = Number(progress.total || steps.length || 0);
+    const remaining = Number(
+      typeof progress.remaining === "number"
+        ? progress.remaining
+        : Math.max(0, total - complete)
+    );
 
-    steps.forEach(step => {
+    const failed = 0;
+    const packageStatus = readiness.status || (complete === total ? "READY" : "REVIEW");
 
-      const done = stepComplete(step.id);
+    if(grid){
+      grid.innerHTML = "";
+    }
 
-      let status = done ? "COMPLETE" : "REVIEW";
+    if(issueList){
+      issueList.innerHTML = "";
+    }
 
-      if(done){
-        complete++;
+    steps.forEach(function(step){
+
+      const done = !!step.complete;
+      const status = done ? "COMPLETE" : "REVIEW";
+
+      if(grid){
+        const div = document.createElement("div");
+        div.className = "item";
+
+        div.innerHTML =
+          "<div class='item-head'>" +
+            "<div class='name'>" + (step.label || step.id) + "</div>" +
+            "<div class='" + badgeClass(status) + "'>" + status + "</div>" +
+          "</div>" +
+          "<div class='detail'>" +
+            (
+              done
+                ? "Completion proof detected through shared workflow state."
+                : "Step still requires review or completion."
+            ) +
+          "</div>";
+
+        grid.appendChild(div);
       }
 
-      const div = document.createElement("div");
-
-      div.className = "item";
-
-      div.innerHTML =
-        "<div class='item-head'>" +
-          "<div class='name'>" + step.name + "</div>" +
-          "<div class='" + badgeClass(status) + "'>" + status + "</div>" +
-        "</div>" +
-        "<div class='detail'>" +
-          (
-            done
-              ? "Completion proof detected."
-              : "Step still requires review or completion."
-          ) +
-        "</div>";
-
-      grid.appendChild(div);
-
-      if(!done){
-
+      if(!done && issueList){
         const issue = document.createElement("div");
-
         issue.className = "issue warn";
-
         issue.innerHTML =
-          "<b>" + step.name + "</b> — Requires completion or verification.";
-
+          "<b>" + (step.label || step.id) + "</b> — Requires completion or verification.";
         issueList.appendChild(issue);
       }
 
     });
 
-    const total = steps.length;
-    const missing = total - complete - failed;
+    if(completeBox) completeBox.textContent = complete + "/" + total;
+    if(missingBox) missingBox.textContent = String(remaining);
+    if(failedBox) failedBox.textContent = String(failed);
+    if(updatedBox) updatedBox.textContent = nowTime();
 
-    let packageStatus = "REVIEW";
+    if(readyBadge){
+      readyBadge.className =
+        "ready-badge " +
+        (
+          packageStatus === "READY"
+            ? "ready"
+            : "review"
+        );
 
-    if(complete === total){
-      packageStatus = "READY";
+      readyBadge.textContent =
+        packageStatus === "READY"
+          ? "READY FOR ENERGIZATION"
+          : "REVIEW REQUIRED";
     }
 
-    completeBox.textContent = complete + "/" + total;
-    missingBox.textContent = String(missing);
-    failedBox.textContent = String(failed);
-    updatedBox.textContent = nowTime();
+    if(heroSub){
+      heroSub.textContent =
+        window.NEXUS_WORKFLOW
+          ? "Shared workflow state active. Firebase/Vanguard can read this state safely."
+          : "Local workflow readiness mode active.";
+    }
 
-    readyBadge.className =
-      "ready-badge " +
-      (
-        packageStatus === "READY"
-          ? "ready"
-          : "review"
+    if(energizationBtn){
+      energizationBtn.classList.toggle(
+        "locked",
+        packageStatus !== "READY"
       );
 
-    readyBadge.textContent =
-      packageStatus === "READY"
-        ? "READY FOR ENERGIZATION"
-        : "REVIEW REQUIRED";
+      energizationBtn.classList.toggle(
+        "ready",
+        packageStatus === "READY"
+      );
+    }
 
-    heroSub.textContent =
-      "Local workflow readiness mode active.";
-
-    energizationBtn.classList.toggle(
-      "locked",
-      packageStatus !== "READY"
-    );
-
-    energizationBtn.classList.toggle(
-      "ready",
-      packageStatus === "READY"
-    );
-
-    if(!issueList.children.length){
-
+    if(issueList && !issueList.children.length){
       const ok = document.createElement("div");
-
       ok.className = "issue";
-
       ok.textContent =
         "No blocking readiness issues detected.";
-
       issueList.appendChild(ok);
     }
 
@@ -543,6 +578,9 @@
           status:packageStatus,
           complete,
           total,
+          remaining,
+          percent: progress.percent || 0,
+          source:"NEXUS_WORKFLOW",
           updated:Date.now()
         })
       );
@@ -551,14 +589,13 @@
 
   }
 
+  setLinks();
   render();
 
   if(refreshBtn){
-
     refreshBtn.addEventListener("click", function(){
       render();
     });
-
   }
 
   window.addEventListener("storage", function(ev){
@@ -566,6 +603,16 @@
     if(!ev || !ev.key) return;
 
     if(ev.key.indexOf(`nexus_${eqSafe}`) === 0){
+      render();
+    }
+
+  });
+
+  window.addEventListener("nexus-workflow-change", function(ev){
+
+    if(!ev || !ev.detail) return;
+
+    if(!ev.detail.equipment || ev.detail.equipment === eqSafe){
       render();
     }
 
