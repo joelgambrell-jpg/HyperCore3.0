@@ -139,9 +139,6 @@ body{
   </div>
 </div>
 
-<script src="nexus-firebase-live-sync.js"></script>
-<script src="vanguard_registry.js"></script>
-
 <script>
 (function(){
   const qs = new URLSearchParams(location.search);
@@ -164,6 +161,33 @@ body{
   function photoKey(){ return `nexus_${eq||'NO_EQ'}_fpv_photo_blob`; }
   function notesKey(){ return `nexus_${eq||'NO_EQ'}_fpv_photo_notes`; }
   function stepKey(){ return `nexus_${eq||'NO_EQ'}_step_fpv_photo`; }
+  function mainFpvStepKey(){ return `nexus_${eq||'NO_EQ'}_step_fpv`; }
+
+  function workflowSetFpvComplete(on){
+    try{
+      if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.setStepComplete === 'function'){
+        window.NEXUS_WORKFLOW.setStepComplete(eq || 'NO_EQ', 'fpv', !!on);
+      }else{
+        if(on) localStorage.setItem(mainFpvStepKey(), '1');
+        else localStorage.removeItem(mainFpvStepKey());
+      }
+    }catch(e){
+      if(on) localStorage.setItem(mainFpvStepKey(), '1');
+      else localStorage.removeItem(mainFpvStepKey());
+    }
+  }
+
+  function workflowIsFpvComplete(){
+    try{
+      if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.getStepStatus === 'function'){
+        return window.NEXUS_WORKFLOW.getStepStatus(eq || 'NO_EQ', 'fpv') === true;
+      }
+    }catch(e){}
+    return (
+      localStorage.getItem(mainFpvStepKey()) === '1' ||
+      localStorage.getItem(stepKey()) === '1'
+    );
+  }
   function fpvExportKey(){ return `nexus_${eq||'NO_EQ'}_fpv_export`; }
   function fpvValidationKey(){ return `nexus_${eq||'NO_EQ'}_fpv_vanguard_validation`; }
   function fpvPackageKey(){ return `nexus_${eq||'NO_EQ'}_fpv_package_proof`; }
@@ -190,7 +214,7 @@ body{
       hasPhoto: photoSaved,
       dataUrl: photoSaved ? thumb.src : '',
       notes: caption.value || '',
-      stepComplete: localStorage.getItem(stepKey()) === '1',
+      stepComplete: workflowIsFpvComplete(),
       source: 'fpv_photo_capture.html',
       aiStatus: photoSaved ? 'PASS' : 'REVIEW',
       aiReason: photoSaved
@@ -303,15 +327,20 @@ body{
   }
 
   function setCompleteUI(){
-    const done = localStorage.getItem(stepKey()) === '1';
+    const done = workflowIsFpvComplete();
     completeBtn.classList.toggle('complete', done);
     completeBtn.textContent = done ? 'STEP COMPLETE' : 'STEP INCOMPLETE';
   }
 
   function markComplete(on){
     if(!eq){ alert('Missing equipment ID (eq).'); return; }
-    if(on) localStorage.setItem(stepKey(), '1');
-    else localStorage.removeItem(stepKey());
+    if(on){
+      localStorage.setItem(stepKey(), '1');
+      workflowSetFpvComplete(true);
+    }else{
+      localStorage.removeItem(stepKey());
+      workflowSetFpvComplete(false);
+    }
     setCompleteUI();
     publishFpv(on ? 'COMPLETE' : 'REVIEW');
   }
@@ -324,7 +353,7 @@ body{
       thumbWrap.style.display = 'block';
     }
     setCompleteUI();
-    publishFpv(localStorage.getItem(stepKey()) === '1' ? 'COMPLETE' : 'REVIEW');
+    publishFpv(workflowIsFpvComplete() ? 'COMPLETE' : 'REVIEW');
   }
 
   photoInput.addEventListener('change', () => {
@@ -348,11 +377,13 @@ body{
     if (hasImage){
       localStorage.setItem(photoKey(), thumb.src);
       localStorage.setItem(stepKey(), '1');
+      workflowSetFpvComplete(true);
       setCompleteUI();
       await publishFpv('COMPLETE');
       alert('Saved + marked complete.');
     } else {
       localStorage.removeItem(stepKey());
+      workflowSetFpvComplete(false);
       setCompleteUI();
       await publishFpv('REVIEW');
       alert('Saved notes. Add a photo to mark complete.');
@@ -361,7 +392,7 @@ body{
 
   // Manual override toggle remains available
   completeBtn.addEventListener('click', () => {
-    const next = !(localStorage.getItem(stepKey()) === '1');
+    const next = !workflowIsFpvComplete();
     markComplete(next);
   });
 
@@ -387,9 +418,10 @@ body{
 </script>
 
 <footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  © 2026 NEXUS Data Science — All Rights Reserved
 </footer>
 
+<script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
   </div>
