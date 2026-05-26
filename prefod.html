@@ -6,27 +6,35 @@
 
   <link rel="stylesheet" href="nexus-core.css" />
   <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-  <link rel="stylesheet" href="assets/css/nexus-core.css" />
 
   <title>Pre-FOD</title>
 
   <style>
+    *{
+      box-sizing:border-box;
+    }
+
+    html,
     body{
       margin:0;
+      min-height:100%;
       font-family:Arial,Helvetica,sans-serif;
       color:#fff;
       background:#b60000;
-      background-image:url("transformer.jpg");
-      background-repeat:no-repeat;
-      background-position:center center;
-      background-size:cover;
-      background-attachment:fixed;
     }
+
+    body{
+      background:
+        linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+        url("transformer.jpg") center center / cover no-repeat fixed !important;
+    }
+
     .nx-header-wrap{
       background:rgba(0,0,0,0.35);
       border-bottom:1px solid rgba(255,255,255,0.18);
       backdrop-filter:blur(8px);
     }
+
     .nx-header{
       max-width:1100px;
       margin:0 auto;
@@ -34,12 +42,104 @@
       display:flex;
       align-items:center;
     }
+
     .nx-header img{
       height:54px;
       width:auto;
       max-width:100%;
       object-fit:contain;
     }
+
+    .wrap{
+      max-width:900px;
+      margin:26px auto 60px;
+      padding:0 18px;
+    }
+
+    .card{
+      padding:22px;
+      border-radius:22px;
+      background:rgba(0,0,0,.34);
+      border:1px solid rgba(255,255,255,.20);
+      backdrop-filter:blur(10px);
+      text-align:center;
+    }
+
+    h1{
+      margin:0 0 10px;
+      font-size:30px;
+      font-weight:1000;
+    }
+
+    .sub{
+      margin:0 0 18px;
+      font-size:14px;
+      font-weight:850;
+      opacity:.92;
+      line-height:1.4;
+    }
+
+    .status{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:44px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(0,194,255,.14);
+      border:1px solid rgba(0,194,255,.36);
+      color:#dffaff;
+      font-weight:1000;
+      margin-bottom:16px;
+    }
+
+    .ai-note{
+      margin:16px auto 0;
+      max-width:720px;
+      padding:12px 14px;
+      border-radius:16px;
+      background:rgba(0,0,0,.24);
+      border:1px solid rgba(255,255,255,.18);
+      font-size:12px;
+      font-weight:850;
+      line-height:1.4;
+      text-align:left;
+    }
+
+    .ai-note b{
+      color:#7dd3fc;
+    }
+
+    .actions{
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    .btn{
+      padding:12px 16px;
+      font-size:14px;
+      font-weight:900;
+      border-radius:999px;
+      color:#3ecbff;
+      background:#0a0f24;
+      border:2px solid #00c2ff;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      user-select:none;
+    }
+
+    .btn.secondary{
+      background:rgba(0,0,0,0.22);
+      color:#fff;
+      border:2px solid rgba(255,255,255,0.35);
+    }
+
     .nx-footer{
       margin-top:40px;
       padding:18px 12px;
@@ -62,6 +162,7 @@
       <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
       <span class="nx-pill" data-nx-status>Opening Pre-FOD…</span>
     </div>
+
     <div class="nx-right">
       <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
         <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
@@ -78,24 +179,54 @@
   <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
 
   <div class="nx-header-wrap">
-    <div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div>
+    <div class="nx-header">
+      <img src="nexus.png" alt="NEXUS" />
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>Pre-FOD</h1>
+
+      <div class="status" id="openStatus">
+        Opening Pre-FOD Verification…
+      </div>
+
+      <p class="sub">
+        This launcher preserves equipment context and routes into the stabilized Pre-FOD digital checklist.
+      </p>
+
+      <div class="actions">
+        <a class="btn" id="openNowBtn" href="#">Open Pre-FOD Now</a>
+        <a class="btn secondary" id="backBtn" href="#">Back to Equipment</a>
+      </div>
+
+      <div class="ai-note">
+        <b>Vanguard-ready:</b>
+        Future AI validation will check Pre-FOD readiness, foreign object risk, checklist completion, photo evidence, inspection link status, and package export proof before allowing final readiness.
+      </div>
+    </div>
   </div>
 
   <footer class="nx-footer">
-    © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+    © 2026 NEXUS Data Science — All Rights Reserved
   </footer>
 
 </div>
 
+<script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
-<script src="nexus-firebase-live-sync.js"></script>
-<script src="vanguard_registry.js"></script>
 
 <script>
 (function(){
+
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
+
+  const openStatus = document.getElementById("openStatus");
+  const openNowBtn = document.getElementById("openNowBtn");
+  const backBtn = document.getElementById("backBtn");
 
   try{
     if(eq){
@@ -111,13 +242,27 @@
     }
   }catch(e){}
 
+  const target = new URL("form.html", location.href);
+  target.searchParams.set("id", "prefod");
+
+  if(eq){
+    target.searchParams.set("eq", eq);
+  }
+
+  const targetHref =
+    target.pathname.split("/").pop() + target.search;
+
+  if(openNowBtn){
+    openNowBtn.href = targetHref;
+  }
+
+  if(backBtn){
+    backBtn.href = eq
+      ? "equipment.html?eq=" + encodeURIComponent(eq)
+      : "equipment.html";
+  }
+
   window.NEXUS_back = function(){
-    try{
-      if(document.referrer && document.referrer.indexOf(location.host) !== -1){
-        history.back();
-        return false;
-      }
-    }catch(e){}
 
     location.href = eq
       ? "equipment.html?eq=" + encodeURIComponent(eq)
@@ -130,39 +275,38 @@
     eq: eq || "NO_EQ",
     section: "prefod_launcher",
     status: "OPENING",
-    target: "form.html?id=prefod",
+    target: targetHref,
+    mode: "local-workflow-safe",
     updatedAt: new Date().toISOString()
   };
 
   try{
-    localStorage.setItem("nexus_" + (eq || "NO_EQ") + "_prefod_launcher_v1", JSON.stringify(payload));
+    localStorage.setItem(
+      "nexus_" + (eq || "NO_EQ") + "_prefod_launcher_v1",
+      JSON.stringify(payload)
+    );
   }catch(e){}
 
   try{
-    if(window.NexusLiveSync && eq){
-      window.NexusLiveSync.save(eq, "prefodLauncher", payload);
+    const statusNode = document.querySelector("[data-nx-status]");
+    if(statusNode){
+      statusNode.textContent = "Opening Pre-FOD";
+    }
+
+    const eqNode = document.querySelector("[data-nx-eq]");
+    if(eqNode){
+      eqNode.textContent = eq || "(none)";
     }
   }catch(e){}
 
-  try{
-    if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.addValidationLog === "function"){
-      window.NEXUS_VANGUARD.addValidationLog(eq || "NO_EQ", {
-        section: "prefod",
-        status: "REVIEW",
-        event: "prefod_launcher_opened",
-        message: "Pre-FOD launcher opened and redirected to form.html?id=prefod.",
-        updatedAt: payload.updatedAt
-      });
-    }
-  }catch(e){}
-
-  const u = new URL("form.html", location.href);
-  u.searchParams.set("id", "prefod");
-  if(eq) u.searchParams.set("eq", eq);
+  if(openStatus){
+    openStatus.textContent = "Opening Pre-FOD Verification…";
+  }
 
   setTimeout(function(){
-    location.replace(u.pathname.split("/").pop() + u.search);
-  }, 150);
+    location.replace(targetHref);
+  }, 250);
+
 })();
 </script>
 
