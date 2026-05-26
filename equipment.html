@@ -1009,8 +1009,8 @@ body{
     background:
       radial-gradient(circle at 14% -6%, rgba(0,194,255,.22), transparent 34%),
       radial-gradient(circle at 88% 6%, rgba(255,212,0,.10), transparent 30%),
-      linear-gradient(135deg,#020617 0%,#07111f 48%,#0c1728 100%) !important;
-    background-attachment:fixed !important;
+      linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+      url("transformer.jpg") center center / cover no-repeat fixed !important;
     color:#f8fbff !important;
   }
 
@@ -1024,7 +1024,12 @@ body{
     background-size:46px 46px;
     opacity:.38;
     pointer-events:none;
-    z-index:-1;
+    z-index:0;
+  }
+
+  .nexus-page{
+    position:relative;
+    z-index:1;
   }
 
   .nx-header-wrap{
@@ -1531,7 +1536,6 @@ body{
 
 </style>
 
-<link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 
 <body>
