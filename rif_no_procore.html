@@ -4,8 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-  <link rel="stylesheet" href="nexus-core.css" />
-  <link rel="stylesheet" href="nexus-core.print.css" media="print" />
+<link rel="stylesheet" href="nexus-core.css" />
+<link rel="stylesheet" href="nexus-core.print.css" media="print" />
+
 <title>RIF (Receipt Inspection Form) • No Procore</title>
 
 <style>
@@ -17,14 +18,22 @@
     --btn-txt:#3ecbff;
     --accent:#00c2ff;
   }
+
   *{box-sizing:border-box;}
-  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:var(--bg);}
+
+  html,
   body{
-    background-image:url("transformer.jpg");
-    background-repeat:no-repeat;
-    background-position:center center;
-    background-size:cover;
-    background-attachment:fixed;
+    margin:0;
+    min-height:100%;
+    font-family:Arial,Helvetica,sans-serif;
+    color:#fff;
+    background:var(--bg);
+  }
+
+  body{
+    background:
+      linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)),
+      url("transformer.jpg") center center / cover no-repeat fixed !important;
   }
 
   .nx-header-wrap{
@@ -32,6 +41,7 @@
     border-bottom: 1px solid rgba(255,255,255,0.18);
     backdrop-filter: blur(8px);
   }
+
   .nx-header{
     max-width: 1100px;
     margin: 0 auto;
@@ -39,9 +49,19 @@
     display: flex;
     align-items: center;
   }
-  .nx-header img{ height: 54px; width:auto; object-fit:contain; }
 
-  .wrap{max-width:1100px;margin:18px auto 60px;padding:0 18px;}
+  .nx-header img{
+    height: 54px;
+    width:auto;
+    object-fit:contain;
+  }
+
+  .wrap{
+    max-width:1100px;
+    margin:18px auto 60px;
+    padding:0 18px;
+  }
+
   .card{
     background: var(--panel);
     border: 1px solid var(--line);
@@ -50,12 +70,42 @@
     backdrop-filter: blur(10px);
   }
 
-  h1{margin:0 0 6px;font-size:28px;font-weight:900;text-shadow:0 4px 18px rgba(0,0,0,.35);}
-  .sub{margin:0 0 12px;font-weight:900;opacity:.95;}
+  h1{
+    margin:0 0 6px;
+    font-size:28px;
+    font-weight:900;
+    text-shadow:0 4px 18px rgba(0,0,0,.35);
+  }
 
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:10px 0 14px;}
-  .left-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-  .right-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-end;}
+  .sub{
+    margin:0 0 12px;
+    font-weight:900;
+    opacity:.95;
+  }
+
+  .row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    margin:10px 0 14px;
+  }
+
+  .left-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .right-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-end;
+  }
 
   .btn{
     padding:12px 16px;
@@ -73,17 +123,37 @@
     user-select:none;
     gap:10px;
   }
+
   .btn.secondary{
     background: rgba(0,0,0,0.22);
     color:#fff;
     border:2px solid rgba(255,255,255,0.35);
   }
-  .btn:disabled{opacity:.55;cursor:not-allowed;}
+
+  .btn:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+  }
 
   .chip{
-    padding:8px 12px;border-radius:999px;font-weight:900;
+    padding:8px 12px;
+    border-radius:999px;
+    font-weight:900;
     border:1px solid rgba(255,255,255,0.25);
     background:rgba(0,0,0,0.22);
+  }
+
+  .chip.complete{
+    color:#002b14;
+    background:#00ff66;
+    border-color:#00ff66;
+    box-shadow:0 0 14px rgba(0,255,102,.45);
+  }
+
+  .chip.review{
+    color:#fff4cc;
+    background:rgba(255,184,0,.22);
+    border-color:rgba(255,184,0,.45);
   }
 
   .doc-sheet{
@@ -101,30 +171,74 @@
     overflow:hidden;
     background:#fff;
   }
+
   .sec-head{
-    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
     padding:12px 12px;
     background: rgba(0,0,0,0.04);
     border-bottom:1px solid rgba(0,0,0,0.08);
     font-weight:900;
   }
-  .sec-head small{font-weight:800;opacity:.75;}
-  .sec-body{padding:12px;}
 
-  table{width:100%;border-collapse:collapse;table-layout:fixed;}
-  th,td{border:1px solid rgba(0,0,0,0.14);padding:10px;vertical-align:top;font-size:13px;}
-  th{background: rgba(0,0,0,0.05);text-align:left;font-weight:900;}
-  td .desc{line-height:1.35;}
+  .sec-head small{
+    font-weight:800;
+    opacity:.75;
+  }
 
-  .col-step{width:92px;text-align:center;font-weight:900;}
-  .col-status{width:220px;}
-  .col-note{width:260px;}
+  .sec-body{
+    padding:12px;
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+
+  th,
+  td{
+    border:1px solid rgba(0,0,0,0.14);
+    padding:10px;
+    vertical-align:top;
+    font-size:13px;
+  }
+
+  th{
+    background: rgba(0,0,0,0.05);
+    text-align:left;
+    font-weight:900;
+  }
+
+  td .desc{
+    line-height:1.35;
+  }
+
+  .col-step{
+    width:92px;
+    text-align:center;
+    font-weight:900;
+  }
+
+  .col-status{
+    width:220px;
+  }
+
+  .col-note{
+    width:260px;
+  }
+
   @media (max-width: 900px){
     .col-status{width:180px;}
     .col-note{width:200px;}
   }
 
-  select,input[type="text"],input[type="date"],input[type="number"]{
+  select,
+  input[type="text"],
+  input[type="date"],
+  input[type="number"]{
     width:100%;
     padding:10px 10px;
     border-radius:12px;
@@ -141,11 +255,15 @@
     grid-template-columns: 1fr 1fr 1fr;
     gap:10px;
   }
-  @media (max-width: 900px){ .grid-3{grid-template-columns:1fr;} }
 
-  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+  @media (max-width: 900px){
+    .grid-3{grid-template-columns:1fr;}
+  }
 
-  /* details/summary (Metadata dropdown) */
+  .mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+  }
+
   details.nx-details{
     margin-top:12px;
     border:1px solid rgba(0,0,0,0.10);
@@ -153,6 +271,7 @@
     overflow:hidden;
     background:#fff;
   }
+
   details.nx-details summary{
     list-style:none;
     cursor:pointer;
@@ -165,20 +284,65 @@
     background: rgba(0,0,0,0.04);
     font-weight:900;
   }
-  details.nx-details summary::-webkit-details-marker{ display:none; }
+
+  details.nx-details summary::-webkit-details-marker{
+    display:none;
+  }
+
   details.nx-details summary .hint{
     font-weight:800;
     opacity:.75;
     font-size:12px;
   }
-  details.nx-details .inner{ padding:12px; }
+
+  details.nx-details .inner{
+    padding:12px;
+  }
+
+  .rif-ai-note{
+    margin-top:12px;
+    padding:12px 12px;
+    border-radius:14px;
+    background:rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.18);
+    color:#fff;
+    font-size:12px;
+    font-weight:850;
+    line-height:1.4;
+  }
+
+  .rif-ai-note b{
+    color:#7dd3fc;
+  }
 
   @media print{
-    .btn,.chip,.nx-back-btn,.nx-header-wrap,.nx-footer{ display:none !important; }
-    body{ background:#fff !important; }
-    .card{ background:#fff !important; border:none !important; }
-    .wrap{ margin:0 !important; max-width:none !important; padding:0 !important; }
-    details.nx-details{ display:none !important; } /* hide metadata in PDF */
+    .btn,
+    .chip,
+    .nx-back-btn,
+    .nx-header-wrap,
+    .nx-footer,
+    .rif-ai-note{
+      display:none !important;
+    }
+
+    body{
+      background:#fff !important;
+    }
+
+    .card{
+      background:#fff !important;
+      border:none !important;
+    }
+
+    .wrap{
+      margin:0 !important;
+      max-width:none !important;
+      padding:0 !important;
+    }
+
+    details.nx-details{
+      display:none !important;
+    }
   }
 
   .nx-footer{
@@ -193,11 +357,11 @@
   }
 </style>
 
-<link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 
 <body>
   <div class="nexus-page">
+
 <div id="nxSessionBanner" class="nx-session-banner">
   <div class="nx-left">
     <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
@@ -242,6 +406,7 @@
       </div>
       <div class="right-actions">
         <span class="chip" id="rifIdChip">RIF: —</span>
+        <span class="chip review" id="workflowChip">Workflow: Review</span>
         <span class="chip" id="saveChip">Not saved</span>
         <button class="btn" id="saveBtn" type="button">Save</button>
         <button class="btn secondary" id="printBtn" type="button">Export PDF</button>
@@ -329,7 +494,6 @@
         </div>
       </div>
 
-      <!-- Metadata (HIDDEN by default, dropdown only) -->
       <details class="nx-details" id="metaDetails">
         <summary>
           <span>Metadata</span>
@@ -342,7 +506,10 @@
           <div>Updated: <span class="mono" id="metaUpdated">—</span></div>
         </div>
       </details>
+    </div>
 
+    <div class="rif-ai-note" id="rifAiNote">
+      <b>Vanguard-ready:</b> This page is wired for shared workflow completion now. Future AI checks will compare receipt data against approved submittals, drawings, serial/model requirements, accessories, and spare parts before recommending pass/review/fail.
     </div>
 
     <div class="row" style="margin-top:14px;">
@@ -359,7 +526,7 @@
 </div>
 
 <footer class="nx-footer">
-  © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+  © 2026 NEXUS Data Science — All Rights Reserved
 </footer>
 
 <script>
@@ -367,29 +534,39 @@
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
 
-  // Back links
   const backHref = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "index.html";
   document.getElementById("backTopBtn").href = backHref;
   document.getElementById("backBottomBtn").href = backHref;
 
-  // Label
   const eqLabel = document.getElementById("eqLabel");
-  if (eqLabel) eqLabel.textContent = eq ? `Mission Critical Program • Equipment: ${eq}` : "Mission Critical Program";
+  if(eqLabel){
+    eqLabel.textContent = eq
+      ? `Mission Critical Program • Equipment: ${eq}`
+      : "Mission Critical Program";
+  }
 
-  // Role rank
-  const ROLE_RANK = { viewer:0, tech:1, foreman:2, superintendent:3, admin:4 };
+  const workflowChip = document.getElementById("workflowChip");
+
+  const ROLE_RANK = {
+    viewer:0,
+    tech:1,
+    foreman:2,
+    superintendent:3,
+    admin:4
+  };
+
   function getCurrentRole(){
     try{
-      if (window.NEXUS && typeof window.NEXUS.getRole === "function"){
+      if(window.NEXUS && typeof window.NEXUS.getRole === "function"){
         return window.NEXUS.getRole() || "viewer";
       }
     }catch(e){}
+
     const sel = document.getElementById("nxRoleSelect");
     return (sel && sel.value) ? sel.value : "viewer";
   }
 
-  // ========= Firebase-ready storage adapter =========
-  const STORAGE_MODE = "local"; // "firebase" later
+  const STORAGE_MODE = "local";
 
   const RifStore = (() => {
     const local = {
@@ -408,19 +585,24 @@
     };
 
     const firebase = {
-      async load(_docKey){ throw new Error("Firebase not configured yet"); },
-      async save(_docKey, _doc){ throw new Error("Firebase not configured yet"); },
-      async remove(_docKey){ throw new Error("Firebase not configured yet"); }
+      async load(_docKey){
+        throw new Error("Firebase not configured yet");
+      },
+      async save(_docKey, _doc){
+        throw new Error("Firebase not configured yet");
+      },
+      async remove(_docKey){
+        throw new Error("Firebase not configured yet");
+      }
     };
 
     return (STORAGE_MODE === "firebase") ? firebase : local;
   })();
 
   function getDocKey(eqVal, rifId){
-    return `nexus/equipment/${(eqVal||"NO_EQ")}/rifs/${(rifId||"NO_RIF")}`;
+    return `nexus/equipment/${(eqVal || "NO_EQ")}/rifs/${(rifId || "NO_RIF")}`;
   }
 
-  // ========= RIF definition =========
   const FIELD_DEFS = [
     ["1.1","Serial Number","text"],
     ["1.2","Date of Manufacture","date"],
@@ -457,7 +639,6 @@
     ["2.9","RIF checks complete and observation created for any identified issues."]
   ];
 
-  // ========= State =========
   let state = {
     meta: {
       schema: "rif_v1",
@@ -469,7 +650,11 @@
       createdBy: null,
       updatedBy: null
     },
-    header: { type:"", quality:"", location:"" },
+    header: {
+      type:"",
+      quality:"",
+      location:""
+    },
     fields: {},
     checks: {}
   };
@@ -479,17 +664,97 @@
   const docKeyPreview = document.getElementById("docKeyPreview");
   const resetBtn = document.getElementById("resetBtn");
 
-  function markUnsaved(){ saveChip.textContent = "Unsaved"; }
+  function markUnsaved(){
+    saveChip.textContent = "Unsaved";
+    saveChip.classList.remove("complete");
+    saveChip.classList.add("review");
+  }
+
+  function updateWorkflowChip(){
+    if(!workflowChip) return;
+
+    let done = false;
+
+    try{
+      if(window.NEXUS_WORKFLOW && eq){
+        done = window.NEXUS_WORKFLOW.getStepStatus(eq, "rif");
+      }else if(eq){
+        done = localStorage.getItem(`nexus_${eq}_step_rif`) === "1";
+      }
+    }catch(e){}
+
+    workflowChip.classList.toggle("complete", done);
+    workflowChip.classList.toggle("review", !done);
+    workflowChip.textContent = done
+      ? "Workflow: RIF Complete"
+      : "Workflow: Review";
+  }
+
+  function markWorkflowComplete(){
+    if(!eq) return;
+
+    try{
+      if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.setStepComplete === "function"){
+        window.NEXUS_WORKFLOW.setStepComplete(eq, "rif", true);
+      }else{
+        localStorage.setItem(`nexus_${eq}_step_rif`, "1");
+      }
+    }catch(e){
+      try{
+        localStorage.setItem(`nexus_${eq}_step_rif`, "1");
+      }catch(_e){}
+    }
+
+    updateWorkflowChip();
+  }
+
+  function clearWorkflowComplete(){
+    if(!eq) return;
+
+    try{
+      if(window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.setStepComplete === "function"){
+        window.NEXUS_WORKFLOW.setStepComplete(eq, "rif", false);
+      }else{
+        localStorage.removeItem(`nexus_${eq}_step_rif`);
+      }
+    }catch(e){
+      try{
+        localStorage.removeItem(`nexus_${eq}_step_rif`);
+      }catch(_e){}
+    }
+
+    updateWorkflowChip();
+  }
+
+  function writeVanguardRifNote(){
+    if(!eq) return;
+
+    try{
+      const key = `nexus_${eq}_rif_vanguard_validation`;
+      const payload = {
+        equipment: eq,
+        section: "rif",
+        status: "CAPTURED",
+        aiStatus: "READY_FOR_REVIEW",
+        aiReason: "RIF data has been saved locally. Future Vanguard validation should compare this receipt data against approved submittals, drawings, accessories, spare parts, and equipment identity requirements.",
+        source: "RIF.html",
+        updatedAt: new Date().toISOString()
+      };
+
+      localStorage.setItem(key, JSON.stringify(payload));
+    }catch(e){}
+  }
 
   function newRifId(){
     const d = new Date();
     const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
+    const m = String(d.getMonth() + 1).padStart(2,"0");
     const day = String(d.getDate()).padStart(2,"0");
     const dateKey = `${y}${m}${day}`;
 
     const seqKey = `nexus_rif_seq_${dateKey}`;
     const seq = (parseInt(localStorage.getItem(seqKey) || "0", 10) + 1);
+
     localStorage.setItem(seqKey, String(seq));
 
     return `RIF-${dateKey}-${String(seq).padStart(3,"0")}`;
@@ -497,32 +762,41 @@
 
   function ensureRifId(){
     const rifParam = (qs.get("rif") || "").trim();
-    if (rifParam){
+
+    if(rifParam){
       state.meta.rifId = rifParam;
     }else{
       state.meta.rifId = state.meta.rifId || newRifId();
       qs.set("rif", state.meta.rifId);
       history.replaceState(null, "", `${location.pathname}?${qs.toString()}`);
     }
+
     rifIdChip.textContent = `RIF: ${state.meta.rifId}`;
     docKeyPreview.textContent = getDocKey(eq, state.meta.rifId);
   }
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#39;"
     }[m]));
   }
 
   function buildCheckSelect(value){
     const sel = document.createElement("select");
+
     sel.innerHTML = `
       <option value="">Select…</option>
       <option value="pass">Pass</option>
       <option value="fail">Fail</option>
       <option value="na">N/A</option>
     `;
+
     sel.value = value || "";
+
     return sel;
   }
 
@@ -535,9 +809,20 @@
     qualEl.value = state.header.quality || "";
     locEl.value  = state.header.location || "";
 
-    typeEl.addEventListener("input", () => { state.header.type = typeEl.value; markUnsaved(); });
-    qualEl.addEventListener("input", () => { state.header.quality = qualEl.value; markUnsaved(); });
-    locEl.addEventListener("input", () => { state.header.location = locEl.value; markUnsaved(); });
+    typeEl.addEventListener("input", () => {
+      state.header.type = typeEl.value;
+      markUnsaved();
+    });
+
+    qualEl.addEventListener("input", () => {
+      state.header.quality = qualEl.value;
+      markUnsaved();
+    });
+
+    locEl.addEventListener("input", () => {
+      state.header.location = locEl.value;
+      markUnsaved();
+    });
   }
 
   function renderFields(){
@@ -545,7 +830,10 @@
     tb.innerHTML = "";
 
     FIELD_DEFS.forEach(([step,label,type]) => {
-      const saved = state.fields[step] || { value:"", note:"" };
+      const saved = state.fields[step] || {
+        value:"",
+        note:""
+      };
 
       const tr = document.createElement("tr");
 
@@ -558,18 +846,22 @@
 
       const tdVal = document.createElement("td");
       tdVal.className = "col-status";
+
       const inp = document.createElement("input");
       inp.type = (type === "date") ? "date" : (type === "number" ? "number" : "text");
       inp.value = saved.value || "";
       inp.placeholder = (type === "date") ? "" : "Enter…";
+
       tdVal.appendChild(inp);
 
       const tdNote = document.createElement("td");
       tdNote.className = "col-note";
+
       const note = document.createElement("input");
       note.type = "text";
       note.placeholder = "Optional note…";
       note.value = saved.note || "";
+
       tdNote.appendChild(note);
 
       inp.addEventListener("input", () => {
@@ -577,6 +869,7 @@
         state.fields[step].value = inp.value;
         markUnsaved();
       });
+
       note.addEventListener("input", () => {
         state.fields[step] = state.fields[step] || {};
         state.fields[step].note = note.value;
@@ -587,6 +880,7 @@
       tr.appendChild(tdDesc);
       tr.appendChild(tdVal);
       tr.appendChild(tdNote);
+
       tb.appendChild(tr);
     });
   }
@@ -596,7 +890,10 @@
     tb.innerHTML = "";
 
     CHECK_DEFS.forEach(([step,text]) => {
-      const saved = state.checks[step] || { result:"", note:"" };
+      const saved = state.checks[step] || {
+        result:"",
+        note:""
+      };
 
       const tr = document.createElement("tr");
 
@@ -609,15 +906,18 @@
 
       const tdStatus = document.createElement("td");
       tdStatus.className = "col-status";
+
       const sel = buildCheckSelect(saved.result);
       tdStatus.appendChild(sel);
 
       const tdNote = document.createElement("td");
       tdNote.className = "col-note";
+
       const note = document.createElement("input");
       note.type = "text";
       note.placeholder = "Optional note…";
       note.value = saved.note || "";
+
       tdNote.appendChild(note);
 
       sel.addEventListener("change", () => {
@@ -626,6 +926,7 @@
         markUnsaved();
         renderExceptions();
       });
+
       note.addEventListener("input", () => {
         state.checks[step] = state.checks[step] || {};
         state.checks[step].note = note.value;
@@ -637,49 +938,74 @@
       tr.appendChild(tdDesc);
       tr.appendChild(tdStatus);
       tr.appendChild(tdNote);
+
       tb.appendChild(tr);
     });
   }
 
   function renderExceptions(){
     const failures = [];
+
     CHECK_DEFS.forEach(([step,text]) => {
       const c = state.checks[step] || {};
-      if (c.result === "fail"){
-        failures.push({ step, text, note: c.note || "" });
+
+      if(c.result === "fail"){
+        failures.push({
+          step,
+          text,
+          note: c.note || ""
+        });
       }
     });
 
     const countEl = document.getElementById("exceptionsCount");
     const listEl  = document.getElementById("exceptionsList");
 
-    if (!failures.length){
+    if(!failures.length){
       countEl.textContent = "0 exceptions";
       listEl.textContent = "No failed items.";
       return;
     }
 
-    countEl.textContent = `${failures.length} exception${failures.length===1?"":"s"}`;
+    countEl.textContent = `${failures.length} exception${failures.length === 1 ? "" : "s"}`;
+
     listEl.innerHTML = failures.map(f =>
-      `<div style="margin:6px 0;"><b>${f.step}</b> — ${f.text}${f.note?`<br><span style="opacity:.85;">Remarks: ${escapeHtml(f.note)}</span>`:""}</div>`
+      `<div style="margin:6px 0;"><b>${f.step}</b> — ${f.text}${f.note ? `<br><span style="opacity:.85;">Remarks: ${escapeHtml(f.note)}</span>` : ""}</div>`
     ).join("");
   }
 
   function renderMeta(){
     const s = state.meta || {};
-    document.getElementById("metaSchema").textContent = s.schema || "—";
-    document.getElementById("metaStatus").textContent = s.status || "—";
-    document.getElementById("metaCreated").textContent = s.createdAt ? `${s.createdAt} (${s.createdBy||"—"})` : "—";
-    document.getElementById("metaUpdated").textContent = s.updatedAt ? `${s.updatedAt} (${s.updatedBy||"—"})` : "—";
+
+    document.getElementById("metaSchema").textContent =
+      s.schema || "—";
+
+    document.getElementById("metaStatus").textContent =
+      s.status || "—";
+
+    document.getElementById("metaCreated").textContent =
+      s.createdAt ? `${s.createdAt} (${s.createdBy || "—"})` : "—";
+
+    document.getElementById("metaUpdated").textContent =
+      s.updatedAt ? `${s.updatedAt} (${s.updatedBy || "—"})` : "—";
   }
 
   async function readState(){
     ensureRifId();
+
     const dk = getDocKey(eq, state.meta.rifId);
     const doc = await RifStore.load(dk);
-    if (doc && typeof doc === "object"){
-      state = { ...state, ...doc };
-      state.meta = { ...state.meta, eq: eq || state?.meta?.eq || null };
+
+    if(doc && typeof doc === "object"){
+      state = {
+        ...state,
+        ...doc
+      };
+
+      state.meta = {
+        ...state.meta,
+        eq: eq || state?.meta?.eq || null
+      };
     }
   }
 
@@ -689,53 +1015,65 @@
 
     state.meta.eq = eq || state.meta.eq || null;
     state.meta.schema = state.meta.schema || "rif_v1";
-    state.meta.status = state.meta.status || "draft";
+    state.meta.status = state.meta.status || "complete";
 
-    if (!state.meta.createdAt) state.meta.createdAt = now;
-    if (!state.meta.createdBy) state.meta.createdBy = role;
+    if(!state.meta.createdAt){
+      state.meta.createdAt = now;
+    }
+
+    if(!state.meta.createdBy){
+      state.meta.createdBy = role;
+    }
 
     state.meta.updatedAt = now;
     state.meta.updatedBy = role;
 
     ensureRifId();
+
     const dk = getDocKey(eq, state.meta.rifId);
 
     try{
       await RifStore.save(dk, state);
+
+      markWorkflowComplete();
+      writeVanguardRifNote();
+
       saveChip.textContent = "Saved";
+      saveChip.classList.remove("review");
+      saveChip.classList.add("complete");
+
       renderMeta();
     }catch(e){
       saveChip.textContent = "Save failed";
+      saveChip.classList.remove("complete");
+      saveChip.classList.add("review");
       console.error(e);
     }
   }
 
-  // Top Save
   document.getElementById("saveBtn").addEventListener("click", async () => {
     await writeState();
     renderExceptions();
   });
 
-  // Top Export PDF
   document.getElementById("printBtn").addEventListener("click", async () => {
     await writeState();
     window.print();
   });
 
-  // Bottom Save (same function)
   document.getElementById("saveBtnBottom").addEventListener("click", async () => {
     await writeState();
     renderExceptions();
   });
 
-  // Bottom Export PDF (same function)
   document.getElementById("printBtnBottom").addEventListener("click", async () => {
     await writeState();
     window.print();
   });
 
   resetBtn.addEventListener("click", async () => {
-    if (!confirm("Reset all RIF fields/checks and clear saved data for this RIF?")) return;
+    if(!confirm("Reset all RIF fields/checks and clear saved data for this RIF?")) return;
+
     const rifId = state?.meta?.rifId;
     const dk = getDocKey(eq, rifId);
 
@@ -750,19 +1088,35 @@
         createdBy: null,
         updatedBy: null
       },
-      header: { type:"", quality:"", location:"" },
+      header: {
+        type:"",
+        quality:"",
+        location:""
+      },
       fields: {},
       checks: {}
     };
 
-    try{ await RifStore.remove(dk); }catch(e){}
+    try{
+      await RifStore.remove(dk);
+    }catch(e){}
+
+    clearWorkflowComplete();
+
     init(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
   });
 
   async function init(skipLoad){
     ensureRifId();
-    if (!skipLoad) await readState();
+
+    if(!skipLoad){
+      await readState();
+    }
 
     rifIdChip.textContent = `RIF: ${state.meta.rifId || "—"}`;
     docKeyPreview.textContent = getDocKey(eq, state.meta.rifId);
@@ -774,10 +1128,20 @@
     renderMeta();
 
     saveChip.textContent = skipLoad ? "Reset" : "Loaded";
-    // keep metadata collapsed by default
+    saveChip.classList.remove("complete");
+    saveChip.classList.add("review");
+
+    updateWorkflowChip();
+
     const metaDetails = document.getElementById("metaDetails");
-    if (metaDetails) metaDetails.open = false;
+    if(metaDetails){
+      metaDetails.open = false;
+    }
   }
+
+  window.addEventListener("storage", updateWorkflowChip);
+  window.addEventListener("focus", updateWorkflowChip);
+  window.addEventListener("pageshow", updateWorkflowChip);
 
   init(false);
 })();
@@ -788,14 +1152,20 @@
   window.NEXUS_back = function(){
     const qs = new URLSearchParams(location.search);
     const eq = qs.get("eq");
-    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+
+    location.href = eq
+      ? `equipment.html?eq=${encodeURIComponent(eq)}`
+      : "equipment.html";
+
     return false;
   };
 })();
 </script>
 
+<script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
+
   </div>
 </body>
 </html>
