@@ -383,23 +383,56 @@
   const eq = (qs.get("eq") || "").trim();
   const STEP_ID = "phenolic";
 
-  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
-  function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
+  function localStepKey(stepId){
+    return `nexus_${eq || "NO_EQ"}_step_${stepId}`;
+  }
+
+  function landingKey(){
+    return `nexus_${eq || "NO_EQ"}_landing_complete`;
+  }
+
+  function workflowAvailable(){
+    return !!(
+      window.NEXUS_WORKFLOW &&
+      typeof window.NEXUS_WORKFLOW.getStepStatus === "function" &&
+      typeof window.NEXUS_WORKFLOW.setStepComplete === "function"
+    );
+  }
+
+  function usable(){
+    return !!(eq && STEP_ID);
+  }
+
+  function done(){
+    if(!usable()) return false;
+
+    if(workflowAvailable()){
+      return window.NEXUS_WORKFLOW.getStepStatus(eq, STEP_ID) === true;
+    }
+
+    return localStorage.getItem(localStepKey(STEP_ID)) === "1";
+  }
 
   async function fbSetStep(eqId, stepId, isDone){
     try{
       if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+
       const { db, auth } = window.NEXUS_FB;
 
       const { doc, setDoc, serverTimestamp } =
         await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
 
       const ref = doc(db, "equipment", eqId, "steps", stepId);
+
       await setDoc(ref, {
         done: !!isDone,
+        status: isDone ? "COMPLETE" : "REVIEW",
         updatedAt: serverTimestamp(),
-        updatedBy: auth?.currentUser?.uid || null
+        updatedBy: auth?.currentUser?.uid || null,
+        source: "phenolic_display.html",
+        localStorageKey: localStepKey(stepId)
       }, { merge:true });
+
     }catch(e){
       console.warn("Firebase step sync failed:", e);
     }
@@ -410,6 +443,7 @@
   async function fbListenStep(eqId, stepId){
     try{
       if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+
       const { db } = window.NEXUS_FB;
 
       const { doc, onSnapshot } =
@@ -419,11 +453,20 @@
 
       fbUnsub = onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
+
         const data = snap.data() || {};
-        if (data.done) localStorage.setItem(stepKey(stepId), "1");
-        else localStorage.removeItem(stepKey(stepId));
+        const nextDone = !!data.done;
+
+        if(workflowAvailable()){
+          window.NEXUS_WORKFLOW.setStepComplete(eqId, stepId, nextDone);
+        }else{
+          if(nextDone) localStorage.setItem(localStepKey(stepId), "1");
+          else localStorage.removeItem(localStepKey(stepId));
+        }
+
         refreshStepBtn();
       });
+
     }catch(e){
       console.warn("Firebase listener failed:", e);
     }
@@ -431,19 +474,22 @@
 
   const stepBtn = document.getElementById("stepCompleteBtn");
 
-  if (stepBtn) stepBtn.style.display = "none";
-
-  function usable(){ return !!(eq && STEP_ID); }
-  function done(){ return !!(eq && STEP_ID && localStorage.getItem(stepKey(STEP_ID)) === "1"); }
+  if (stepBtn){
+    stepBtn.style.display = "none";
+  }
 
   async function setDoneState(nextDone){
     if (!usable()) return;
 
-    if (nextDone){
-      localStorage.setItem(stepKey(STEP_ID), "1");
+    if(workflowAvailable()){
+      window.NEXUS_WORKFLOW.setStepComplete(eq, STEP_ID, nextDone);
+    }else{
+      if(nextDone) localStorage.setItem(localStepKey(STEP_ID), "1");
+      else localStorage.removeItem(localStepKey(STEP_ID));
+    }
+
+    if(nextDone){
       localStorage.setItem(landingKey(), "1");
-    } else {
-      localStorage.removeItem(stepKey(STEP_ID));
     }
 
     await fbSetStep(eq, STEP_ID, nextDone);
@@ -457,6 +503,7 @@
     stepBtn.title = usable() ? "" : "Missing eq in URL";
 
     const isDone = done();
+
     stepBtn.classList.toggle("complete", isDone);
     stepBtn.textContent = isDone ? "Step Complete ✓" : "Mark Step Complete";
   }
@@ -464,21 +511,30 @@
   if (stepBtn){
     stepBtn.addEventListener("click", async () => {
       if (!usable()) return;
+
       const next = !done();
+
       await setDoneState(next);
+
       refreshStepBtn();
     });
   }
 
   refreshStepBtn();
+
   window.addEventListener("storage", refreshStepBtn);
   window.addEventListener("focus", refreshStepBtn);
   window.addEventListener("pageshow", refreshStepBtn);
+  window.addEventListener("nexus-workflow-change", refreshStepBtn);
 
-  if (usable()) fbListenStep(eq, STEP_ID);
+  if (usable()){
+    fbListenStep(eq, STEP_ID);
+  }
 
   window.addEventListener("beforeunload", () => {
-    try{ if (fbUnsub) fbUnsub(); }catch(e){}
+    try{
+      if (fbUnsub) fbUnsub();
+    }catch(e){}
   });
 })();
 </script>
@@ -498,6 +554,7 @@
   © 2026 NEXUS Data Science - All Rights Reserved
 </footer>
 
+<script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
   </div>
