@@ -1658,33 +1658,42 @@
   function hasAnyProgress(eq){
     if(!eq) return false;
 
-    const signedKey = `nexus_${eq}_ccs_signed_off`;
-    if (localStorage.getItem(signedKey) === "1") return true;
-
-    const stepPrefix = `nexus_${eq}_step_`;
-    for (let i=0; i<localStorage.length; i++){
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (k.indexOf(stepPrefix) === 0) return true;
-    }
-
-    // Conservative extra checks (won't break anything if keys don't exist)
-    const extraPrefixes = [
-      `nexus_${eq}_torque_`,
-      `nexus_${eq}_meg_`,
-      `nexus_${eq}_prefod_`,
-      `nexus_${eq}_rif_`,
-      `nexus_${eq}_l2_`
+    /*
+      PERFORMANCE FIX:
+      Do not scan all localStorage keys on index load/back navigation.
+      Image/base64 keys and package data can make full scans freeze the page.
+      Use only direct known completion flags.
+    */
+    const directFlags = [
+      `nexus_${eq}_ccs_signed_off`,
+      `nexus_${eq}_step_rif`,
+      `nexus_${eq}_step_ccs`,
+      `nexus_${eq}_step_phenolic`,
+      `nexus_${eq}_step_torque`,
+      `nexus_${eq}_step_l2`,
+      `nexus_${eq}_step_meg`,
+      `nexus_${eq}_step_megohmmeter`,
+      `nexus_${eq}_step_megohmmeter_line`,
+      `nexus_${eq}_step_megohmmeter_load`,
+      `nexus_${eq}_step_prefod`,
+      `nexus_${eq}_step_fpv`,
+      `nexus_${eq}_step_fpv_photo`,
+      `nexus_${eq}_step_final_ccs`,
+      `nexus_${eq}_torque_complete`,
+      `nexus_${eq}_meg_complete`,
+      `nexus_${eq}_prefod_complete`,
+      `nexus_${eq}_l2_complete`,
+      `nexus_${eq}_rif_complete`
     ];
-    for (let i=0; i<localStorage.length; i++){
-      const k = localStorage.key(i);
-      if (!k) continue;
-      for (const p of extraPrefixes){
-        if (k.indexOf(p) === 0) return true;
-      }
-    }
 
-    return false;
+    return directFlags.some(function(k){
+      try{
+        const v = localStorage.getItem(k);
+        return v === "1" || v === "true" || v === "COMPLETE" || v === "complete";
+      }catch(e){
+        return false;
+      }
+    });
   }
 
   function applyEquipmentTypeLock(eq){
@@ -1802,6 +1811,15 @@
     });
   }
 
+  let nexusIndexSaveTimer = null;
+  function scheduleIndexMetaSave(eq){
+    if(!eq) return;
+    clearTimeout(nexusIndexSaveTimer);
+    nexusIndexSaveTimer = setTimeout(function(){
+      try{ saveMeta(eq); }catch(e){ console.warn("Deferred index save failed", e); }
+    }, 450);
+  }
+
   // persist meta on changes (includes equipmentType + phenolic fields; nothing removed)
   [
     eqInput,
@@ -1826,7 +1844,7 @@
     });
     el.addEventListener("input", ()=>{
       const eq = getEq();
-      if(eq) saveMeta(eq);
+      if(eq) scheduleIndexMetaSave(eq);
     });
   });
 
@@ -1834,16 +1852,21 @@
   eqInput.addEventListener("change", ()=>{
     const eq = getEq();
     loadMetaIntoFields(eq);
-    loadPreviewForCurrentEq();
-    loadTorquePreviewForCurrentEq();
     refreshEquipmentStepsLink();
+    scheduleLazyPreviewRefresh();
   });
   eqInput.addEventListener("input", ()=>{
     const eq = getEq();
-    applyEquipmentTypeLock(eq);
-    loadPreviewForCurrentEq();
-    loadTorquePreviewForCurrentEq();
     refreshEquipmentStepsLink();
+
+    // Do not load image previews or scan progress while typing.
+    clearTimeout(nexusIndexSaveTimer);
+    nexusIndexSaveTimer = setTimeout(function(){
+      try{
+        applyEquipmentTypeLock(eq);
+        if(eq) saveMeta(eq);
+      }catch(e){ console.warn("Equipment input update failed", e); }
+    }, 600);
   });
 
   // buttons
@@ -1901,6 +1924,10 @@
     preview.style.display = "block";
   }
 
+  function isLargeDataUrl(url){
+    return String(url || "").length > 450000;
+  }
+
   function hide(){
     preview.removeAttribute("src");
     preview.style.display = "none";
@@ -1924,8 +1951,13 @@
     }
     const rec = readEquip(eq);
     if(rec.imageDataUrl){
-      show(rec.imageDataUrl);
-      setStatus("Loaded saved image for this equipment (GitHub mode: this device).");
+      if(isLargeDataUrl(rec.imageDataUrl)){
+        hide();
+        setStatus("Saved image exists. Preview is not auto-loaded on the index page for speed.");
+      }else{
+        show(rec.imageDataUrl);
+        setStatus("Loaded saved image for this equipment (GitHub mode: this device).");
+      }
     } else {
       hide();
       setStatus("No image saved yet for this equipment.");
@@ -2470,10 +2502,17 @@
 
     const active = source === "engineer_override" ? (tp.overrideImage || "") : (tp.documentationImage || "");
     if(active){
-      showTorque(active);
-      setTorqueStatus(source === "engineer_override"
-        ? "Engineer photo override is active for this equipment."
-        : ("AI documentation image is active" + (tp.documentationReference ? ` • ${tp.documentationReference}` : ".")));
+      if(isLargeDataUrl(active)){
+        hideTorque();
+        setTorqueStatus(source === "engineer_override"
+          ? "Engineer photo override is saved. Preview is not auto-loaded on the index page for speed."
+          : "AI documentation image is saved. Preview is not auto-loaded on the index page for speed.");
+      }else{
+        showTorque(active);
+        setTorqueStatus(source === "engineer_override"
+          ? "Engineer photo override is active for this equipment."
+          : ("AI documentation image is active" + (tp.documentationReference ? ` • ${tp.documentationReference}` : ".")));
+      }
     } else {
       hideTorque();
       setTorqueStatus(source === "engineer_override"
@@ -2603,6 +2642,18 @@
     applyEquipImageZoom();
   }, { passive:false });
 
+  let nexusIndexPreviewTimer = null;
+  function scheduleLazyPreviewRefresh(){
+    clearTimeout(nexusIndexPreviewTimer);
+    nexusIndexPreviewTimer = setTimeout(function(){
+      try{
+        loadPreviewForCurrentEq();
+        syncActiveTorquePhoto(getEq());
+        loadTorquePreviewForCurrentEq();
+      }catch(e){ console.warn("Lazy preview refresh failed", e); }
+    }, 350);
+  }
+
   // init: if URL has eq, set it; load meta + images
   if(aiBackendUrlInput && window.VanguardBackendClient && typeof window.VanguardBackendClient.baseUrl === "function"){
     aiBackendUrlInput.value = window.VanguardBackendClient.baseUrl() || "";
@@ -2612,12 +2663,22 @@
     eqInput.value = incomingEq;
   }
   loadMetaIntoFields(getEq());
-  loadPreviewForCurrentEq();
-  syncActiveTorquePhoto(getEq());
-  loadTorquePreviewForCurrentEq();
   renderAiDocPanels(getEq(), loadMeta(getEq()));
   refreshEquipmentStepsLink();
-  publishVanguardEquipment("init");
+  scheduleLazyPreviewRefresh();
+
+  // Do not publish/write Vanguard state during index startup/back navigation.
+  // Publishing is handled on explicit user actions: save/change/open/generate QR/AI populate.
+  try{
+    if(vxIndexEq) vxIndexEq.textContent = getEq() || "—";
+    if(vxIndexReadiness) vxIndexReadiness.textContent = "Ready";
+    if(vxIndexLastSync) vxIndexLastSync.textContent = "Local";
+    setVxIndex("ok", "READY", "Index loaded without startup publishing for faster back navigation.");
+  }catch(e){}
+  window.addEventListener("pagehide", function(){
+    clearTimeout(nexusIndexSaveTimer);
+    clearTimeout(nexusIndexPreviewTimer);
+  });
 })();
 </script>
 
