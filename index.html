@@ -21,57 +21,34 @@
     --warn:#ffb800;
   }
   *{box-sizing:border-box;}
-  html,body{
-    margin:0;
-    min-height:100%;
-    font-family:Arial,Helvetica,sans-serif;
-    color:var(--ink);
-    background:#050505;
-  }
+  html,body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:var(--bg);}
   body{
-    background:
-      linear-gradient(rgba(0,0,0,.42), rgba(0,0,0,.42)),
-      url("transformer.jpg");
+    background-image:url("transformer.jpg");
     background-repeat:no-repeat;
     background-position:center center;
     background-size:cover;
     background-attachment:fixed;
-    min-height:100vh;
   }
 
   .topbar{
-    width:100%;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(125,0,0,.95),
-        rgba(88,0,0,.92)
-      );
-    border-bottom:2px solid rgba(255,60,60,.65);
-    box-shadow:0 10px 30px rgba(0,0,0,.40);
-    padding:16px 24px;
+    max-width:1200px;
+    margin:16px auto 0;
+    padding:0 18px;
     display:flex;
     align-items:flex-start;
     justify-content:space-between;
     gap:12px;
-    position:sticky;
-    top:0;
-    z-index:999;
   }
   .brand{ font-weight:900; font-size:44px; letter-spacing:.02em; text-shadow:0 6px 22px rgba(0,0,0,.35); }
   .tagline{ margin-top:6px; font-weight:800; opacity:.95; text-shadow:0 6px 22px rgba(0,0,0,.35); }
   .ready-pill{
     margin-top:4px;
-    padding:10px 18px;
+    padding:6px 14px;
     border-radius:999px;
-    background:rgba(0,0,0,0.55);
-    border:1px solid rgba(68,255,140,0.70);
-    color:#6dff9c;
-    font-weight:1000;
-    font-size:16px;
-    box-shadow:
-      0 0 18px rgba(68,255,140,.18),
-      inset 0 0 10px rgba(68,255,140,.08);
+    background:rgba(0,0,0,0.25);
+    border:1px solid rgba(255,255,255,0.20);
+    font-weight:900;
+    font-size:14px;
     align-self:flex-start;
   }
 
@@ -81,15 +58,11 @@
     padding:0 18px;
   }
   .shell{
-    background:rgba(18,10,10,0.50);
-    border:1px solid rgba(255,255,255,0.18);
-    border-radius:28px;
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-    padding:22px;
-    box-shadow:
-      0 18px 60px rgba(0,0,0,.45),
-      inset 0 1px 0 rgba(255,255,255,.08);
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+    padding:18px;
   }
 
   .grid{
@@ -104,20 +77,10 @@
   }
 
   .card{
-    background:
-      linear-gradient(
-        135deg,
-        rgba(90,18,18,0.52),
-        rgba(35,12,12,0.42)
-      );
-    border:1px solid rgba(255,255,255,0.16);
-    border-radius:24px;
-    padding:20px;
-    backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-    box-shadow:
-      0 12px 40px rgba(0,0,0,.32),
-      inset 0 1px 0 rgba(255,255,255,.05);
+    background:rgba(0,0,0,0.20);
+    border:1px solid rgba(255,255,255,0.18);
+    border-radius:18px;
+    padding:16px;
   }
   .card h3{
     margin:0 0 12px;
@@ -144,18 +107,13 @@
 
   .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
   .btn{
-    padding:14px 18px;
+    padding:12px 16px;
     font-size:15px;
     font-weight:900;
-    border-radius:18px;
-    color:#fff;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(20,20,20,.96),
-        rgba(8,8,8,.96)
-      );
-    border:1px solid rgba(255,255,255,.18);
+    border-radius:999px;
+    color:var(--btn-txt);
+    background:var(--btn-bg);
+    border:2px solid var(--accent);
     cursor:pointer;
     text-decoration:none;
     display:inline-flex;
@@ -163,31 +121,12 @@
     justify-content:center;
     user-select:none;
     gap:10px;
-    min-width:170px;
-    transition:
-      transform .15s ease,
-      box-shadow .15s ease,
-      border-color .15s ease;
-    box-shadow:
-      0 8px 22px rgba(0,0,0,.38),
-      inset 0 1px 0 rgba(255,255,255,.06);
-  }
-  .btn:hover{
-    transform:translateY(-1px);
-    border-color:rgba(255,255,255,.32);
-    box-shadow:
-      0 14px 28px rgba(0,0,0,.45),
-      inset 0 1px 0 rgba(255,255,255,.08);
+    min-width: 170px;
   }
   .btn.secondary{
-    background:
-      linear-gradient(
-        180deg,
-        rgba(40,40,40,.90),
-        rgba(14,14,14,.92)
-      );
+    background: rgba(0,0,0,0.18);
     color:#fff;
-    border:1px solid rgba(255,255,255,.16);
+    border:2px solid rgba(255,255,255,0.30);
   }
 
   .hint{
@@ -550,544 +489,56 @@
 
 
   /* ===========================================================
-     NEXUS VISUAL UPGRADE — INDUSTRIAL / VANGUARD COMMAND STYLE
-     This is intentionally placed at the end of the style block so it
-     overrides older page styling without changing working page logic.
+     FINAL INDEX PERFORMANCE + READABILITY OVERRIDE
+     Preserves full original file/features; fixes heavy visual layer.
      =========================================================== */
-  :root{
-    --nexus-red:#8f0505;
-    --nexus-red-dark:#3b0505;
-    --nexus-glass:rgba(17,10,10,0.62);
-    --nexus-glass-heavy:rgba(8,8,10,0.78);
-    --nexus-border:rgba(255,255,255,0.18);
-    --nexus-border-hot:rgba(255,78,78,0.42);
-    --nexus-green:#69ff9a;
-    --nexus-blue:#64d8ff;
-  }
-
-  html{
-    background:#050202;
-  }
-
   body{
-    min-height:100vh;
     background:
-      radial-gradient(circle at 18% 8%, rgba(255,70,35,0.22), transparent 32%),
-      radial-gradient(circle at 78% 4%, rgba(255,0,0,0.20), transparent 35%),
-      linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.78)),
-      linear-gradient(90deg, rgba(70,0,0,0.56), rgba(0,0,0,0.24) 45%, rgba(65,0,0,0.56)),
+      linear-gradient(rgba(0,0,0,.38), rgba(0,0,0,.52)),
       url("transformer.jpg") center center / cover no-repeat fixed !important;
-    overflow-x:hidden;
-  }
-
-  body::before{
-    content:"";
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    z-index:-1;
-    background:
-      linear-gradient(115deg, rgba(255,255,255,0.045), transparent 24%, transparent 70%, rgba(255,255,255,0.025)),
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.018) 0, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 84px);
-    mix-blend-mode:screen;
-  }
-
-  .nexus-page{
     min-height:100vh;
-    padding-bottom:28px;
   }
-
-  .topbar{
-    width:min(1220px, calc(100% - 28px));
-    margin:14px auto 0;
-    padding:18px 22px;
-    border-radius:0 0 26px 26px;
-    background:
-      linear-gradient(180deg, rgba(155,4,4,0.96), rgba(91,0,0,0.94)),
-      linear-gradient(90deg, rgba(255,255,255,0.12), transparent);
-    border:1px solid rgba(255,255,255,0.14);
-    border-bottom:2px solid rgba(255,94,94,0.64);
-    box-shadow:
-      0 18px 50px rgba(0,0,0,0.52),
-      inset 0 1px 0 rgba(255,255,255,0.12),
-      inset 0 -18px 38px rgba(0,0,0,0.20);
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-  }
-
-  .brand{
-    font-size:52px;
-    line-height:0.95;
-    letter-spacing:.045em;
-    color:#fff;
-    text-shadow:
-      0 2px 0 rgba(0,0,0,0.36),
-      0 10px 28px rgba(0,0,0,0.62),
-      0 0 20px rgba(255,255,255,0.10);
-  }
-
-  .tagline{
-    color:rgba(255,255,255,0.92);
-    letter-spacing:.025em;
-    text-shadow:0 8px 22px rgba(0,0,0,0.70);
-  }
-
-  .ready-pill{
-    padding:12px 22px;
-    border-radius:999px;
-    color:var(--nexus-green);
-    background:
-      radial-gradient(circle at 30% 15%, rgba(105,255,154,0.22), transparent 44%),
-      rgba(0,0,0,0.70);
-    border:1px solid rgba(105,255,154,0.82);
-    text-transform:uppercase;
-    letter-spacing:.08em;
-    box-shadow:
-      0 0 0 1px rgba(105,255,154,0.10),
-      0 0 24px rgba(105,255,154,0.30),
-      0 10px 26px rgba(0,0,0,0.42),
-      inset 0 1px 0 rgba(255,255,255,0.10);
-  }
-
-  .wrap{
-    max-width:1220px;
-    margin:20px auto 42px;
-    padding:0 14px;
-  }
-
-  .shell{
-    padding:24px;
-    border-radius:30px;
-    background:
-      linear-gradient(135deg, rgba(124,6,6,0.42), rgba(4,4,6,0.68) 48%, rgba(75,0,0,0.45)),
-      rgba(0,0,0,0.34);
-    border:1px solid rgba(255,255,255,0.17);
-    box-shadow:
-      0 26px 82px rgba(0,0,0,0.58),
-      0 0 0 1px rgba(255,80,80,0.08),
-      inset 0 1px 0 rgba(255,255,255,0.10),
-      inset 0 -40px 80px rgba(0,0,0,0.24);
-    backdrop-filter:blur(18px) saturate(1.12);
-    -webkit-backdrop-filter:blur(18px) saturate(1.12);
-  }
-
-  .grid{
-    gap:20px;
-  }
-
-  .card{
-    position:relative;
-    overflow:hidden;
-    padding:22px;
-    border-radius:28px;
-    background:
-      radial-gradient(circle at 12% 0%, rgba(255,80,80,0.18), transparent 34%),
-      linear-gradient(145deg, rgba(106,18,18,0.64), rgba(12,12,14,0.70) 55%, rgba(62,7,7,0.58)),
-      rgba(0,0,0,0.40);
-    border:1px solid rgba(255,255,255,0.17);
-    box-shadow:
-      0 18px 48px rgba(0,0,0,0.46),
-      inset 0 1px 0 rgba(255,255,255,0.09),
-      inset 0 -28px 60px rgba(0,0,0,0.20);
-    backdrop-filter:blur(16px) saturate(1.08);
-    -webkit-backdrop-filter:blur(16px) saturate(1.08);
-  }
-
-  .card::before{
-    content:"";
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    background:linear-gradient(120deg, rgba(255,255,255,0.08), transparent 18%, transparent 78%, rgba(255,255,255,0.035));
-  }
-
-  .card h3,
-  .section-title{
-    position:relative;
-    color:#fff;
-    font-size:13px;
-    letter-spacing:.16em;
-    text-shadow:0 8px 24px rgba(0,0,0,0.64);
-  }
-
-  .card h3::after,
-  .section-title::after{
-    content:"";
-    display:block;
-    width:84px;
-    height:3px;
-    margin-top:9px;
-    border-radius:999px;
-    background:linear-gradient(90deg, rgba(255,68,68,0.96), rgba(255,255,255,0.18));
-    box-shadow:0 0 14px rgba(255,68,68,0.26);
-  }
-
-  .field{
-    position:relative;
-  }
-
-  label{
-    color:rgba(255,255,255,0.94);
-    letter-spacing:.03em;
-    text-shadow:0 5px 18px rgba(0,0,0,0.55);
-  }
-
-  input,
-  select{
-    border-radius:16px;
-    color:#0d0d0f;
-    background:linear-gradient(180deg, rgba(255,255,255,0.96), rgba(238,238,238,0.92));
-    border:1px solid rgba(255,255,255,0.40);
-    box-shadow:
-      0 10px 24px rgba(0,0,0,0.26),
-      inset 0 1px 0 rgba(255,255,255,0.65);
-  }
-
-  input:focus,
-  select:focus{
-    border-color:rgba(100,216,255,0.95);
-    box-shadow:
-      0 0 0 3px rgba(100,216,255,0.22),
-      0 12px 26px rgba(0,0,0,0.32),
-      inset 0 1px 0 rgba(255,255,255,0.70);
-  }
-
-  .btnrow{
-    gap:12px;
-  }
-
-  .btn,
-  .mini-btn,
-  .equip-image-tool-btn{
-    border-radius:18px;
-    color:#fff;
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255,255,255,0.12), transparent 42%),
-      linear-gradient(180deg, rgba(32,32,35,0.98), rgba(6,6,8,0.98));
-    border:1px solid rgba(255,255,255,0.20);
-    box-shadow:
-      0 12px 28px rgba(0,0,0,0.48),
-      inset 0 1px 0 rgba(255,255,255,0.10),
-      inset 0 -12px 20px rgba(0,0,0,0.30);
-  }
-
-  .btn{
-    min-height:50px;
-    text-transform:none;
-  }
-
-  .btn:hover,
-  .mini-btn:hover,
-  .equip-image-tool-btn:hover{
-    transform:translateY(-2px);
-    border-color:rgba(255,255,255,0.36);
-    box-shadow:
-      0 18px 36px rgba(0,0,0,0.56),
-      0 0 18px rgba(255,255,255,0.06),
-      inset 0 1px 0 rgba(255,255,255,0.12);
-  }
-
-  .btn:not(.secondary){
-    border-color:rgba(100,216,255,0.42);
-    box-shadow:
-      0 14px 32px rgba(0,0,0,0.50),
-      0 0 22px rgba(100,216,255,0.10),
-      inset 0 1px 0 rgba(255,255,255,0.11),
-      inset 0 -14px 24px rgba(0,0,0,0.28);
-  }
-
-  .btn.secondary{
-    color:rgba(255,255,255,0.96);
-    background:
-      radial-gradient(circle at 50% 0%, rgba(255,255,255,0.10), transparent 42%),
-      linear-gradient(180deg, rgba(45,45,48,0.92), rgba(13,13,15,0.96));
-    border-color:rgba(255,255,255,0.16);
-  }
-
-  .hint,
-  .subhint,
-  .locknote,
-  .ai-box,
-  .source-choice,
-  .vx-index-panel,
-  .vx-index-box{
-    background:rgba(0,0,0,0.34);
-    border:1px solid rgba(255,255,255,0.14);
-    box-shadow:
-      0 10px 24px rgba(0,0,0,0.22),
-      inset 0 1px 0 rgba(255,255,255,0.05);
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-  }
-
-  .vx-index-panel{
-    border-radius:24px;
-    background:
-      linear-gradient(135deg, rgba(116,8,8,0.50), rgba(0,0,0,0.48)),
-      rgba(0,0,0,0.32);
-    border-color:rgba(255,90,90,0.20);
-  }
-
-  .vx-index-badge{
-    background:
-      radial-gradient(circle at 30% 10%, rgba(100,216,255,0.22), transparent 46%),
-      rgba(0,0,0,0.58);
-    border-color:rgba(100,216,255,0.55);
-    box-shadow:0 0 20px rgba(100,216,255,0.14), inset 0 1px 0 rgba(255,255,255,0.08);
-  }
-
-  .vx-index-badge.ok{
-    background:
-      radial-gradient(circle at 30% 10%, rgba(105,255,154,0.24), transparent 46%),
-      rgba(0,0,0,0.58);
-    border-color:rgba(105,255,154,0.62);
-    color:#dcffe8;
-  }
-
-  .vx-index-badge.warn{
-    background:
-      radial-gradient(circle at 30% 10%, rgba(255,184,0,0.26), transparent 46%),
-      rgba(0,0,0,0.58);
-    border-color:rgba(255,184,0,0.62);
-    color:#fff5cd;
-  }
-
-  .ai-pill{
-    background:rgba(0,0,0,0.42);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);
-  }
-
-  #nexusEquipImagePreview,
-  #nexusTorquePhotoPreview{
-    border-radius:18px;
-    box-shadow:0 18px 42px rgba(0,0,0,0.38);
-  }
-
-  .footer{
-    max-width:none;
-    margin:24px -24px -24px;
-    padding:18px 12px;
-    border-radius:0 0 30px 30px;
-    background:linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.52));
-    border-top:1px solid rgba(255,255,255,0.12);
-  }
-
-  @media (max-width:980px){
-    .topbar{
-      width:calc(100% - 18px);
-      border-radius:0 0 22px 22px;
-    }
-    .brand{font-size:38px;}
-    .shell{padding:16px;border-radius:24px;}
-    .card{padding:18px;border-radius:24px;}
-    .footer{margin:20px -16px -16px;border-radius:0 0 24px 24px;}
-  }
-
-
-
-  /* ===========================================================
-     PERFORMANCE + READABILITY FIX
-     Keeps the dark command look but removes expensive effects
-     and fixes low-contrast text without changing workflow logic.
-     =========================================================== */
-
-  html,
-  body{
-    min-height:100% !important;
-    overflow-x:hidden !important;
-    color:#ffffff !important;
-  }
-
-  body{
-    background:
-      linear-gradient(rgba(0,0,0,.36), rgba(0,0,0,.54)),
-      url("transformer.jpg") center center / cover no-repeat fixed !important;
-  }
-
-  @media (max-width:900px){
-    body{
-      background-attachment:scroll !important;
-    }
-  }
-
-  .nexus-page{
-    min-height:100vh !important;
-    color:#ffffff !important;
-  }
-
-  /* Expensive blur/backdrop effects were making the page slow. */
-  .shell,
-  .card,
-  .hint,
-  .locknote,
-  .ai-box,
-  .vx-index-panel,
-  .source-choice,
-  .topbar,
-  .footer{
+  .shell,.card,.hint,.locknote,.ai-box,.vx-index-panel{
     backdrop-filter:none !important;
     -webkit-backdrop-filter:none !important;
-    filter:none !important;
   }
-
-  /* Keep the command-style panels, but make them readable. */
   .shell{
-    background:rgba(32,7,7,.86) !important;
-    border:1px solid rgba(255,255,255,.26) !important;
-    border-radius:28px !important;
-    box-shadow:0 14px 34px rgba(0,0,0,.42) !important;
+    background:rgba(35,8,8,.84) !important;
+    border:1px solid rgba(255,255,255,.24) !important;
+    box-shadow:0 12px 32px rgba(0,0,0,.36) !important;
   }
-
   .card{
     background:rgba(58,12,12,.90) !important;
-    border:1px solid rgba(255,255,255,.30) !important;
-    border-radius:24px !important;
-    color:#ffffff !important;
-    box-shadow:0 10px 24px rgba(0,0,0,.34) !important;
-  }
-
-  .card h3,
-  .section-title{
-    color:#ffffff !important;
-    opacity:1 !important;
-    text-shadow:0 1px 2px rgba(0,0,0,.90) !important;
-    letter-spacing:.14em !important;
-  }
-
-  .card h3::after,
-  .section-title::after{
-    content:"";
-    display:block;
-    width:52px;
-    height:3px;
-    margin-top:12px;
-    background:rgba(255,255,255,.72);
-    border-radius:999px;
-  }
-
-  label,
-  .subhint,
-  .hint,
-  .locknote,
-  .ai-box,
-  .ai-status-line,
-  .ai-list,
-  .ai-kv-row,
-  .source-choice,
-  .source-choice .title,
-  .source-choice .sub,
-  .vx-index-sub,
-  .img-status{
-    color:#ffffff !important;
-    opacity:1 !important;
-    text-shadow:0 1px 2px rgba(0,0,0,.90) !important;
-  }
-
-  .subhint,
-  .hint{
-    background:rgba(0,0,0,.42) !important;
-    border:1px solid rgba(255,255,255,.24) !important;
-    border-radius:14px !important;
-    line-height:1.45 !important;
-  }
-
-  .locknote.warn{
-    background:rgba(39,23,0,.94) !important;
-    color:#fff7d0 !important;
-    border:2px solid rgba(255,184,0,.82) !important;
-    box-shadow:none !important;
-  }
-
-  code{
-    background:rgba(0,0,0,.78) !important;
-    color:#ffffff !important;
-    border:1px solid rgba(255,255,255,.42) !important;
-    text-shadow:none !important;
-  }
-
-  input,
-  select,
-  textarea{
-    background:rgba(255,255,255,.97) !important;
-    color:#111111 !important;
-    border:1px solid rgba(0,0,0,.24) !important;
-    box-shadow:inset 0 1px 2px rgba(0,0,0,.10) !important;
-    text-shadow:none !important;
-  }
-
-  input::placeholder,
-  textarea::placeholder{
-    color:#565656 !important;
-    opacity:1 !important;
-  }
-
-  .btn,
-  .mini-btn{
-    background:linear-gradient(180deg, rgba(28,28,28,.98), rgba(8,8,8,.98)) !important;
-    color:#ffffff !important;
     border:1px solid rgba(255,255,255,.28) !important;
-    border-radius:18px !important;
-    box-shadow:0 6px 14px rgba(0,0,0,.34) !important;
-    text-shadow:0 1px 1px rgba(0,0,0,.75) !important;
-    transition:none !important;
+    color:#fff !important;
+    box-shadow:0 10px 24px rgba(0,0,0,.30) !important;
   }
-
-  .btn:hover,
-  .mini-btn:hover{
-    transform:none !important;
-    border-color:rgba(255,255,255,.48) !important;
-  }
-
-  .btn.secondary{
-    background:linear-gradient(180deg, rgba(36,36,36,.96), rgba(12,12,12,.96)) !important;
-    color:#ffffff !important;
-  }
-
-  .ready-pill{
-    background:rgba(0,0,0,.70) !important;
-    border:1px solid rgba(70,255,145,.82) !important;
-    color:#68ff9d !important;
-    box-shadow:0 0 12px rgba(70,255,145,.20) !important;
-    text-shadow:none !important;
-  }
-
-  .topbar{
-    background:linear-gradient(180deg, rgba(126,0,0,.96), rgba(82,0,0,.95)) !important;
-    border-bottom:2px solid rgba(255,55,55,.75) !important;
-    box-shadow:0 8px 22px rgba(0,0,0,.38) !important;
-  }
-
-  .brand,
-  .tagline{
-    color:#ffffff !important;
+  .subhint,.hint,.locknote,.ai-box,.ai-status-line,.ai-list,.vx-index-sub,label,.card h3,.section-title{
+    color:#fff !important;
     opacity:1 !important;
-    text-shadow:0 2px 5px rgba(0,0,0,.85) !important;
+    text-shadow:0 1px 2px rgba(0,0,0,.85) !important;
   }
-
-  .ai-box,
-  .source-choice,
-  .vx-index-panel{
-    background:rgba(0,0,0,.38) !important;
-    border:1px solid rgba(255,255,255,.24) !important;
-    box-shadow:none !important;
+  code{
+    background:rgba(0,0,0,.72) !important;
+    color:#fff !important;
+    border:1px solid rgba(255,255,255,.35) !important;
   }
-
-  .vx-index-badge,
-  .ai-pill{
-    text-shadow:none !important;
-    box-shadow:none !important;
+  .locknote.warn{
+    background:rgba(38,20,0,.92) !important;
+    color:#fff7d0 !important;
+    border:2px solid rgba(255,184,0,.75) !important;
   }
-
-  /* Prevent selection/highlight appearance from being needed for readability. */
-  ::selection{
-    background:rgba(0,122,255,.42);
-    color:#ffffff;
+  input,select{
+    background:rgba(255,255,255,.97) !important;
+    color:#111 !important;
   }
-
-  /* Global shadow cap for speed. */
-  *{
-    animation:none !important;
-    scroll-behavior:auto !important;
+  .btn,.mini-btn,.ready-pill{
+    box-shadow:0 6px 16px rgba(0,0,0,.35) !important;
+  }
+  .topbar{
+    background:linear-gradient(180deg,rgba(125,0,0,.95),rgba(88,0,0,.92)) !important;
+    border-bottom:2px solid rgba(255,60,60,.65) !important;
+    box-shadow:0 8px 22px rgba(0,0,0,.32) !important;
   }
 
 </style>
@@ -1658,13 +1109,10 @@
   function hasAnyProgress(eq){
     if(!eq) return false;
 
-    /*
-      PERFORMANCE FIX:
-      Do not scan all localStorage keys on index load/back navigation.
-      Image/base64 keys and package data can make full scans freeze the page.
-      Use only direct known completion flags.
-    */
-    const directFlags = [
+    // Performance-safe progress check.
+    // Do not scan all localStorage keys; large saved images/base64 data can freeze the index page
+    // when returning from equipment.html. Only check direct known completion/progress flags.
+    const keys = [
       `nexus_${eq}_ccs_signed_off`,
       `nexus_${eq}_step_rif`,
       `nexus_${eq}_step_ccs`,
@@ -1672,28 +1120,20 @@
       `nexus_${eq}_step_torque`,
       `nexus_${eq}_step_l2`,
       `nexus_${eq}_step_meg`,
-      `nexus_${eq}_step_megohmmeter`,
-      `nexus_${eq}_step_megohmmeter_line`,
-      `nexus_${eq}_step_megohmmeter_load`,
       `nexus_${eq}_step_prefod`,
       `nexus_${eq}_step_fpv`,
-      `nexus_${eq}_step_fpv_photo`,
-      `nexus_${eq}_step_final_ccs`,
-      `nexus_${eq}_torque_complete`,
-      `nexus_${eq}_meg_complete`,
-      `nexus_${eq}_prefod_complete`,
-      `nexus_${eq}_l2_complete`,
-      `nexus_${eq}_rif_complete`
+      `nexus_${eq}_step_package`,
+      `nexus_${eq}_step_energization`,
+      `nexus_${eq}_step_megohmmeter_line`,
+      `nexus_${eq}_step_megohmmeter_load`,
+      `nexus_${eq}_step_fpv_photo`
     ];
 
-    return directFlags.some(function(k){
-      try{
-        const v = localStorage.getItem(k);
-        return v === "1" || v === "true" || v === "COMPLETE" || v === "complete";
-      }catch(e){
-        return false;
-      }
-    });
+    try{
+      return keys.some(function(k){ return localStorage.getItem(k) === "1"; });
+    }catch(e){
+      return false;
+    }
   }
 
   function applyEquipmentTypeLock(eq){
@@ -1811,15 +1251,6 @@
     });
   }
 
-  let nexusIndexSaveTimer = null;
-  function scheduleIndexMetaSave(eq){
-    if(!eq) return;
-    clearTimeout(nexusIndexSaveTimer);
-    nexusIndexSaveTimer = setTimeout(function(){
-      try{ saveMeta(eq); }catch(e){ console.warn("Deferred index save failed", e); }
-    }, 450);
-  }
-
   // persist meta on changes (includes equipmentType + phenolic fields; nothing removed)
   [
     eqInput,
@@ -1844,29 +1275,28 @@
     });
     el.addEventListener("input", ()=>{
       const eq = getEq();
-      if(eq) scheduleIndexMetaSave(eq);
+      if(eq) saveMeta(eq);
     });
   });
 
-  // when eq changes, load meta for that eq
+  // when eq changes, load meta for that eq.
+  // Do not auto-load large base64 image previews on every input/back navigation.
+  let nxEqInputTimer = null;
   eqInput.addEventListener("change", ()=>{
     const eq = getEq();
     loadMetaIntoFields(eq);
+    applyEquipmentTypeLock(eq);
     refreshEquipmentStepsLink();
-    scheduleLazyPreviewRefresh();
+    if(status) setStatus(eq ? "Image preview is not auto-loaded for speed. Upload a new image if needed." : "Enter Equipment ID to save an image.");
+    if(torqueStatus) setTorqueStatus(eq ? "Torque photo preview is not auto-loaded for speed. Upload/select source if needed." : "Enter Equipment ID to manage torque photo source.");
   });
   eqInput.addEventListener("input", ()=>{
-    const eq = getEq();
-    refreshEquipmentStepsLink();
-
-    // Do not load image previews or scan progress while typing.
-    clearTimeout(nexusIndexSaveTimer);
-    nexusIndexSaveTimer = setTimeout(function(){
-      try{
-        applyEquipmentTypeLock(eq);
-        if(eq) saveMeta(eq);
-      }catch(e){ console.warn("Equipment input update failed", e); }
-    }, 600);
+    clearTimeout(nxEqInputTimer);
+    nxEqInputTimer = setTimeout(function(){
+      const eq = getEq();
+      applyEquipmentTypeLock(eq);
+      refreshEquipmentStepsLink();
+    }, 180);
   });
 
   // buttons
@@ -1912,7 +1342,7 @@
     const cur = readEquip(eq);
     const merged = { ...cur, ...patch, _updatedAt: Date.now() };
     localStorage.setItem(equipKey(eq), JSON.stringify(merged));
-    try{ publishVanguardEquipment("writeEquip"); }catch(e){}
+    // Do not publish Vanguard during image writes from the index page; it slows/back-freezes navigation.
     return merged;
   }
 
@@ -1922,10 +1352,6 @@
     if(!url) return;
     preview.src = url;
     preview.style.display = "block";
-  }
-
-  function isLargeDataUrl(url){
-    return String(url || "").length > 450000;
   }
 
   function hide(){
@@ -1951,13 +1377,8 @@
     }
     const rec = readEquip(eq);
     if(rec.imageDataUrl){
-      if(isLargeDataUrl(rec.imageDataUrl)){
-        hide();
-        setStatus("Saved image exists. Preview is not auto-loaded on the index page for speed.");
-      }else{
-        show(rec.imageDataUrl);
-        setStatus("Loaded saved image for this equipment (GitHub mode: this device).");
-      }
+      show(rec.imageDataUrl);
+      setStatus("Loaded saved image for this equipment (GitHub mode: this device).");
     } else {
       hide();
       setStatus("No image saved yet for this equipment.");
@@ -2502,17 +1923,10 @@
 
     const active = source === "engineer_override" ? (tp.overrideImage || "") : (tp.documentationImage || "");
     if(active){
-      if(isLargeDataUrl(active)){
-        hideTorque();
-        setTorqueStatus(source === "engineer_override"
-          ? "Engineer photo override is saved. Preview is not auto-loaded on the index page for speed."
-          : "AI documentation image is saved. Preview is not auto-loaded on the index page for speed.");
-      }else{
-        showTorque(active);
-        setTorqueStatus(source === "engineer_override"
-          ? "Engineer photo override is active for this equipment."
-          : ("AI documentation image is active" + (tp.documentationReference ? ` • ${tp.documentationReference}` : ".")));
-      }
+      showTorque(active);
+      setTorqueStatus(source === "engineer_override"
+        ? "Engineer photo override is active for this equipment."
+        : ("AI documentation image is active" + (tp.documentationReference ? ` • ${tp.documentationReference}` : ".")));
     } else {
       hideTorque();
       setTorqueStatus(source === "engineer_override"
@@ -2642,18 +2056,6 @@
     applyEquipImageZoom();
   }, { passive:false });
 
-  let nexusIndexPreviewTimer = null;
-  function scheduleLazyPreviewRefresh(){
-    clearTimeout(nexusIndexPreviewTimer);
-    nexusIndexPreviewTimer = setTimeout(function(){
-      try{
-        loadPreviewForCurrentEq();
-        syncActiveTorquePhoto(getEq());
-        loadTorquePreviewForCurrentEq();
-      }catch(e){ console.warn("Lazy preview refresh failed", e); }
-    }, 350);
-  }
-
   // init: if URL has eq, set it; load meta + images
   if(aiBackendUrlInput && window.VanguardBackendClient && typeof window.VanguardBackendClient.baseUrl === "function"){
     aiBackendUrlInput.value = window.VanguardBackendClient.baseUrl() || "";
@@ -2663,22 +2065,28 @@
     eqInput.value = incomingEq;
   }
   loadMetaIntoFields(getEq());
+  // Speed fix: avoid auto-loading large saved images and avoid publishing Vanguard during index startup/back navigation.
+  if(status) setStatus(getEq() ? "Image preview skipped for speed." : "Enter Equipment ID to save an image.");
+  if(torqueStatus) setTorqueStatus(getEq() ? "Torque photo preview skipped for speed." : "Enter Equipment ID to manage torque photo source.");
   renderAiDocPanels(getEq(), loadMeta(getEq()));
   refreshEquipmentStepsLink();
-  scheduleLazyPreviewRefresh();
+  setVxIndex("ok", "READY", "Index loaded without heavy startup sync.");
+  if(vxIndexEq) vxIndexEq.textContent = getEq() || "—";
+  if(vxIndexReadiness) vxIndexReadiness.textContent = "Ready";
+  if(vxIndexLastSync) vxIndexLastSync.textContent = new Date().toLocaleString();
 
-  // Do not publish/write Vanguard state during index startup/back navigation.
-  // Publishing is handled on explicit user actions: save/change/open/generate QR/AI populate.
-  try{
-    if(vxIndexEq) vxIndexEq.textContent = getEq() || "—";
-    if(vxIndexReadiness) vxIndexReadiness.textContent = "Ready";
-    if(vxIndexLastSync) vxIndexLastSync.textContent = "Local";
-    setVxIndex("ok", "READY", "Index loaded without startup publishing for faster back navigation.");
-  }catch(e){}
-  window.addEventListener("pagehide", function(){
-    clearTimeout(nexusIndexSaveTimer);
-    clearTimeout(nexusIndexPreviewTimer);
+  // Back/forward-cache recovery: keep buttons clickable when returning from equipment.html.
+  window.addEventListener("pageshow", function(){
+    try{
+      refreshEquipmentStepsLink();
+      applyEquipmentTypeLock(getEq());
+      setVxIndex("ok", "READY", "Returned from equipment page without heavy reload.");
+      if(vxIndexEq) vxIndexEq.textContent = getEq() || "—";
+      if(vxIndexReadiness) vxIndexReadiness.textContent = "Ready";
+      if(vxIndexLastSync) vxIndexLastSync.textContent = new Date().toLocaleString();
+    }catch(e){}
   });
+
 })();
 </script>
 
