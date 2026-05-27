@@ -20,17 +20,8 @@
   }
 
   *{box-sizing:border-box;}
-  html,body{
-    min-height:100%;
-    height:auto !important;
-    overflow-x:hidden !important;
-    overflow-y:auto !important;
-  }
-  .nexus-page{
-    min-height:100vh;
-    height:auto !important;
-    overflow:visible !important;
-  }
+  html,body{min-height:100%;}
+  html{overflow-y:auto;}
 
   .wrap-anywhere,
   a,
@@ -49,6 +40,8 @@
 
   body{
     margin:0;
+    min-height:100%;
+    overflow-y:auto;
     font-family:Arial,Helvetica,sans-serif;
     color:#fff;
     background:
@@ -491,6 +484,7 @@
       grid-template-columns:180px 1fr;
     }
   }
+  .nexus-page{min-height:100%; overflow:visible;}
 </style>
 </head>
 <body>
@@ -867,6 +861,10 @@ try{
     return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   }
 
+  function escapeHtml(v){
+    return safe(v);
+  }
+
   function readJSON(key){
     try{
       const raw = localStorage.getItem(key);
@@ -1183,6 +1181,13 @@ try{
   function packageLocalSignature(eqId){
     const eqk = eqId || 'NO_EQ';
     const interesting = allKeys().filter(function(k){
+      if(!k) return false;
+      /* Do not watch Package Export's own generated output.
+         Watching these keys makes buildReport() trigger itself forever. */
+      if(k.indexOf('_package_export_snapshot') !== -1) return false;
+      if(k.indexOf('_package_imported_step_status_v1') !== -1) return false;
+      if(k.indexOf('_vanguard_system') !== -1) return false;
+      if(k.indexOf('_vanguard_intelligence') !== -1) return false;
       return k === 'nexus.meg.fluke.sessions.v1' ||
         k === 'nexus.torque.sessions.v1' ||
         k.indexOf('nexus_' + eqk + '_') === 0 ||
@@ -1278,7 +1283,7 @@ try{
       if(!document.hidden) maybeRefresh('visible');
     });
 
-    localRefreshTimer = setInterval(function(){ maybeRefresh('auto'); }, 1500);
+    localRefreshTimer = setInterval(function(){ maybeRefresh('auto'); }, 5000);
   }
 
 
@@ -2425,18 +2430,14 @@ try{
     }
   }
 
-  function safeReportSection(title, fn){
-    try{
-      return fn();
-    }catch(err){
-      console.error('Package Export section failed:', title, err);
-      return sectionHeader(title) +
-        '<div class="status-banner fail">SECTION FAILED TO RENDER — check console for details. The rest of the package was allowed to continue loading.</div>';
-    }
-  }
+  let packageExportIsBuilding = false;
 
   function buildReport(){
     if(!reportEl) return;
+    if(packageExportIsBuilding) return;
+    packageExportIsBuilding = true;
+
+    try{
 
     const meta = loadEqMeta();
     const rif = findLatestRif(eq);
@@ -2540,6 +2541,14 @@ try{
         });
       }
     }catch(e){}
+
+    }catch(err){
+      console.error('Package Export render failed:', err);
+      reportEl.innerHTML = '<h2>Package Export Render Error</h2><div class="status-banner fail">The export page hit a JavaScript error before it could finish loading.</div><div class="source-box mono">' + safe(err && (err.stack || err.message) || err) + '</div>';
+      setLiveStatus('Package Export render error. See report area.');
+    }finally{
+      packageExportIsBuilding = false;
+    }
   }
 
   function wireControls(){
