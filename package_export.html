@@ -20,8 +20,7 @@
   }
 
   *{box-sizing:border-box;}
-  html,body{min-height:100%;}
-  html{overflow-y:auto;}
+  html,body{min-height:100%; height:auto; overflow-y:auto;}
 
   .wrap-anywhere,
   a,
@@ -40,8 +39,6 @@
 
   body{
     margin:0;
-    min-height:100%;
-    overflow-y:auto;
     font-family:Arial,Helvetica,sans-serif;
     color:#fff;
     background:
@@ -484,7 +481,6 @@
       grid-template-columns:180px 1fr;
     }
   }
-  .nexus-page{min-height:100%; overflow:visible;}
 </style>
 </head>
 <body>
@@ -950,21 +946,11 @@ try{
   }
 
   function writeJSON(key, value){
-    if(!key || value === undefined || value === null) return;
-    try{
-      localStorage.setItem(key, JSON.stringify(value));
-    }catch(e){
-      console.warn('Package Export local mirror failed for key:', key, e);
-    }
+    console.warn('Package Export is read-only. Blocked writeJSON:', key);
   }
 
   function writeText(key, value){
-    if(!key || value === undefined || value === null) return;
-    try{
-      localStorage.setItem(key, String(value));
-    }catch(e){
-      console.warn('Package Export local text mirror failed for key:', key, e);
-    }
+    console.warn('Package Export is read-only. Blocked writeText:', key);
   }
 
   function asArray(v){
@@ -1030,144 +1016,8 @@ try{
   }
 
   function mirrorFirebasePackageToLocal(eqId, data){
-    if(!eqId || !data || typeof data !== 'object') return;
-    const eqk = eqId || 'NO_EQ';
-
-    function packageSectionIsVerified(section){
-      if(!section || typeof section !== 'object') return false;
-      const status = String(section.status || section.overallStatus || section.packageStatus || section.validationStatus || '').toUpperCase();
-      return section.verified === true || section.approved === true || section.complete === true || section.signedOff === true || status === 'COMPLETE' || status === 'PASS' || status === 'READY';
-    }
-
-    function registerImportedPackageEvidence(group, section){
-      if(!section || typeof section !== 'object') return;
-      try{
-        if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.registerEvidence === 'function'){
-          window.NEXUS_VANGUARD.registerEvidence(group, {
-            equipmentId: eqk,
-            source: 'package_export_import_mirror',
-            importedAt: new Date().toISOString(),
-            verified: packageSectionIsVerified(section),
-            section: section
-          });
-        }
-      }catch(e){}
-    }
-
-    function readOnlyPackageNote(stepId, section){
-      registerImportedPackageEvidence(stepId, section);
-    }
-
-    const meta = firstObject(
-      getSection(data, ['meta','equipmentMeta','equipment_meta','equipment','setup','equipmentSetup','rifMeta']),
-      data.meta,
-      data.equipment
-    );
-    if(meta){
-      writeJSON('nexus_meta_' + eqk, meta);
-    }
-
-    const steps = firstObject(getSection(data, ['steps','stepStatus','completion','packageStatus','status']));
-    if(steps){
-      writeJSON('nexus_' + eqk + '_package_imported_step_status_v1', steps);
-      registerImportedPackageEvidence('package-step-status', { steps: steps, status: 'IMPORTED_READ_ONLY' });
-    }
-
-    const rif = firstObject(getSection(data, ['rif','RIF','receiptInspection','receiptInspectionForm']));
-    if(rif){
-      const id = (rif.meta && rif.meta.rifId) || rif.rifId || rif.id || ('RIF-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
-      writeJSON('nexus/equipment/' + eqk + '/rifs/' + id, rif);
-      readOnlyPackageNote('rif', rif);
-    }
-
-    const l2 = firstObject(getSection(data, ['l2','L2','l2ivf','installationVerification','installation_verification']));
-    if(l2){
-      const id = (l2.meta && l2.meta.l2Id) || l2.l2Id || l2.id || ('L2-' + new Date().toISOString().slice(0,10).replace(/-/g,''));
-      writeJSON('nexus/equipment/' + eqk + '/l2s/' + id, l2);
-      readOnlyPackageNote('l2', l2);
-    }
-
-    const meg = firstObject(getSection(data, ['meg','megLog','meg_log','megohmmeter','megohmmeterLog']));
-    if(meg){
-      writeJSON('nexus_' + eqk + '_meg_log_v2', meg);
-      readOnlyPackageNote('meg', meg);
-    }
-
-    const megEquip = firstObject(getSection(data, ['megEquip','equipmentMeg','equipment_meg','equipMeg']));
-    if(megEquip){
-      writeJSON('nexus_' + eqk + '_meg_equip_v1', megEquip);
-    }
-
-    const megVanguard = firstObject(getSection(data, ['megVanguard','meg_vanguard','megValidation','meg_validation']));
-    if(megVanguard){
-      writeJSON('nexus_' + eqk + '_meg_vanguard_export', megVanguard);
-    }
-
-    const torque = firstObject(getSection(data, ['torque','torqueLog','torque_log']));
-    const torqueVanguard = firstObject(getSection(data, ['torqueVanguard','torque_vanguard','torqueValidation','torque_validation']), torque && torque.vanguard, torque && torque.validation);
-    if(torqueVanguard){
-      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torqueVanguard);
-      readOnlyPackageNote('torque', torqueVanguard);
-    }else if(torque){
-      writeJSON('nexus_' + eqk + '_torque_vanguard_export', torque);
-    }
-
-    const foreman = firstObject(getSection(data, ['foreman','foremanVerification','torqueForeman','torque_foreman','torqueForemanState']), torque && torque.foreman, torque && torque.foremanState);
-    if(foreman){
-      writeJSON('nexus_' + eqk + '_torque_foreman_state_v1', foreman);
-    }
-
-    const tilt = firstObject(getSection(data, ['tilt','tiltTest','torqueTilt','torque_tilt']), torque && torque.tilt, torque && torque.tiltTest);
-    if(tilt){
-      writeJSON('nexus_' + eqk + '_torque_tilt_v2', tilt);
-    }
-
-    const flukeSessions = firstArray(getSection(data, ['flukeSessions','fluke','flukeConnect','megFlukeSessions']), meg && meg.flukeSessions, meg && meg.fluke);
-    if(flukeSessions.length){
-      const normalized = flukeSessions.map(function(s){
-        if(s && typeof s === 'object'){
-          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
-        }
-        return s;
-      });
-      writeJSON('nexus.meg.fluke.sessions.v1', normalized);
-    }
-
-    const snapSessions = firstArray(getSection(data, ['snaponSessions','snapOnSessions','torqueSessions','torqueConnect','snapon','snapOn']), torque && torque.sessions, torque && torque.snaponSessions);
-    if(snapSessions.length){
-      const normalized = snapSessions.map(function(s){
-        if(s && typeof s === 'object'){
-          return Object.assign({}, s, { equipment: s.equipment || s.eq || s.equipmentId || eqk });
-        }
-        return s;
-      });
-      writeJSON('nexus.torque.sessions.v1', normalized);
-    }
-
-    const fpv = firstObject(getSection(data, ['fpv','finishedProductVerification','finished_product_verification','fpvPhoto']));
-    if(fpv){
-      const img = fpv.photo || fpv.photoDataUrl || fpv.image || fpv.imageDataUrl || fpv.dataUrl || fpv.dataURL || '';
-      const notes = fpv.notes || fpv.note || fpv.comment || '';
-      if(img) writeText('nexus_' + eqk + '_fpv_photo', img);
-      if(notes) writeText('nexus_' + eqk + '_fpv_notes', notes);
-      if(img) readOnlyPackageNote('fpv', fpv);
-    }
-
-    const prefod = firstObject(getSection(data, ['prefod','preFod','pre_fod','preFOD','prefodChecklist']));
-    if(prefod){
-      writeJSON('nexus_' + eqk + '_prefod_checklist_v1', prefod);
-      readOnlyPackageNote('prefod', prefod);
-    }
-
-    const ccs = firstObject(getSection(data, ['ccs','constructionCheckSheet','construction_check_sheet','constructionCheckSheetImport','ccsImport','ccsVanguardValidation']));
-    if(ccs){
-      writeJSON('nexus_' + eqk + '_ccs_vanguard_export', ccs);
-      writeJSON('nexus_' + eqk + '_ccs_two_tab_v1', ccs);
-      writeJSON('nexus_' + eqk + '_ccs_excel', ccs);
-      if(packageSectionIsVerified(ccs) && Number(ccs.issueRows || (ccs.validation && Array.isArray(ccs.validation.issues) ? ccs.validation.issues.length : 0) || (Array.isArray(ccs.issues) ? ccs.issues.length : 0) || 0) === 0){
-        readOnlyPackageNote('ccs', ccs);
-      }
-    }
+    liveFirebasePackage = data || null;
+    console.warn('Package Export read-only mode: Firebase data captured but not mirrored into workflow storage.');
   }
 
   function firebaseSnapshotSignature(data){
@@ -1181,13 +1031,6 @@ try{
   function packageLocalSignature(eqId){
     const eqk = eqId || 'NO_EQ';
     const interesting = allKeys().filter(function(k){
-      if(!k) return false;
-      /* Do not watch Package Export's own generated output.
-         Watching these keys makes buildReport() trigger itself forever. */
-      if(k.indexOf('_package_export_snapshot') !== -1) return false;
-      if(k.indexOf('_package_imported_step_status_v1') !== -1) return false;
-      if(k.indexOf('_vanguard_system') !== -1) return false;
-      if(k.indexOf('_vanguard_intelligence') !== -1) return false;
       return k === 'nexus.meg.fluke.sessions.v1' ||
         k === 'nexus.torque.sessions.v1' ||
         k.indexOf('nexus_' + eqk + '_') === 0 ||
@@ -1258,32 +1101,39 @@ try{
 
   function startLocalAutoRefresh(eqId){
     if(!eqId) return;
-    localRefreshSignature = packageLocalSignature(eqId);
 
     function maybeRefresh(reason){
-      const sig = packageLocalSignature(eqId);
-      if(sig !== localRefreshSignature){
-        localRefreshSignature = sig;
-        buildReport();
-        if(!liveFirebaseConnected){
-          setLiveStatus('Local package data refreshed' + (reason ? ' (' + reason + ')' : '') + ': ' + new Date().toLocaleString());
-        }
+      buildReport();
+
+      if(!liveFirebaseConnected){
+        setLiveStatus(
+          'Local package data refreshed' +
+          (reason ? ' (' + reason + ')' : '') +
+          ': ' + new Date().toLocaleString()
+        );
       }
     }
 
     window.addEventListener('storage', function(e){
       if(!e || !e.key) return;
-      if(e.key === 'nexus.meg.fluke.sessions.v1' || e.key === 'nexus.torque.sessions.v1' || e.key.indexOf('nexus_' + eqId + '_') === 0 || e.key.indexOf('nexus/equipment/' + eqId + '/') === 0){
+
+      if(
+        e.key === 'nexus.meg.fluke.sessions.v1' ||
+        e.key === 'nexus.torque.sessions.v1' ||
+        e.key.indexOf('nexus_' + eqId + '_') === 0 ||
+        e.key.indexOf('nexus/equipment/' + eqId + '/') === 0
+      ){
         maybeRefresh('storage');
       }
     });
 
-    window.addEventListener('focus', function(){ maybeRefresh('focus'); });
+    window.addEventListener('focus', function(){
+      maybeRefresh('focus');
+    });
+
     document.addEventListener('visibilitychange', function(){
       if(!document.hidden) maybeRefresh('visible');
     });
-
-    localRefreshTimer = setInterval(function(){ maybeRefresh('auto'); }, 5000);
   }
 
 
@@ -1434,17 +1284,7 @@ try{
 
 
   function savePackageSnapshot(){
-    if(!eq) return;
-    const payload = {
-      equipment: eq,
-      generatedAt: new Date().toISOString(),
-      destination: destSel ? destSel.value : '',
-      html: reportEl ? reportEl.innerHTML : '',
-      suggestedFileName: generatedUploadFileName(),
-      selectedPiece: selectedPieceName(),
-      procoreDestinationLabel: currentProcoreDestinationLabel()
-    };
-    writeJSON('nexus_' + eq + '_package_export_snapshot', payload);
+    return;
   }
 
   eqLabel.textContent = eq ? 'Equipment: ' + eq : 'Equipment: (missing eq)';
@@ -2428,16 +2268,8 @@ try{
     }else{
       alert('No Procore URL saved for this destination.');
     }
-  }
-
-  let packageExportIsBuilding = false;
-
-  function buildReport(){
+  }  function buildReport(){
     if(!reportEl) return;
-    if(packageExportIsBuilding) return;
-    packageExportIsBuilding = true;
-
-    try{
 
     const meta = loadEqMeta();
     const rif = findLatestRif(eq);
@@ -2531,24 +2363,7 @@ try{
     savePackageSnapshot();
     updateUploadFileName();
 
-    try{
-      if(window.NEXUS_VANGUARD){
-        window.NEXUS_VANGUARD.setEvidence('packageExport', {
-          exists:true,
-          generatedAt:new Date().toISOString(),
-          selectedPiece:selectedPieceName(),
-          suggestedFileName:generatedUploadFileName()
-        });
-      }
-    }catch(e){}
-
-    }catch(err){
-      console.error('Package Export render failed:', err);
-      reportEl.innerHTML = '<h2>Package Export Render Error</h2><div class="status-banner fail">The export page hit a JavaScript error before it could finish loading.</div><div class="source-box mono">' + safe(err && (err.stack || err.message) || err) + '</div>';
-      setLiveStatus('Package Export render error. See report area.');
-    }finally{
-      packageExportIsBuilding = false;
-    }
+    /* Package Export is read-only. Do not write Vanguard evidence from export page. */
   }
 
   function wireControls(){
