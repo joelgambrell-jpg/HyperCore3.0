@@ -20,7 +20,17 @@
   }
 
   *{box-sizing:border-box;}
-  html,body{height:100%;}
+  html,body{
+    min-height:100%;
+    height:auto !important;
+    overflow-x:hidden !important;
+    overflow-y:auto !important;
+  }
+  .nexus-page{
+    min-height:100vh;
+    height:auto !important;
+    overflow:visible !important;
+  }
 
   .wrap-anywhere,
   a,
@@ -2413,7 +2423,19 @@ try{
     }else{
       alert('No Procore URL saved for this destination.');
     }
-  }  function buildReport(){
+  }
+
+  function safeReportSection(title, fn){
+    try{
+      return fn();
+    }catch(err){
+      console.error('Package Export section failed:', title, err);
+      return sectionHeader(title) +
+        '<div class="status-banner fail">SECTION FAILED TO RENDER — check console for details. The rest of the package was allowed to continue loading.</div>';
+    }
+  }
+
+  function buildReport(){
     if(!reportEl) return;
 
     const meta = loadEqMeta();
