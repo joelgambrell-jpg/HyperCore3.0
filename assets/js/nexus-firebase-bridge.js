@@ -110,7 +110,7 @@
     return `equipment/${equipment}/forms/${form}`;
   }
 
-  async function save(key, payload) {
+  async function remoteSave(key, payload) {
     try {
       const db = getDb();
       if (!db) return false;
@@ -138,15 +138,36 @@
         }
       }
     } catch (e) {
-      console.warn("NEXUS_FIREBASE.save failed:", e);
+      console.warn("NEXUS_FIREBASE.remoteSave failed:", e);
     }
     return false;
+  }
+
+
+  async function save(key, payload) {
+    try {
+      if (window.NEXUS_OFFLINE && typeof window.NEXUS_OFFLINE.saveLocal === "function") {
+        const localDoc = window.NEXUS_OFFLINE.saveLocal(key, payload, "firebase-bridge");
+        if (window.NEXUS_OFFLINE && typeof window.NEXUS_OFFLINE.enqueue === "function") {
+          window.NEXUS_OFFLINE.enqueue("set", key, localDoc || payload);
+        }
+        if (navigator.onLine && window.NEXUS_SYNC_QUEUE && typeof window.NEXUS_SYNC_QUEUE.schedule === "function") {
+          window.NEXUS_SYNC_QUEUE.schedule();
+        }
+        return true;
+      }
+    } catch (e) {
+      console.warn("NEXUS local-first save failed; trying Firebase directly:", e);
+    }
+    return await remoteSave(key, payload);
   }
 
   async function load(key) {
     try {
       const db = getDb();
-      if (!db) return null;
+      if (!db) {
+        return window.NEXUS_OFFLINE && typeof window.NEXUS_OFFLINE.getLocal === "function" ? window.NEXUS_OFFLINE.getLocal(key) : null;
+      }
 
       if (db.doc && typeof db.doc === "function") {
         const snap = await db.doc(key).get();
@@ -155,6 +176,9 @@
     } catch (e) {
       console.warn("NEXUS_FIREBASE.load failed:", e);
     }
+    try {
+      return window.NEXUS_OFFLINE && typeof window.NEXUS_OFFLINE.getLocal === "function" ? window.NEXUS_OFFLINE.getLocal(key) : null;
+    } catch (e) {}
     return null;
   }
 
@@ -218,6 +242,8 @@
   window.NEXUS_FIREBASE.syncRole = syncRole;
   window.NEXUS_FIREBASE.getUserProfile = getUserProfile;
 
+  window.NEXUS_FIREBASE.remoteSave = remoteSave;
+  window.NEXUS_FIREBASE.__remoteSave = remoteSave;
   window.NEXUS_FIREBASE.save = save;
   window.NEXUS_FIREBASE.set = set;
   window.NEXUS_FIREBASE.write = write;
