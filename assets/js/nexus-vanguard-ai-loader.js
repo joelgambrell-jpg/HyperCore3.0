@@ -5,7 +5,7 @@
   Important:
   - Core/offline/AI foundation loads broadly.
   - Module-specific UI integrations load only on their matching pages.
-  - This prevents false readiness panels and browser freezing from loading every module everywhere.
+  - Registry page is intentionally core-only to prevent freezing, rogue panels, and false readiness.
   - Global boot locks prevent repeated injection/initialization loops.
 */
 (function(){
@@ -15,7 +15,7 @@
   if (window.__NEXUS_VANGUARD_AI_BOOTED || window.__NEXUS_VANGUARD_AI_BOOTING) return;
   window.__NEXUS_VANGUARD_AI_BOOTING = true;
 
-  var VERSION = '1.1.1-page-aware-bootlock';
+  var VERSION = '1.1.2-registry-core-only';
   var loaded = window.__NEXUS_VANGUARD_AI_LOADED = window.__NEXUS_VANGUARD_AI_LOADED || {};
   var base = 'assets/js/';
   var path = String(location.pathname || '').toLowerCase();
@@ -24,12 +24,13 @@
     return list.some(function(item){ return path.indexOf(item) !== -1; });
   }
 
-  var isCCS = includesAny(['construction_check_sheet', 'ccs_']);
-  var isTorque = includesAny(['torque_log', 'torque.html']);
-  var isMeg = includesAny(['meg_log', 'equipment_meg', 'meg/']);
-  var isDashboard = includesAny(['vanguard', 'index_equipment_registry', 'package_readiness']);
-  var isDocument = includesAny(['supporting', 'document', 'index.html', 'vanguard_control_center']);
-  var isEquipment = includesAny(['equipment.html', 'index_equipment_registry']);
+  var isRegistry = includesAny(['index_equipment_registry']);
+  var isCCS = !isRegistry && includesAny(['construction_check_sheet', 'ccs_']);
+  var isTorque = !isRegistry && includesAny(['torque_log', 'torque.html']);
+  var isMeg = !isRegistry && includesAny(['meg_log', 'equipment_meg', 'meg/']);
+  var isDashboard = !isRegistry && includesAny(['vanguard', 'package_readiness']);
+  var isDocument = !isRegistry && includesAny(['supporting', 'document', 'index.html', 'vanguard_control_center']);
+  var isEquipment = !isRegistry && includesAny(['equipment.html']);
 
   var files = [
     'nexus-offline-store.js',
@@ -40,10 +41,11 @@
     'nexus-vanguard-ai-bridge.js',
     'nexus-vanguard-requirement-library.js',
     'nexus-vanguard-conflict-engine.js',
-    'nexus-vanguard-readiness-engine.js',
-    'nexus-vanguard-workflow-verifier.js'
+    'nexus-vanguard-readiness-engine.js'
   ];
 
+  if (isRegistry) files.push('nexus-registry-safety-patch.js');
+  if (!isRegistry) files.push('nexus-vanguard-workflow-verifier.js');
   if (isDashboard) files.push('nexus-vanguard-dashboard-requirement-bridge.js');
   if (isEquipment) files.push('nexus-vanguard-equipment-readiness.js');
   if (isDocument || isDashboard) files.push('nexus-vanguard-auto-document-intake.js');
@@ -79,7 +81,7 @@
     window.NEXUS_VANGUARD_AI_LOADER = {
       version:VERSION,
       page:path,
-      context:{ isCCS:isCCS, isTorque:isTorque, isMeg:isMeg, isDashboard:isDashboard, isDocument:isDocument, isEquipment:isEquipment },
+      context:{ isRegistry:isRegistry, isCCS:isCCS, isTorque:isTorque, isMeg:isMeg, isDashboard:isDashboard, isDocument:isDocument, isEquipment:isEquipment },
       files:list.slice(),
       loaded:loaded
     };
