@@ -6,12 +6,16 @@
   - Core/offline/AI foundation loads broadly.
   - Module-specific UI integrations load only on their matching pages.
   - This prevents false readiness panels and browser freezing from loading every module everywhere.
+  - Global boot locks prevent repeated injection/initialization loops.
 */
 (function(){
   'use strict';
   if (typeof window === 'undefined') return;
 
-  var VERSION = '1.1.0-page-aware';
+  if (window.__NEXUS_VANGUARD_AI_BOOTED || window.__NEXUS_VANGUARD_AI_BOOTING) return;
+  window.__NEXUS_VANGUARD_AI_BOOTING = true;
+
+  var VERSION = '1.1.1-page-aware-bootlock';
   var loaded = window.__NEXUS_VANGUARD_AI_LOADED = window.__NEXUS_VANGUARD_AI_LOADED || {};
   var base = 'assets/js/';
   var path = String(location.pathname || '').toLowerCase();
@@ -69,6 +73,7 @@
   }
 
   async function boot(){
+    if (window.__NEXUS_VANGUARD_AI_BOOTED) return;
     var list = unique(files);
     for (var i=0;i<list.length;i++) await loadScript(base + list[i]);
     window.NEXUS_VANGUARD_AI_LOADER = {
@@ -78,8 +83,15 @@
       files:list.slice(),
       loaded:loaded
     };
+    window.__NEXUS_VANGUARD_AI_BOOTED = true;
+    window.__NEXUS_VANGUARD_AI_BOOTING = false;
     window.dispatchEvent(new CustomEvent('nexus:vanguard-ai-stack-ready', { detail:{ version:VERSION, page:path, files:list.slice() } }));
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+  function failSafeUnlock(){
+    if (!window.__NEXUS_VANGUARD_AI_BOOTED) window.__NEXUS_VANGUARD_AI_BOOTING = false;
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ boot().catch(failSafeUnlock); });
+  else boot().catch(failSafeUnlock);
 })();
