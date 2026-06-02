@@ -238,11 +238,17 @@
       window.__NEXUS_REGISTRY_CORE_GUARD__ = true;
       window.__NEXUS_REGISTRY_SKIP_HEAVY_PROGRESS_SCAN__ = true;
 
+      // Registry has heavy inline state and image/progress storage reads.
+      // A no-op unload handler makes browsers do a clean page load when returning
+      // instead of restoring a stale BFCache snapshot. This avoids forced reload loops.
+      window.addEventListener("unload", function(){}, { capture:true });
+
       const nativeKey = Storage.prototype.key;
       const nativeGetItem = Storage.prototype.getItem;
       let progressScanDepth = 0;
       let progressScanCount = 0;
       const MAX_PROGRESS_SCAN_KEYS = 900;
+      let resetTimer = null;
 
       Storage.prototype.getItem = function guardedGetItem(key){
         const value = nativeGetItem.call(this, key);
@@ -267,9 +273,10 @@
 
       window.addEventListener("pageshow", resetProgressGuard, { capture:true });
       window.addEventListener("focus", resetProgressGuard, { capture:true });
-      setInterval(resetProgressGuard, 3000);
+      resetTimer = setInterval(resetProgressGuard, 3000);
 
       window.addEventListener("pagehide", function(){
+        try { if (resetTimer) clearInterval(resetTimer); } catch(e) {}
         try { Storage.prototype.key = nativeKey; Storage.prototype.getItem = nativeGetItem; } catch(e) {}
       }, { capture:true });
     } catch (e) {
