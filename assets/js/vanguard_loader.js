@@ -9,7 +9,14 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_LOADER && window.NEXUS_VANGUARD_LOADER.__installed) return;
 
-  var VERSION = '0.4.3-mode-aware-loader';
+  var VERSION = '0.4.5-registry-safe-minimal';
+
+  var REGISTRY_MODULES = [
+    'assets/js/vanguard_core.js',
+    'assets/js/vanguard_state.js',
+    'assets/js/vanguard_registry.js',
+    'assets/js/vanguard_ipad_ux_hardening.js'
+  ];
 
   var CORE_MODULES = [
     'assets/js/vanguard_core.js',
@@ -60,7 +67,16 @@
     'assets/js/vanguard_final_export_engine.js'
   ];
 
+  var REGISTRY_AI_MODULES = [
+    'assets/js/vanguard_requirement_extractor.js',
+    'assets/js/vanguard_extraction_engine.js',
+    'assets/js/vanguard_backend_client.js',
+    'assets/js/vanguard_document_mapper.js'
+  ];
+
   var MODE_MAP = {
+    registry: REGISTRY_MODULES,
+    registry_ai: REGISTRY_MODULES.concat(REGISTRY_AI_MODULES),
     minimal: CORE_MODULES,
     core: CORE_MODULES,
     ccs: CORE_MODULES.concat(CCS_MODULES),
@@ -85,6 +101,10 @@
     })();
   }
 
+  function isRegistryPage(){
+    return String(location.pathname || '').toLowerCase().indexOf('index_equipment_registry') !== -1 || !!window.__NEXUS_REGISTRY_PAGE;
+  }
+
   function normalizeMode(mode){
     mode = String(mode || '').trim().toLowerCase();
     return MODE_MAP[mode] ? mode : 'minimal';
@@ -101,7 +121,9 @@
       fromQuery = u.searchParams.get('mode') || '';
     }catch(e){}
     var fromBody = document.body ? (document.body.getAttribute('data-vanguard-mode') || '') : '';
-    return normalizeMode(fromWindow || fromDataset || fromQuery || fromBody || 'minimal');
+    var selected = normalizeMode(fromWindow || fromDataset || fromQuery || fromBody || 'minimal');
+    if (isRegistryPage() && selected === 'minimal') return 'registry';
+    return selected;
   }
 
   var MODE = detectMode();
@@ -128,9 +150,9 @@
     });
   }
 
-  function loadAll(){
+  function loadList(list){
     var chain = Promise.resolve([]);
-    MODULES.forEach(function(src){
+    unique(list || []).forEach(function(src){
       chain = chain.then(function(results){
         return loadScript(src).then(function(result){
           results.push(result);
@@ -138,9 +160,21 @@
         });
       });
     });
-    return chain.then(function(results){
+    return chain;
+  }
+
+  function loadAll(){
+    return loadList(MODULES).then(function(results){
       window.NEXUS_VANGUARD_LOADER.results = results;
       try { window.dispatchEvent(new CustomEvent('vanguard:loader:complete',{detail:{version:VERSION,mode:MODE,results:results}})); } catch(e){}
+      return results;
+    });
+  }
+
+  function loadRegistryAi(){
+    return loadList(REGISTRY_AI_MODULES).then(function(results){
+      window.NEXUS_VANGUARD_LOADER.registryAiResults = results;
+      try { window.dispatchEvent(new CustomEvent('vanguard:registry-ai-ready',{detail:{version:VERSION,results:results}})); } catch(e){}
       return results;
     });
   }
@@ -153,7 +187,10 @@
     availableModes:Object.keys(MODE_MAP),
     optionalMissing:OPTIONAL_NOT_PRESENT_IN_THIS_BUILD.slice(),
     loadAll:loadAll,
-    results:[]
+    loadRegistryAi:loadRegistryAi,
+    loadScript:loadScript,
+    results:[],
+    registryAiResults:[]
   };
   window.NEXUS_VANGUARD_LOADER = api;
   window.VanguardLoader = api;
