@@ -9,11 +9,20 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_LOADER && window.NEXUS_VANGUARD_LOADER.__installed) return;
 
-  var VERSION = '0.4.5-registry-safe-minimal';
+  var VERSION = '0.4.6-registry-and-export-lightweight';
 
   var REGISTRY_MODULES = [
     'assets/js/vanguard_core.js',
     'assets/js/vanguard_state.js',
+    'assets/js/vanguard_registry.js',
+    'assets/js/vanguard_ipad_ux_hardening.js'
+  ];
+
+  var EXPORT_CORE_MODULES = [
+    'assets/js/vanguard_core.js',
+    'assets/js/vanguard_state.js',
+    'assets/js/vanguard_approved_rules_enforcement.js',
+    'assets/js/vanguard_export_state.js',
     'assets/js/vanguard_registry.js',
     'assets/js/vanguard_ipad_ux_hardening.js'
   ];
@@ -80,7 +89,7 @@
     minimal: CORE_MODULES,
     core: CORE_MODULES,
     ccs: CORE_MODULES.concat(CCS_MODULES),
-    export: CORE_MODULES.concat(EXPORT_MODULES),
+    export: EXPORT_CORE_MODULES.concat(EXPORT_MODULES),
     dashboard: CORE_MODULES.concat(DOCUMENT_MODULES, CCS_MODULES, DASHBOARD_MODULES),
     full: CORE_MODULES.concat(DOCUMENT_MODULES, CCS_MODULES, DASHBOARD_MODULES, EXPORT_MODULES)
   };
