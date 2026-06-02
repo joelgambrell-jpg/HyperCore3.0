@@ -6,6 +6,7 @@
   - Core/offline/AI foundation loads broadly.
   - Module-specific UI integrations load only on their matching pages.
   - Registry page is intentionally core-only to prevent freezing, rogue panels, and false readiness.
+  - The GitHub Pages root /HyperCore3.0/ serves index.html, which is also the Registry page.
   - Global boot locks prevent repeated injection/initialization loops.
 */
 (function(){
@@ -15,7 +16,7 @@
   if (window.__NEXUS_VANGUARD_AI_BOOTED || window.__NEXUS_VANGUARD_AI_BOOTING) return;
   window.__NEXUS_VANGUARD_AI_BOOTING = true;
 
-  var VERSION = '1.1.2-registry-core-only';
+  var VERSION = '1.1.3-root-index-registry-safe';
   var loaded = window.__NEXUS_VANGUARD_AI_LOADED = window.__NEXUS_VANGUARD_AI_LOADED || {};
   var base = 'assets/js/';
   var path = String(location.pathname || '').toLowerCase();
@@ -24,7 +25,11 @@
     return list.some(function(item){ return path.indexOf(item) !== -1; });
   }
 
-  var isRegistry = includesAny(['index_equipment_registry']);
+  function isRootIndexRegistry(){
+    return /\/hypercore3\.0\/?$/i.test(path) || /\/hypercore3\.0\/index\.html$/i.test(path) || /\/index\.html$/i.test(path);
+  }
+
+  var isRegistry = includesAny(['index_equipment_registry']) || isRootIndexRegistry() || !!window.__NEXUS_REGISTRY_PAGE;
   var isCCS = !isRegistry && includesAny(['construction_check_sheet', 'ccs_']);
   var isTorque = !isRegistry && includesAny(['torque_log', 'torque.html']);
   var isMeg = !isRegistry && includesAny(['meg_log', 'equipment_meg', 'meg/']);
