@@ -238,46 +238,14 @@
       window.__NEXUS_REGISTRY_CORE_GUARD__ = true;
       window.__NEXUS_REGISTRY_SKIP_HEAVY_PROGRESS_SCAN__ = true;
 
-      // Registry has heavy inline state and image/progress storage reads.
-      // A no-op unload handler makes browsers do a clean page load when returning
-      // instead of restoring a stale BFCache snapshot. This avoids forced reload loops.
-      window.addEventListener("unload", function(){}, { capture:true });
-
-      const nativeKey = Storage.prototype.key;
-      const nativeGetItem = Storage.prototype.getItem;
-      let progressScanDepth = 0;
-      let progressScanCount = 0;
-      const MAX_PROGRESS_SCAN_KEYS = 900;
-      let resetTimer = null;
-
-      Storage.prototype.getItem = function guardedGetItem(key){
-        const value = nativeGetItem.call(this, key);
-        if (typeof key === "string" && /^nexus_.+_(ccs_signed_off|step_|torque_|meg_|prefod_|rif_|l2_)/.test(key)) {
-          progressScanDepth = Math.max(progressScanDepth, 1);
-        }
-        return value;
-      };
-
-      Storage.prototype.key = function guardedStorageKey(index){
-        if (progressScanDepth > 0) {
-          progressScanCount += 1;
-          if (progressScanCount > MAX_PROGRESS_SCAN_KEYS) return null;
-        }
-        return nativeKey.call(this, index);
-      };
-
-      function resetProgressGuard(){
-        progressScanDepth = 0;
-        progressScanCount = 0;
-      }
-
-      window.addEventListener("pageshow", resetProgressGuard, { capture:true });
-      window.addEventListener("focus", resetProgressGuard, { capture:true });
-      resetTimer = setInterval(resetProgressGuard, 3000);
-
+      // Leave this guard intentionally small. Do not patch Storage.prototype here;
+      // the registry page has many localStorage-backed controls and image fields.
+      // Prototype interception caused button freezes during navigation testing.
       window.addEventListener("pagehide", function(){
-        try { if (resetTimer) clearInterval(resetTimer); } catch(e) {}
-        try { Storage.prototype.key = nativeKey; Storage.prototype.getItem = nativeGetItem; } catch(e) {}
+        try { window.__NEXUS_REGISTRY_LEAVING__ = true; } catch(e) {}
+      }, { capture:true });
+      window.addEventListener("pageshow", function(){
+        try { window.__NEXUS_REGISTRY_LEAVING__ = false; } catch(e) {}
       }, { capture:true });
     } catch (e) {
       console.warn("Registry startup guard failed:", e);
