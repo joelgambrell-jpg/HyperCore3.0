@@ -9,7 +9,7 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_LOADER && window.NEXUS_VANGUARD_LOADER.__installed) return;
 
-  var VERSION = '0.4.6-registry-and-export-lightweight';
+  var VERSION = '0.4.7-root-registry-lightweight';
 
   var REGISTRY_MODULES = [
     'assets/js/vanguard_core.js',
@@ -110,8 +110,14 @@
     })();
   }
 
+  function isRootIndexRegistry(){
+    var p = String(location.pathname || '').toLowerCase();
+    return /\/hypercore3\.0\/?$/.test(p) || /\/hypercore3\.0\/index\.html$/.test(p) || /\/index\.html$/.test(p);
+  }
+
   function isRegistryPage(){
-    return String(location.pathname || '').toLowerCase().indexOf('index_equipment_registry') !== -1 || !!window.__NEXUS_REGISTRY_PAGE;
+    var p = String(location.pathname || '').toLowerCase();
+    return p.indexOf('index_equipment_registry') !== -1 || isRootIndexRegistry() || !!window.__NEXUS_REGISTRY_PAGE;
   }
 
   function normalizeMode(mode){
