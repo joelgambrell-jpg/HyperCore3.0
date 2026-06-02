@@ -231,7 +231,54 @@
     }
   }
 
+  function registryStartupGuard(){
+    try {
+      const isRegistry = /index_equipment_registry/i.test(location.pathname || "");
+      if (!isRegistry || window.__NEXUS_REGISTRY_CORE_GUARD__) return;
+      window.__NEXUS_REGISTRY_CORE_GUARD__ = true;
+      window.__NEXUS_REGISTRY_SKIP_HEAVY_PROGRESS_SCAN__ = true;
+
+      const nativeKey = Storage.prototype.key;
+      const nativeGetItem = Storage.prototype.getItem;
+      let progressScanDepth = 0;
+      let progressScanCount = 0;
+      const MAX_PROGRESS_SCAN_KEYS = 900;
+
+      Storage.prototype.getItem = function guardedGetItem(key){
+        const value = nativeGetItem.call(this, key);
+        if (typeof key === "string" && /^nexus_.+_(ccs_signed_off|step_|torque_|meg_|prefod_|rif_|l2_)/.test(key)) {
+          progressScanDepth = Math.max(progressScanDepth, 1);
+        }
+        return value;
+      };
+
+      Storage.prototype.key = function guardedStorageKey(index){
+        if (progressScanDepth > 0) {
+          progressScanCount += 1;
+          if (progressScanCount > MAX_PROGRESS_SCAN_KEYS) return null;
+        }
+        return nativeKey.call(this, index);
+      };
+
+      function resetProgressGuard(){
+        progressScanDepth = 0;
+        progressScanCount = 0;
+      }
+
+      window.addEventListener("pageshow", resetProgressGuard, { capture:true });
+      window.addEventListener("focus", resetProgressGuard, { capture:true });
+      setInterval(resetProgressGuard, 3000);
+
+      window.addEventListener("pagehide", function(){
+        try { Storage.prototype.key = nativeKey; Storage.prototype.getItem = nativeGetItem; } catch(e) {}
+      }, { capture:true });
+    } catch (e) {
+      console.warn("Registry startup guard failed:", e);
+    }
+  }
+
   function init(){
+    registryStartupGuard();
     persistEq(getEq());
     updateSessionBanner();
     forceEqOnLinks(document);
@@ -263,7 +310,8 @@
     updateSessionBanner,
     readJSON,
     writeJSON,
-    controlCenterStabilityGuard
+    controlCenterStabilityGuard,
+    registryStartupGuard
   };
 
   window.NEXUS = window.NEXUS || {};
