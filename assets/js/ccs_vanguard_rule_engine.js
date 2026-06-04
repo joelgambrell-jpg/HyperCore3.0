@@ -7,6 +7,7 @@
   - Additive only. Does not replace existing CCS page logic.
   - Uses existing NEXUS/localStorage completion keys where possible.
   - Front-end hardened: N/A, FAIL, missing references, linked workflow gates, and Vanguard hard gates are enforced before final sign-off.
+  - Adds a field-friendly active guidance banner without changing CCS page structure.
 
   Field states:
   PASS    = GOOD
@@ -20,7 +21,7 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_CCS_VANGUARD_RULES && window.NEXUS_CCS_VANGUARD_RULES.__installed) return;
 
-  var VERSION = '0.5.1-ui-signoff-guard';
+  var VERSION = '0.6.0-active-field-guidance';
 
   var RULES = {
     REQUIRED: 'REQUIRED',
@@ -69,6 +70,12 @@
 
   function lower(value) {
     return clean(value).toLowerCase();
+  }
+
+  function escapeHtml(value) {
+    return clean(value).replace(/[&<>"']/g, function (char) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char];
+    });
   }
 
   function nowISO() {
@@ -479,14 +486,134 @@
     return summary;
   }
 
-  function getImportPageSteps() {
+  function getImportPageState() {
     try {
       if (window.NEXUS_CCS_IMPORT_PAGE && typeof window.NEXUS_CCS_IMPORT_PAGE.getState === 'function') {
-        var state = window.NEXUS_CCS_IMPORT_PAGE.getState();
-        if (state && Array.isArray(state.steps)) return state.steps;
+        return window.NEXUS_CCS_IMPORT_PAGE.getState() || null;
       }
     } catch (err) {}
+    return null;
+  }
+
+  function getImportPageSteps() {
+    var state = getImportPageState();
+    if (state && Array.isArray(state.steps)) return state.steps;
     return [];
+  }
+
+  function ensureGuidanceStyle() {
+    if (document.getElementById('nexus-ccs-field-guidance-style')) return;
+    var style = document.createElement('style');
+    style.id = 'nexus-ccs-field-guidance-style';
+    style.textContent = '' +
+      '#nexusCcsFieldGuide{position:sticky;top:0;z-index:30;margin:12px 0 14px;padding:16px;border-radius:18px;border:3px solid rgba(255,255,255,.22);box-shadow:0 14px 35px rgba(0,0,0,.35);font-weight:1000;color:#fff;background:#111827;}' +
+      '#nexusCcsFieldGuide.good{background:#052e1a;border-color:#2dff9b;color:#eafff1;}' +
+      '#nexusCcsFieldGuide.check{background:#3b2a05;border-color:#ffb800;color:#fff8db;}' +
+      '#nexusCcsFieldGuide.stop{background:#3a0909;border-color:#ff5b5b;color:#ffe6e6;}' +
+      '.nexus-ccs-guide-top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;}' +
+      '.nexus-ccs-guide-pill{display:inline-flex;align-items:center;justify-content:center;min-width:92px;padding:10px 14px;border-radius:999px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.24);font-size:18px;letter-spacing:.03em;}' +
+      '.nexus-ccs-guide-main{flex:1;min-width:220px;font-size:18px;line-height:1.25;}' +
+      '.nexus-ccs-guide-sub{margin-top:8px;font-size:13px;line-height:1.35;opacity:.94;}' +
+      '.nexus-ccs-guide-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}' +
+      '.nexus-ccs-guide-btn{min-height:42px;padding:9px 13px;border-radius:999px;border:2px solid rgba(255,255,255,.38);background:rgba(0,0,0,.20);color:#fff;font-size:13px;font-weight:1000;cursor:pointer;}' +
+      '.step.nexus-ccs-active-step{border-color:#ffb800!important;box-shadow:0 0 0 4px rgba(255,184,0,.22),0 8px 30px rgba(0,0,0,.35)!important;}' +
+      '.step.nexus-ccs-blocked-step{border-color:#ff5b5b!important;}' +
+      '@media(max-width:700px){#nexusCcsFieldGuide{top:0;border-radius:14px}.nexus-ccs-guide-main{font-size:16px}.nexus-ccs-guide-pill{font-size:16px;min-width:80px}}' +
+      '@media print{#nexusCcsFieldGuide{position:static;background:#fff!important;color:#000!important;border:1px solid #999!important;box-shadow:none!important}.nexus-ccs-guide-btn{display:none!important}}';
+    document.head.appendChild(style);
+  }
+
+  function firstActionFromResult(result) {
+    if (!result) return 'Open the first unfinished item.';
+    if (result.status === 'BLOCKED') return result.message || 'Fix the STOP item before final sign-off.';
+    if (result.status === 'REVIEW') return result.message || 'Add notes or evidence, then continue.';
+    return 'Continue to the next unfinished item.';
+  }
+
+  function getFirstNonPassResult(steps) {
+    var results = evaluateSteps(steps || [], { eq: getEq() });
+    for (var i = 0; i < results.length; i += 1) {
+      if (results[i].result.status !== 'PASS') return results[i];
+    }
+    return results.length ? results[0] : null;
+  }
+
+  function highlightActiveStep(index, result) {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.step'));
+    cards.forEach(function (card) {
+      card.classList.remove('nexus-ccs-active-step');
+      card.classList.remove('nexus-ccs-blocked-step');
+    });
+    if (index == null || index < 0 || !cards[index]) return;
+    cards[index].classList.add('nexus-ccs-active-step');
+    if (result && result.status === 'BLOCKED') cards[index].classList.add('nexus-ccs-blocked-step');
+  }
+
+  function scrollToActiveStep(index) {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('.step'));
+    if (index == null || index < 0 || !cards[index]) return;
+    cards[index].classList.add('open');
+    try {
+      cards[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } catch (err) {
+      cards[index].scrollIntoView(true);
+    }
+  }
+
+  function insertGuide() {
+    ensureGuidanceStyle();
+    var guide = document.getElementById('nexusCcsFieldGuide');
+    if (guide) return guide;
+
+    guide = document.createElement('section');
+    guide.id = 'nexusCcsFieldGuide';
+    guide.className = 'check';
+    guide.innerHTML = '<div class="nexus-ccs-guide-top"><div class="nexus-ccs-guide-pill">CHECK</div><div class="nexus-ccs-guide-main">Loading CCS guidance.</div></div><div class="nexus-ccs-guide-sub">Vanguard is checking the checklist state.</div><div class="nexus-ccs-guide-actions"><button type="button" class="nexus-ccs-guide-btn" data-nexus-ccs-scroll-active>Go To Active Item</button><button type="button" class="nexus-ccs-guide-btn" data-nexus-ccs-expand-all>Show All Items</button></div>';
+
+    var progress = document.querySelector('.progress');
+    if (progress && progress.parentNode) progress.parentNode.insertBefore(guide, progress.nextSibling);
+    else document.body.insertBefore(guide, document.body.firstChild);
+
+    guide.addEventListener('click', function (ev) {
+      var target = ev.target;
+      if (!target || !target.matches) return;
+      if (target.matches('[data-nexus-ccs-scroll-active]')) {
+        var idx = Number(guide.getAttribute('data-active-index'));
+        if (Number.isFinite(idx)) scrollToActiveStep(idx);
+      }
+      if (target.matches('[data-nexus-ccs-expand-all]')) {
+        Array.prototype.slice.call(document.querySelectorAll('.step')).forEach(function (card) { card.classList.add('open'); });
+      }
+    });
+
+    return guide;
+  }
+
+  function renderFieldGuidance() {
+    try {
+      var steps = getImportPageSteps();
+      if (!steps.length) return;
+
+      var guide = insertGuide();
+      var summary = summarize(steps, { eq: getEq() });
+      var active = getFirstNonPassResult(steps);
+      var activeIndex = active ? active.index : -1;
+      var activeResult = active ? active.result : null;
+      var tone = summary.status === 'BLOCKED' ? 'stop' : summary.status === 'REVIEW' ? 'check' : 'good';
+      var label = summary.status === 'BLOCKED' ? 'STOP' : summary.status === 'REVIEW' ? 'CHECK' : 'GOOD';
+      var title = summary.status === 'PASS'
+        ? 'All visible CCS checks look good.'
+        : 'Step ' + (activeIndex + 1) + ': ' + (active && active.title ? active.title : 'Review required');
+      var action = firstActionFromResult(activeResult);
+
+      guide.className = tone;
+      guide.setAttribute('data-active-index', String(activeIndex));
+      guide.querySelector('.nexus-ccs-guide-pill').textContent = label;
+      guide.querySelector('.nexus-ccs-guide-main').textContent = title;
+      guide.querySelector('.nexus-ccs-guide-sub').innerHTML = escapeHtml(action) + '<br>Pass: ' + summary.pass + ' | Check: ' + summary.review + ' | Stop: ' + summary.blocked + ' | Total: ' + summary.total;
+
+      highlightActiveStep(activeIndex, activeResult);
+    } catch (err) {}
   }
 
   function installCcsImportUiGuard() {
@@ -514,14 +641,18 @@
         if (!steps.length) return;
         var summary = summarize(steps, { eq: getEq() });
         var statusLine = document.getElementById('statusLine');
-        if (!statusLine || !summary) return;
-        if (summary.status === 'BLOCKED') statusLine.textContent = 'STOP: ' + summary.message;
-        else if (summary.status === 'REVIEW') statusLine.textContent = 'CHECK: ' + summary.message;
+        if (statusLine && summary) {
+          if (summary.status === 'BLOCKED') statusLine.textContent = 'STOP: ' + summary.message;
+          else if (summary.status === 'REVIEW') statusLine.textContent = 'CHECK: ' + summary.message;
+        }
+        renderFieldGuidance();
       } catch (err) {}
     }
 
     window.addEventListener('nexus-workflow-change', refreshBanner);
     window.addEventListener('storage', refreshBanner);
+    document.addEventListener('click', function () { setTimeout(refreshBanner, 80); }, true);
+    document.addEventListener('change', function () { setTimeout(refreshBanner, 80); }, true);
     setTimeout(refreshBanner, 500);
     setInterval(refreshBanner, 5000);
   }
@@ -539,7 +670,8 @@
     isStepComplete: isStepComplete,
     normalizeStatus: normalizeStatus,
     completionKeys: completionKeys,
-    installCcsImportUiGuard: installCcsImportUiGuard
+    installCcsImportUiGuard: installCcsImportUiGuard,
+    renderFieldGuidance: renderFieldGuidance
   };
 
   window.NEXUS_CCS_VANGUARD_RULES = api;
