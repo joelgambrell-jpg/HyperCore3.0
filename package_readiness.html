@@ -290,6 +290,7 @@
 <script src="assets/js/nexus-workflow-state.js"></script>
 <script src="assets/js/nexus-core.js"></script>
 <script src="assets/js/nexus-firebase-bridge.js"></script>
+<script src="assets/js/nexus-vanguard-hard-gates.js"></script>
 
 <script>
 (function(){
@@ -417,6 +418,56 @@
     };
   }
 
+  function readJSON(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    }catch(e){ return fallback; }
+  }
+
+  function getVanguardBlockers(){
+    const blockers = [];
+    const ccsPayload = readJSON(`nexus_${eqSafe}_ccs_vanguard_export`, null);
+    const ccsValidation = readJSON(`nexus_${eqSafe}_ccs_vanguard_validation`, null);
+    const torqueValidation = readJSON(`nexus_${eqSafe}_torque_vanguard_validation_v1`, null);
+    const conflicts = readJSON("nexus_vanguard_conflicts_v1", { conflicts:[] });
+
+    try{
+      if(window.NEXUS_VANGUARD_HARD_GATES && ccsPayload && typeof window.NEXUS_VANGUARD_HARD_GATES.validatePayload === "function"){
+        const gate = window.NEXUS_VANGUARD_HARD_GATES.validatePayload(ccsPayload, { requireLocator:false });
+        if(gate && gate.issues && gate.issues.length){
+          gate.issues.forEach(function(issue){
+            blockers.push({ label:"CCS Hard Gate", detail:issue.reason || "CCS Vanguard hard gate is blocked." });
+          });
+        }
+      }
+    }catch(e){}
+
+    if(ccsValidation && Array.isArray(ccsValidation.issues) && ccsValidation.issues.length){
+      ccsValidation.issues.forEach(function(issue){
+        const status = String(issue.status || "").toUpperCase();
+        if(status === "BLOCKED" || status === "FAIL" || status === "MISSING"){
+          blockers.push({ label:"CCS Validation", detail:issue.reason || "CCS validation issue requires review." });
+        }
+      });
+    }
+
+    if(torqueValidation && String(torqueValidation.state || "").toLowerCase() === "blocked"){
+      blockers.push({ label:"Torque Vanguard", detail:torqueValidation.summary || "Torque validation is blocked." });
+    }
+
+    if(Array.isArray(conflicts.conflicts)){
+      conflicts.conflicts.forEach(function(conflict){
+        const state = String(conflict.state || "review").toLowerCase();
+        if(state !== "resolved" && state !== "approved" && state !== "closed"){
+          blockers.push({ label:"Requirement Conflict", detail:conflict.reason || "Unresolved requirement conflict requires engineer review." });
+        }
+      });
+    }
+
+    return blockers;
+  }
+
   function badgeClass(status){
 
     if(status === "COMPLETE"){
@@ -476,8 +527,9 @@
         : Math.max(0, total - complete)
     );
 
-    const failed = 0;
-    const packageStatus = readiness.status || (complete === total ? "READY" : "REVIEW");
+    const vanguardBlockers = getVanguardBlockers();
+    const failed = vanguardBlockers.length;
+    const packageStatus = failed ? "BLOCKED" : (readiness.status || (complete === total ? "READY" : "REVIEW"));
 
     if(grid){
       grid.innerHTML = "";
@@ -522,6 +574,15 @@
 
     });
 
+    vanguardBlockers.forEach(function(blocker){
+      if(issueList){
+        const issue = document.createElement("div");
+        issue.className = "issue bad";
+        issue.innerHTML = "<b>" + blocker.label + "</b> — " + blocker.detail;
+        issueList.appendChild(issue);
+      }
+    });
+
     if(completeBox) completeBox.textContent = complete + "/" + total;
     if(missingBox) missingBox.textContent = String(remaining);
     if(failedBox) failedBox.textContent = String(failed);
@@ -533,13 +594,17 @@
         (
           packageStatus === "READY"
             ? "ready"
-            : "review"
+            : packageStatus === "BLOCKED"
+              ? "blocked"
+              : "review"
         );
 
       readyBadge.textContent =
         packageStatus === "READY"
           ? "READY FOR ENERGIZATION"
-          : "REVIEW REQUIRED";
+          : packageStatus === "BLOCKED"
+            ? "BLOCKED BY VANGUARD"
+            : "REVIEW REQUIRED";
     }
 
     if(heroSub){
@@ -576,6 +641,8 @@
         JSON.stringify({
           equipment:eqSafe,
           status:packageStatus,
+          blockedCount:failed,
+          blockers:vanguardBlockers,
           complete,
           total,
           remaining,
