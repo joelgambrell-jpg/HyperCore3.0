@@ -362,7 +362,7 @@
 
   .actions{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(4,1fr);
     gap:10px;
     margin-top:12px;
   }
@@ -382,6 +382,7 @@
   .choice.pass{background:rgba(45,255,155,.18);border-color:rgba(45,255,155,.75);}
   .choice.fail{background:rgba(255,91,91,.20);border-color:rgba(255,91,91,.75);}
   .choice.review{background:rgba(125,211,252,.18);border-color:rgba(125,211,252,.75);}
+  .choice.na{background:rgba(255,184,0,.16);border-color:rgba(255,184,0,.75);}
 
   .choice.active.pass{
     background:var(--green);
@@ -397,6 +398,11 @@
     background:var(--review);
     color:#001018;
     box-shadow:0 0 24px rgba(125,211,252,.85),0 0 50px rgba(125,211,252,.35);
+  }
+  .choice.active.na{
+    background:var(--yellow);
+    color:#1f1300;
+    box-shadow:0 0 24px rgba(255,184,0,.85),0 0 50px rgba(255,184,0,.35);
   }
   .choice.active::after{content:" ✓";}
 
@@ -762,6 +768,11 @@
     background:#7dd3fc !important;
     border-color:#7dd3fc !important;
   }
+  .badge.na{
+    color:#1f1300 !important;
+    background:#ffb800 !important;
+    border-color:#ffb800 !important;
+  }
 
   .step-tools{
     border-top:1px solid rgba(255,255,255,.14);
@@ -998,6 +1009,8 @@
 <script src="assets/js/nexus-firebase-bridge.js"></script>
 <script src="assets/js/ccs_excel_importer.js"></script>
 <script src="assets/js/ccs_template_renderer.js"></script>
+<script src="assets/js/nexus-vanguard-hard-gates.js"></script>
+<script src="assets/js/nexus-vanguard-requirement-normalizer.js"></script>
 <script src="assets/js/ccs_vanguard_rule_engine.js"></script>
 <script src="assets/js/ccs_supervisor_review_engine.js"></script>
 <script src="assets/js/ccs_evidence_engine.js"></script>
@@ -1197,12 +1210,13 @@
     const statusRaw = String(raw || "").trim().toUpperCase();
     if(["PASS","PASSED","P","YES","Y","GO","TRUE","COMPLETE","COMPLETED"].includes(statusRaw)) return "PASS";
     if(["FAIL","FAILED","F","NO","N","FALSE","NG"].includes(statusRaw)) return "FAIL";
-    if(["REVIEW","REV","PENDING","HOLD","NA","N/A"].includes(statusRaw)) return "REVIEW";
+    if(["NA","N/A","NOT APPLICABLE","NOT-APPLICABLE"].includes(statusRaw)) return "NA";
+    if(["REVIEW","REV","PENDING","HOLD"].includes(statusRaw)) return "REVIEW";
     return "";
   }
 
   function completed(){
-    return state.steps.filter(s => s.status === "PASS" || s.status === "REVIEW").length;
+    return state.steps.filter(s => s.status === "PASS" || s.status === "REVIEW" || s.status === "NA").length;
   }
 
   function failed(){
@@ -1213,8 +1227,31 @@
     return state.steps.filter(s => !s.status).length;
   }
 
+  function getRuleSummary(){
+    try{
+      if(window.NEXUS_CCS_VANGUARD_RULES && typeof window.NEXUS_CCS_VANGUARD_RULES.summarize === "function"){
+        return window.NEXUS_CCS_VANGUARD_RULES.summarize(state.steps, { eq:eqSafe });
+      }
+    }catch(e){}
+    return null;
+  }
+
+  function hasBlockingVanguardIssues(){
+    const summary = getRuleSummary();
+    if(summary && summary.status === "BLOCKED") return true;
+
+    try{
+      if(window.NEXUS_VANGUARD_HARD_GATES && typeof window.NEXUS_VANGUARD_HARD_GATES.validatePayload === "function"){
+        const gate = window.NEXUS_VANGUARD_HARD_GATES.validatePayload({ steps:state.steps }, { ignoreConflicts:true, requireLocator:false });
+        return !!(gate && gate.status === "BLOCKED");
+      }
+    }catch(e){}
+
+    return false;
+  }
+
   function isChecklistReady(){
-    return state.steps.length && missing() === 0 && failed() === 0;
+    return state.steps.length && missing() === 0 && failed() === 0 && !hasBlockingVanguardIssues();
   }
 
   function isFinalApproved(){
@@ -1384,7 +1421,7 @@
       status: step && step.status ? "PASS" : "BLOCKED",
       fieldLabel: step && step.status ? "GOOD" : "STOP",
       tone: step && step.status ? "good" : "stop",
-      message: step && step.status ? "Good. This item is ready." : "Tap PASS, FAIL, or REVIEW.",
+      message: step && step.status ? "Good. This item is ready." : "Tap PASS, FAIL, REVIEW, or N/A.",
       rules: [],
       issues: [],
       warnings: []
@@ -1479,6 +1516,7 @@
     const s = String(status || "").toUpperCase();
     if(s === "PASS") return "PASS";
     if(s === "REVIEW") return "REVIEW";
+    if(s === "NA") return "NA";
     if(s === "FAIL") return "FAIL";
     return "PENDING";
   }
@@ -1566,8 +1604,8 @@
     state.steps.forEach((s,idx) => {
       if(!s.status) issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"MISSING", reason:"Step " + (idx + 1) + " is not complete: " + s.title });
       if(s.status === "FAIL") issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"FAIL", reason:"Step " + (idx + 1) + " failed: " + s.title, note:s.note || "" });
-      if((s.status === "FAIL" || s.status === "REVIEW") && !String(s.note || "").trim()){
-        issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"REVIEW", reason:"Step " + (idx + 1) + " needs notes: " + s.title });
+      if((s.status === "FAIL" || s.status === "REVIEW" || s.status === "NA") && !String(s.note || "").trim()){
+        issues.push({ row:idx+1, displayStep:idx+1, step:s.id, status:"REVIEW", reason:"Step " + (idx + 1) + " needs notes/reason: " + s.title });
       }
       const ruleIssue = validationIssueForStep(s, idx);
       if(ruleIssue) issues.push(ruleIssue);
@@ -1579,7 +1617,7 @@
     const validation = {
       eq:eqSafe,
       section:"ccs",
-      status:isComplete() ? "COMPLETE" : (failed() ? "FAIL" : "REVIEW"),
+      status:isComplete() ? "COMPLETE" : (issues.some(function(i){ return String(i.status || "").toUpperCase() === "BLOCKED" || String(i.status || "").toUpperCase() === "FAIL"; }) ? "FAIL" : "REVIEW"),
       issues,
       rows:state.steps.map((s,idx) => ({
         row:idx+1,
@@ -1964,85 +2002,65 @@
 
   function normalizeStepOrder(){
     state.steps = (state.steps || []).map(function(step, idx){
-      step.order = idx + 1;
-      step.displayStep = String(idx + 1);
-      step.rowNumber = idx + 1;
+      step.displayStep = idx + 1;
       return step;
     });
+  }
+
+  function createManualStepFromValues(values){
+    const refs = [];
+    if(values.refName || values.refUrl){
+      refs.push(normalizeReference({ name:values.refName || "Reference", type:"Manual", url:values.refUrl || "", notes:"Added from CCS page." }));
+    }
+
+    return normalizeStepObject({
+      id:nextManualStepId(),
+      title:values.title || "Manual Checklist Step",
+      description:values.description || "Manual field verification step.",
+      source:values.source || "Manual Entry",
+      validationRule:values.validationRule || "REQUIRED",
+      evidenceRequired:values.evidenceRequired || "",
+      role:"field",
+      required:true,
+      section:"MANUAL",
+      status:"",
+      note:"",
+      updatedAt:nowISO(),
+      updatedBy:currentRole(),
+      references:refs,
+      manuallyAdded:true
+    }, state.steps.length);
   }
 
   function clearAddForm(){
     if(newStepTitle) newStepTitle.value = "";
     if(newStepDescription) newStepDescription.value = "";
     if(newStepSource) newStepSource.value = "";
+    const rule = document.getElementById("newStepRule");
+    if(rule) rule.value = "";
     if(newStepRefName) newStepRefName.value = "";
     if(newStepRefUrl) newStepRefUrl.value = "";
-    var newRule = document.getElementById("newStepRule");
-    if(newRule) newRule.value = "";
-  }
-
-  function buildManualStepFromValues(title, description, source, refName, refUrl, addedBy, insertContext, validationRule){
-    const refs = [];
-    if(refUrl || refName){
-      refs.push({
-        name: refName || "Reference",
-        type: refUrl && isInternalUrl(refUrl) ? "NEXUS Page" : "Reference",
-        url: refUrl,
-        notes: "Added manually"
-      });
-    }
-
-    return autoCheckStep({
-      id: nextManualStepId(),
-      title: title,
-      description: description || title,
-      source: source || "Manual field-added step",
-      validationRule: validationRule || "REQUIRED",
-      evidenceRequired: "",
-      role: "field",
-      required: true,
-      section: "GENERAL",
-      references: refs,
-      status: "",
-      note: "",
-      updatedAt: nowISO(),
-      updatedBy: addedBy || currentRole(),
-      aiCheck: {
-        required: true,
-        status: "PENDING",
-        reason: "Manual step added after import. Vanguard should validate requirement, source, sequence location, and reference document.",
-        insertContext: insertContext || "",
-        createdAt: nowISO()
-      },
-      manuallyAdded: true
-    }, "Manual step added. Automatic Vanguard AI validation queued.");
   }
 
   function addManualStep(){
+    const rule = document.getElementById("newStepRule");
     const title = String(newStepTitle && newStepTitle.value || "").trim();
-    const description = String(newStepDescription && newStepDescription.value || "").trim();
-    const source = String(newStepSource && newStepSource.value || "").trim();
-    const refName = String(newStepRefName && newStepRefName.value || "").trim();
-    const refUrl = String(newStepRefUrl && newStepRefUrl.value || "").trim();
-    const ruleEl = document.getElementById("newStepRule");
-    const validationRule = String(ruleEl && ruleEl.value || "REQUIRED").trim() || "REQUIRED";
-
     if(!title){
-      alert("Step Title is required.");
-      if(newStepTitle) newStepTitle.focus();
+      alert("Step title is required.");
       return;
     }
 
-    state.steps.push(buildManualStepFromValues(title, description, source, refName, refUrl, currentRole(), "Added to end of checklist", validationRule));
-    normalizeStepOrder();
-
-    state.expanded = true;
-    state.finalSignoff = null;
-    localStorage.removeItem(signedKey());
-    setWorkflowCompleteState(false);
-
+    state.steps.push(createManualStepFromValues({
+      title:title,
+      description:String(newStepDescription && newStepDescription.value || "").trim(),
+      source:String(newStepSource && newStepSource.value || "").trim(),
+      validationRule:String(rule && rule.value || "").trim(),
+      refName:String(newStepRefName && newStepRefName.value || "").trim(),
+      refUrl:String(newStepRefUrl && newStepRefUrl.value || "").trim()
+    }));
     clearAddForm();
     if(addPanel) addPanel.classList.remove("show");
+    normalizeStepOrder();
     save("manual_step_added");
   }
 
@@ -2050,84 +2068,39 @@
     const titleEl = document.getElementById("below_title_" + idx);
     const descEl = document.getElementById("below_desc_" + idx);
     const sourceEl = document.getElementById("below_source_" + idx);
+    const ruleEl = document.getElementById("below_rule_" + idx);
     const refNameEl = document.getElementById("below_ref_name_" + idx);
     const refUrlEl = document.getElementById("below_ref_url_" + idx);
-
     const title = String(titleEl && titleEl.value || "").trim();
-    const description = String(descEl && descEl.value || "").trim();
-    const source = String(sourceEl && sourceEl.value || "").trim();
-    const refName = String(refNameEl && refNameEl.value || "").trim();
-    const refUrl = String(refUrlEl && refUrlEl.value || "").trim();
-    const ruleEl = document.getElementById("below_rule_" + idx);
-    const validationRule = String(ruleEl && ruleEl.value || "REQUIRED").trim() || "REQUIRED";
 
     if(!title){
-      alert("Step Title is required.");
-      if(titleEl) titleEl.focus();
+      alert("Step title is required.");
       return;
     }
 
-    const afterStep = state.steps[idx] ? state.steps[idx].id + " - " + state.steps[idx].title : "unknown";
-    const newStep = buildManualStepFromValues(title, description, source, refName, refUrl, currentRole(), "Added below " + afterStep, validationRule);
+    const newStep = createManualStepFromValues({
+      title:title,
+      description:String(descEl && descEl.value || "").trim(),
+      source:String(sourceEl && sourceEl.value || "").trim(),
+      validationRule:String(ruleEl && ruleEl.value || "").trim(),
+      refName:String(refNameEl && refNameEl.value || "").trim(),
+      refUrl:String(refUrlEl && refUrlEl.value || "").trim()
+    });
 
     state.steps.splice(idx + 1, 0, newStep);
     normalizeStepOrder();
-    state.expanded = true;
-    state.finalSignoff = null;
-    localStorage.removeItem(signedKey());
-    setWorkflowCompleteState(false);
-
     save("manual_step_added_below");
-  }
-
-  function markStepAiCheck(idx){
-    const s = state.steps[idx];
-    if(!s) return;
-
-    s.aiCheck = Object.assign({}, s.aiCheck || {}, {
-      required: true,
-      status: "REQUESTED",
-      requestedAt: nowISO(),
-      requestedBy: currentRole(),
-      reason: "User requested Vanguard AI review for this CCS step."
-    });
-
-    try{
-      if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.updateState === "function"){
-        window.NEXUS_VANGUARD.updateState({
-          equipmentId:eqSafe,
-          validations:{
-            ccsManualStepAiReview:{
-              status:"REVIEW",
-              step:s.id,
-              title:s.title,
-              source:s.source,
-              references:s.references || [],
-              message:"Manual CCS step queued for AI validation.",
-              updatedAt:nowISO()
-            }
-          }
-        }, "ccs:manual-step-ai-check-requested");
-      }
-    }catch(e){}
-
-    save("manual_step_ai_check_requested");
   }
 
   function deleteStep(idx){
     const s = state.steps[idx];
     if(!s) return;
-
-    if(!confirm("Delete this checklist step?\\n\\n" + s.title)){
+    if(!confirm("Delete this checklist step?\n\n" + (s.title || s.id))){
       return;
     }
-
     state.steps.splice(idx, 1);
     normalizeStepOrder();
-    state.finalSignoff = null;
-    localStorage.removeItem(signedKey());
-    setWorkflowCompleteState(false);
-    save("manual_step_deleted");
+    save("step_deleted");
   }
 
   function saveEditedStep(idx){
@@ -2141,39 +2114,26 @@
     const refName = document.getElementById("edit_ref_name_" + idx);
     const refUrl = document.getElementById("edit_ref_url_" + idx);
 
-    const newTitle = String(title && title.value || "").trim();
-    if(!newTitle){
-      alert("Step title cannot be blank.");
-      return;
-    }
-
-    s.title = newTitle;
+    s.title = String(title && title.value || s.title || "").trim();
     s.description = String(desc && desc.value || "").trim();
-    s.source = String(source && source.value || "").trim() || "NEXUS Vanguard";
-    s.validationRule = String(rule && rule.value || s.validationRule || "REQUIRED").trim() || "REQUIRED";
-
-    const rn = String(refName && refName.value || "").trim();
-    const ru = String(refUrl && refUrl.value || "").trim();
-
-    if(rn || ru){
-      s.references = [{
-        name: rn || "Reference",
-        type: ru && isInternalUrl(ru) ? "NEXUS Page" : "Reference",
-        url: ru,
-        notes: "Edited on CCS page"
-      }];
-    }else{
-      s.references = [];
-    }
-
+    s.source = String(source && source.value || "").trim();
+    s.validationRule = String(rule && rule.value || "").trim();
     s.updatedAt = nowISO();
     s.updatedBy = currentRole();
+    s.manuallyAdded = true;
+
+    const rName = String(refName && refName.value || "").trim();
+    const rUrl = String(refUrl && refUrl.value || "").trim();
+    if(rName || rUrl){
+      s.references = [normalizeReference({ name:rName || "Reference", type:"Manual", url:rUrl, notes:"Edited from CCS page." })];
+    }
+
     s.aiCheck = Object.assign({}, s.aiCheck || {}, {
-      required: true,
-      status: "PENDING",
-      reason: "Step was edited manually. Vanguard should re-check requirement, source, sequence, and references.",
-      editedAt: nowISO(),
-      editedBy: currentRole()
+      required:true,
+      status:"PENDING",
+      reason:"Step was edited manually. Vanguard should re-check requirement, source, sequence, and references.",
+      editedAt:nowISO(),
+      editedBy:currentRole()
     });
     autoCheckStep(s, "Step edited. Automatic Vanguard AI validation queued.");
     save("step_edited");
@@ -2201,12 +2161,7 @@
     progressCount.textContent = done + "/" + total;
     progressFill.style.width = pct + "%";
 
-    let ruleSummary = null;
-    try{
-      if(window.NEXUS_CCS_VANGUARD_RULES && typeof window.NEXUS_CCS_VANGUARD_RULES.summarize === "function"){
-        ruleSummary = window.NEXUS_CCS_VANGUARD_RULES.summarize(state.steps, { eq:eqSafe });
-      }
-    }catch(e){}
+    let ruleSummary = getRuleSummary();
 
     if(ruleSummary && ruleSummary.status === "BLOCKED"){
       statusLine.textContent = "STOP: " + ruleSummary.message;
@@ -2217,9 +2172,9 @@
     }else if(isChecklistReady()){
       statusLine.textContent = "GOOD: Checklist ready. Final sign-off is available.";
     }else if(failCount){
-      statusLine.textContent = failCount + " failed step(s). Correct them or move to REVIEW with notes before final sign-off.";
+      statusLine.textContent = failCount + " failed step(s). Correct them or use authorized override before final sign-off.";
     }else{
-      statusLine.textContent = missingCount + " step(s) still need PASS / FAIL / REVIEW.";
+      statusLine.textContent = missingCount + " step(s) still need PASS / FAIL / REVIEW / N/A.";
     }
 
     expandCollapseBtn.textContent = state.expanded ? "Collapse All Steps" : "Show All Steps";
@@ -2250,10 +2205,11 @@
             <button class="choice pass ${s.status === "PASS" ? "active" : ""}" type="button" data-status="PASS" data-idx="${idx}">PASS</button>
             <button class="choice fail ${s.status === "FAIL" ? "active" : ""}" type="button" data-status="FAIL" data-idx="${idx}">FAIL</button>
             <button class="choice review ${s.status === "REVIEW" ? "active" : ""}" type="button" data-status="REVIEW" data-idx="${idx}">REVIEW</button>
+            <button class="choice na ${s.status === "NA" ? "active" : ""}" type="button" data-status="NA" data-idx="${idx}">N/A</button>
           </div>
           <div class="note-area">
             <label for="note_${idx}">Notes</label>
-            <textarea id="note_${idx}" data-note-idx="${idx}" placeholder="Required for FAIL or REVIEW.">${escapeHtml(s.note || "")}</textarea>
+            <textarea id="note_${idx}" data-note-idx="${idx}" placeholder="Required for FAIL, REVIEW, or N/A. Explain what happened or why N/A applies.">${escapeHtml(s.note || "")}</textarea>
           </div>
 
           <details style="margin-top:12px;">
@@ -2458,238 +2414,161 @@
         const cat = firstValue(row, ["Category","Section","Group","Phase","Discipline"]);
         const title = String(cat ? cat + " — " + titleRaw : titleRaw).trim();
         const desc = firstValue(row, ["Description","Requirement","Comments","Notes","Remarks","Instruction","Instructions"]) || titleRaw;
-        const source = firstValue(row, ["Document Reference","Reference","Source","Spec","Drawing","Doc Ref","Requirement Source"]) || "Imported Excel file";
-        const status = normalizeStatus(firstValue(row, ["Status","Pass/Fail/N/A","Result","Pass Fail","PassFail","Pass/Fail"]));
-        const note = String(firstValue(row, ["Notes","Comments","Remarks"]) || "").trim();
-        const technician = String(firstValue(row, ["Technician","Tech","Inspector","Signed Off By","SignedOffBy"]) || "").trim();
+        const source = firstValue(row, ["Document Reference","Reference","Source","Spec","Drawing","Submittal","SOP","Manufacturer","Manual"]);
+        const rule = firstValue(row, ["Validation Rule","Rule","Gate","Completion Rule","Requirement Rule"]);
+        const evidence = firstValue(row, ["Evidence Required","Evidence","Proof","Photo Required","Attachment Required"]);
+        const role = firstValue(row, ["Role","Responsible","Owner","By"]);
+        const status = normalizeStatus(firstValue(row, ["Status","Result","Pass Fail","Pass/Fail","State"]));
+        const note = firstValue(row, ["Notes","Comments","Remarks"]);
+        const refs = refsByStep[id] || [];
 
-        let references = Array.isArray(refsByStep[id]) ? refsByStep[id].slice() : [];
-
-        const inlineUrl = firstValue(row, ["Reference URL","File URL","Document URL","Link","Hyperlink","Open File","File"]);
-        if(inlineUrl){
-          references.push(normalizeReference({
-            name:firstValue(row, ["Reference Name","Document Reference","Reference","Source"]) || "Reference",
-            type:firstValue(row, ["Reference Type","Document Type","Type"]),
-            url:inlineUrl,
-            notes:"Inline reference from CCS_Steps"
-          }));
-        }
-
-        return autoCheckStep({
+        return normalizeStepObject({
           id,
           title,
-          description:String(desc || "").trim(),
-          source:String(source || "").trim(),
-          references,
-          validationRule:String(firstValue(row, ["Validation Rule","Rule","Gate","Acceptance Criteria"]) || "REQUIRED").trim(),
-          evidenceRequired:String(firstValue(row, ["Evidence Required","Evidence","Photo Required","Proof Required"]) || "").trim(),
-          role:String(firstValue(row, ["Role","Responsible Role","Owner"]) || "field").trim(),
-          required:String(firstValue(row, ["Required","Is Required","Mandatory"]) || "YES").trim().toUpperCase() !== "NO",
-          section:String(firstValue(row, ["Section","Category","Group","Phase","Discipline"]) || "GENERAL").trim(),
+          description:desc,
+          source,
+          validationRule:rule || "REQUIRED",
+          evidenceRequired:evidence,
+          role:role || "field",
+          required:true,
+          section:cat || "IMPORTED",
           status,
           note,
-          updatedAt:status ? nowISO() : "",
-          updatedBy:status ? (technician || "import") : "",
-          manuallyAdded:false
-        }, "Excel import. Automatic Vanguard AI validation queued.");
-      })
-      .filter(s => s.title);
+          updatedAt:"",
+          updatedBy:"",
+          references:refs
+        }, idx);
+      });
   }
 
-  function findSheetName(workbook, candidates, fallbackIndex){
-    const names = workbook.SheetNames || [];
-    const lowerMap = {};
-    names.forEach(n => lowerMap[String(n).trim().toLowerCase()] = n);
-
-    for(const c of candidates){
-      const hit = lowerMap[String(c).trim().toLowerCase()];
-      if(hit) return hit;
-    }
-
-    return names[fallbackIndex] || names[0] || "";
-  }
-
-
-  function applyImportedTemplate(parsed, file){
-    if(!parsed || !Array.isArray(parsed.steps) || !parsed.steps.length){
-      alert("No usable checklist steps found in the imported file.");
-      return false;
-    }
-
-    const importedSteps = parsed.steps.map(function(step){
-      return autoCheckStep(Object.assign({}, step, {
-        references:Array.isArray(step.references) ? step.references.map(normalizeReference).filter(function(r){ return r.name || r.url; }) : [],
-        status:normalizeStatus(step.status),
-        updatedAt:step.status ? (step.updatedAt || nowISO()) : "",
-        updatedBy:step.status ? (step.updatedBy || "import") : "",
-        manuallyAdded:!!step.manuallyAdded
-      }), "Excel import. Automatic Vanguard AI validation queued.");
-    });
-
-    const refCount = importedSteps.reduce(function(sum, s){
-      return sum + (Array.isArray(s.references) ? s.references.length : 0);
-    }, 0);
-
-    const ok = confirm(
-      "Import " + importedSteps.length + " step(s) from " + (parsed.fileName || (file && file.name) || "Excel file") + "?\n\n" +
-      "Steps sheet: " + (parsed.stepsSheet || "CCS_Steps") + "\n" +
-      "Reference sheet: " + (parsed.referencesSheet || "none") + "\n" +
-      "Reference links found: " + refCount + "\n\n" +
-      "This replaces the current step list."
-    );
-
-    if(!ok) return false;
-
-    state.steps = importedSteps;
-    normalizeStepOrder();
-    state.finalSignoff = null;
-    state.expanded = true;
-    state.importInfo = {
-      fileName:parsed.fileName || (file && file.name) || "Imported CCS workbook",
-      stepsSheet:parsed.stepsSheet || "",
-      referencesSheet:parsed.referencesSheet || "",
-      stepCount:importedSteps.length,
-      referenceCount:refCount,
-      importedAt:parsed.importedAt || nowISO(),
-      importerVersion:window.NEXUS_CCS_EXCEL_IMPORTER ? window.NEXUS_CCS_EXCEL_IMPORTER.version : "inline"
-    };
-
+  function handleWorkbook(workbook, fileName){
+    let normalized = null;
     try{
-      if(window.NEXUS_VANGUARD && window.NEXUS_CCS_TEMPLATE_RENDERER && typeof window.NEXUS_VANGUARD.setCCSItems === "function"){
-        window.NEXUS_VANGUARD.setCCSItems(window.NEXUS_CCS_TEMPLATE_RENDERER.toVanguardItems(state.steps), {
-          template:"EXCEL_IMPORT",
-          equipmentType:""
-        });
+      if(window.NEXUS_CCS_EXCEL_IMPORTER && typeof window.NEXUS_CCS_EXCEL_IMPORTER.fromWorkbook === "function"){
+        normalized = window.NEXUS_CCS_EXCEL_IMPORTER.fromWorkbook(workbook, { fileName:fileName, eq:eqSafe });
       }
     }catch(e){
-      console.warn("Vanguard CCS item sync failed:", e);
+      console.warn("CCS importer engine failed, using local fallback:", e);
     }
 
-    localStorage.removeItem(signedKey());
-    setWorkflowCompleteState(false);
-    return true;
-  }
+    let steps = [];
+    let refsByStep = {};
+    let source = "local-fallback";
+    let precheck = null;
 
-  async function parseExcel(file){
-    if(!file) return;
-    if(!window.XLSX){
-      alert("Excel parser did not load.");
+    if(normalized && Array.isArray(normalized.steps)){
+      steps = normalized.steps.map(function(step, idx){ return normalizeStepObject(step, idx); });
+      source = normalized.source || "ccs_excel_importer";
+      precheck = normalized.precheck || null;
+    }else{
+      const sheetNames = workbook.SheetNames || [];
+      const stepSheetName = sheetNames.find(n => /step|ccs/i.test(n)) || sheetNames[0];
+      const refSheetName = sheetNames.find(n => /ref|reference|link|document/i.test(n)) || sheetNames[1];
+
+      const stepRows = stepSheetName
+        ? XLSX.utils.sheet_to_json(workbook.Sheets[stepSheetName], { defval:"" })
+        : [];
+      const refRows = refSheetName
+        ? XLSX.utils.sheet_to_json(workbook.Sheets[refSheetName], { defval:"" })
+        : [];
+
+      refsByStep = rowsToRefsByStep(refRows);
+      steps = rowsToSteps(stepRows, refsByStep);
+      precheck = null;
+    }
+
+    if(!steps.length){
+      alert("No checklist steps found. Verify the workbook has a CCS_Steps tab.");
       return;
     }
 
-    if(window.NEXUS_CCS_EXCEL_IMPORTER && typeof window.NEXUS_CCS_EXCEL_IMPORTER.parseFile === "function"){
-      try{
-        const parsed = await window.NEXUS_CCS_EXCEL_IMPORTER.parseFile(file);
-        if(applyImportedTemplate(parsed, file)){
-          await save("ccs_excel_importer_module");
-        }
-        return;
-      }catch(err){
-        console.warn("CCS Excel Importer module failed; falling back to inline parser:", err);
-      }
-    }
-
-    const data = await file.arrayBuffer();
-    const wb = XLSX.read(data,{ type:"array", cellDates:true });
-
-    const stepsSheetName = findSheetName(wb, ["CCS_Steps","CCS Steps","Steps","CCS_Template","Checklist","Sheet1"], 0);
-    const refsSheetName = findSheetName(wb, ["Step_References","Step References","References","Reference Docs","Reference_Docs","Docs","Sheet2"], 1);
-
-    if(!stepsSheetName || !wb.Sheets[stepsSheetName]){
-      alert("No usable steps sheet found. Use a first tab named CCS_Steps.");
-      return;
-    }
-
-    const stepRows = XLSX.utils.sheet_to_json(wb.Sheets[stepsSheetName], { defval:"" });
-    const refRows = refsSheetName && wb.Sheets[refsSheetName]
-      ? XLSX.utils.sheet_to_json(wb.Sheets[refsSheetName], { defval:"" })
-      : [];
-
-    const refsByStep = rowsToRefsByStep(refRows);
-    const importedSteps = rowsToSteps(stepRows, refsByStep);
-
-    if(!importedSteps.length){
-      alert("No usable checklist steps found in " + stepsSheetName + ".");
-      return;
-    }
-
-    const refCount = importedSteps.reduce((sum, s) => sum + (Array.isArray(s.references) ? s.references.length : 0), 0);
-
-    const ok = confirm(
-      "Import " + importedSteps.length + " step(s) from " + file.name + "?\\n\\n" +
-      "Steps sheet: " + stepsSheetName + "\\n" +
-      "Reference sheet: " + (refsSheetName || "none") + "\\n" +
-      "Reference links found: " + refCount + "\\n\\n" +
-      "This replaces the current step list."
-    );
-
-    if(!ok) return;
-
-    state.steps = importedSteps;
-    normalizeStepOrder();
-    state.finalSignoff = null;
-    state.expanded = true;
+    state.steps = steps;
     state.importInfo = {
-      fileName:file.name,
-      stepsSheet:stepsSheetName,
-      referencesSheet:refsSheetName || "",
-      stepCount:importedSteps.length,
-      referenceCount:refCount,
-      importedAt:nowISO()
+      fileName:fileName || "Imported workbook",
+      importedAt:nowISO(),
+      count:steps.length,
+      source:source,
+      precheck:precheck
     };
-
-    localStorage.removeItem(signedKey());
-    setWorkflowCompleteState(false);
-
-    await save("two_tab_excel_import");
+    state.finalSignoff = null;
+    state.updatedAt = nowISO();
+    normalizeStepOrder();
+    save("excel_imported");
   }
 
-  if(downloadTemplateBtn){
-    downloadTemplateBtn.addEventListener("click", () => {
-      try{
-        if(window.NEXUS_CCS_EXCEL_IMPORTER && typeof window.NEXUS_CCS_EXCEL_IMPORTER.downloadTemplate === "function"){
-          window.NEXUS_CCS_EXCEL_IMPORTER.downloadTemplate("NEXUS_CCS_Template.xlsx");
-        }else{
-          alert("Template generator is not loaded.");
-        }
-      }catch(err){
-        alert("Unable to generate template: " + (err && err.message ? err.message : err));
+  function downloadTemplate(){
+    const wb = XLSX.utils.book_new();
+    const steps = [
+      {
+        "Step ID":"CCS-001",
+        "Category":"RIF",
+        "Inspection Item":"Receipt inspection is complete",
+        "Description":"Verify receipt inspection has been completed and no open damage items remain.",
+        "Document Reference":"RIF.html",
+        "Validation Rule":"REQUIRED",
+        "Evidence Required":"RIF complete"
+      },
+      {
+        "Step ID":"CCS-002",
+        "Category":"TORQUE",
+        "Inspection Item":"Torque application is complete",
+        "Description":"Verify torque log is complete and values match approved requirements.",
+        "Document Reference":"torque_log.html",
+        "Validation Rule":"TORQUE_COMPLETE",
+        "Evidence Required":"Torque log"
       }
-    });
+    ];
+    const refs = [
+      { "Step ID":"CCS-001", "Reference Name":"Open RIF", "Reference Type":"NEXUS Page", "Reference URL":"RIF.html", "Notes":"Receipt Inspection Form" },
+      { "Step ID":"CCS-002", "Reference Name":"Open Torque Log", "Reference Type":"NEXUS Page", "Reference URL":"torque_log.html", "Notes":"Torque Log" }
+    ];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(steps), "CCS_Steps");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(refs), "Step_References");
+    XLSX.writeFile(wb, "NEXUS_CCS_Two_Tab_Template.xlsx");
   }
 
-  dropZone.addEventListener("click", () => excelInput.click());
-  excelInput.addEventListener("change", () => {
-    const file = excelInput.files && excelInput.files[0];
-    if(file) parseExcel(file);
-  });
+  function attachDrop(){
+    if(!dropZone || !excelInput) return;
 
-  ["dragenter","dragover"].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
+    dropZone.addEventListener("click", () => excelInput.click());
+    dropZone.addEventListener("dragover", e => {
       e.preventDefault();
-      e.stopPropagation();
       dropZone.classList.add("dragover");
     });
-  });
-
-  ["dragleave","drop"].forEach(evt => {
-    dropZone.addEventListener(evt, e => {
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", e => {
       e.preventDefault();
-      e.stopPropagation();
       dropZone.classList.remove("dragover");
+      const file = e.dataTransfer.files && e.dataTransfer.files[0];
+      if(file) readExcel(file);
     });
-  });
+    excelInput.addEventListener("change", () => {
+      const file = excelInput.files && excelInput.files[0];
+      if(file) readExcel(file);
+      excelInput.value = "";
+    });
+  }
 
-  dropZone.addEventListener("drop", e => {
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if(file) parseExcel(file);
-  });
+  function readExcel(file){
+    const reader = new FileReader();
+    reader.onload = e => {
+      try{
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type:"array" });
+        handleWorkbook(wb, file.name);
+      }catch(err){
+        console.error(err);
+        alert("Could not read Excel file. Make sure it is .xlsx/.xls.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
 
-  addStepBtn.addEventListener("click", () => {
-    if(addPanel) addPanel.classList.toggle("show");
-    if(addPanel && addPanel.classList.contains("show") && newStepTitle) newStepTitle.focus();
-  });
-
+  downloadTemplateBtn.addEventListener("click", downloadTemplate);
+  if(addStepBtn){
+    addStepBtn.addEventListener("click", () => {
+      if(addPanel) addPanel.classList.toggle("show");
+    });
+  }
   saveNewStepBtn.addEventListener("click", addManualStep);
 
   cancelNewStepBtn.addEventListener("click", () => {
@@ -2703,8 +2582,10 @@
   });
 
   finalSignBtn.addEventListener("click", () => {
+    const summary = getRuleSummary();
     if(!isChecklistReady()){
-      alert("All steps must be PASS or REVIEW before final sign-off. Failed steps must be corrected or moved to REVIEW with notes.");
+      const reason = summary && summary.message ? summary.message : "All steps must be PASS, REVIEW, or documented N/A before final sign-off. Failed, missing, or blocked Vanguard items must be corrected or overridden.";
+      alert("STOP: Final CCS sign-off is blocked.\n\n" + reason);
       return;
     }
 
@@ -2725,6 +2606,14 @@
     save("final_signoff");
   });
 
+  window.NEXUS_CCS_IMPORT_PAGE = {
+    version:"1.1.0-hard-gate-ui",
+    getState:function(){ return state; },
+    getPayload:function(){ return buildPayload(); },
+    getRuleSummary:getRuleSummary,
+    isChecklistReady:isChecklistReady
+  };
+
   window.NEXUS_back = function(){
     location.href = eq ? "equipment.html?eq=" + encodeURIComponent(eq) : "equipment.html";
     return false;
@@ -2741,38 +2630,28 @@
 
   if(window.NEXUS_CCS_FIREBASE_SYNC && typeof window.NEXUS_CCS_FIREBASE_SYNC.attach === "function" && eq){
     try{
-      window.NEXUS_CCS_FIREBASE_SYNC.attach({
-        eq:eq,
-        getState:function(){ return state; },
-        setState:function(nextState){
-          if(nextState && Array.isArray(nextState.steps) && nextState.steps.length){
-            state = Object.assign({}, state, nextState);
-            state.steps = state.steps.map((s, idx) => normalizeStepObject(s, idx));
-            normalizeStepOrder();
-          }
-        },
-        render:function(){ render(); },
-        onStatus:function(sync){
-          firebaseConnected = !!(sync && (sync.firebaseConnected || sync.firebaseSaved));
+      window.NEXUS_CCS_FIREBASE_SYNC.attach(eq, {
+        onRemote:function(payload){
+          if(!payload || !Array.isArray(payload.steps) || !payload.steps.length) return;
+          state = Object.assign({}, state, payload);
+          state.steps = state.steps.map((s,idx) => normalizeStepObject(s, idx));
+          normalizeStepOrder();
+          firebaseConnected = true;
+          render();
         }
       });
+      firebaseConnected = true;
     }catch(e){
       console.warn("CCS Firebase attach failed:", e);
       firebaseConnected = false;
     }
-  }else if(false && window.NexusLiveSync && typeof window.NexusLiveSync.listen === "function" && eq){
-    /* Disabled during localStorage-first stabilization to prevent listener/render/save loops. */
   }
 
-  save("loaded");
-
-  try{
-    if(window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.refresh === "function"){
-      window.NEXUS_VANGUARD.refresh();
-    }
-  }catch(e){}
+  attachDrop();
+  save("page_load");
 })();
 </script>
 
+</div>
 </body>
 </html>
