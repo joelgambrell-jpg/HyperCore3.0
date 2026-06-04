@@ -20,7 +20,7 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_CCS_VANGUARD_RULES && window.NEXUS_CCS_VANGUARD_RULES.__installed) return;
 
-  var VERSION = '0.5.0-workflow-gatekeeper';
+  var VERSION = '0.5.1-ui-signoff-guard';
 
   var RULES = {
     REQUIRED: 'REQUIRED',
@@ -479,6 +479,53 @@
     return summary;
   }
 
+  function getImportPageSteps() {
+    try {
+      if (window.NEXUS_CCS_IMPORT_PAGE && typeof window.NEXUS_CCS_IMPORT_PAGE.getState === 'function') {
+        var state = window.NEXUS_CCS_IMPORT_PAGE.getState();
+        if (state && Array.isArray(state.steps)) return state.steps;
+      }
+    } catch (err) {}
+    return [];
+  }
+
+  function installCcsImportUiGuard() {
+    if (installCcsImportUiGuard.__installed) return;
+    installCcsImportUiGuard.__installed = true;
+
+    document.addEventListener('click', function (ev) {
+      var target = ev.target;
+      if (!target || !target.matches || !target.matches('#finalSignBtn')) return;
+
+      var steps = getImportPageSteps();
+      if (!steps.length) return;
+
+      var summary = summarize(steps, { eq: getEq() });
+      if (summary && summary.status === 'BLOCKED') {
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        alert('STOP: Final CCS sign-off is blocked.\n\n' + summary.message);
+      }
+    }, true);
+
+    function refreshBanner() {
+      try {
+        var steps = getImportPageSteps();
+        if (!steps.length) return;
+        var summary = summarize(steps, { eq: getEq() });
+        var statusLine = document.getElementById('statusLine');
+        if (!statusLine || !summary) return;
+        if (summary.status === 'BLOCKED') statusLine.textContent = 'STOP: ' + summary.message;
+        else if (summary.status === 'REVIEW') statusLine.textContent = 'CHECK: ' + summary.message;
+      } catch (err) {}
+    }
+
+    window.addEventListener('nexus-workflow-change', refreshBanner);
+    window.addEventListener('storage', refreshBanner);
+    setTimeout(refreshBanner, 500);
+    setInterval(refreshBanner, 5000);
+  }
+
   var api = {
     __installed: true,
     version: VERSION,
@@ -491,11 +538,15 @@
     summarize: summarize,
     isStepComplete: isStepComplete,
     normalizeStatus: normalizeStatus,
-    completionKeys: completionKeys
+    completionKeys: completionKeys,
+    installCcsImportUiGuard: installCcsImportUiGuard
   };
 
   window.NEXUS_CCS_VANGUARD_RULES = api;
   window.CCSVanguardRules = api;
   window.NEXUS = window.NEXUS || {};
   window.NEXUS.CCSVanguardRules = api;
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installCcsImportUiGuard);
+  else installCcsImportUiGuard();
 })();
