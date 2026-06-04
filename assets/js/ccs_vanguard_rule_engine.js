@@ -6,6 +6,7 @@
   - Converts imported Excel CCS Validation Rule values into simple field states.
   - Additive only. Does not replace existing CCS page logic.
   - Uses existing NEXUS/localStorage completion keys where possible.
+  - Front-end hardened: N/A, FAIL, missing references, and Vanguard hard gates are enforced before final sign-off.
 
   Field states:
   PASS    = GOOD
@@ -19,7 +20,7 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_CCS_VANGUARD_RULES && window.NEXUS_CCS_VANGUARD_RULES.__installed) return;
 
-  var VERSION = '0.3.0-evidence-aware';
+  var VERSION = '0.4.0-hard-gate-aware';
 
   var RULES = {
     REQUIRED: 'REQUIRED',
@@ -139,7 +140,8 @@
     var s = upper(value);
     if (s === 'PASS' || s === 'PASSED' || s === 'GO' || s === 'COMPLETE' || s === 'COMPLETED' || s === 'YES' || s === 'Y') return 'PASS';
     if (s === 'FAIL' || s === 'FAILED' || s === 'NO' || s === 'N' || s === 'NG') return 'FAIL';
-    if (s === 'REVIEW' || s === 'HOLD' || s === 'CHECK' || s === 'NA' || s === 'N/A') return 'REVIEW';
+    if (s === 'NA' || s === 'N/A' || s === 'NOT APPLICABLE' || s === 'NOT-APPLICABLE') return 'NA';
+    if (s === 'REVIEW' || s === 'HOLD' || s === 'CHECK') return 'REVIEW';
     return '';
   }
 
@@ -191,14 +193,32 @@
     return rules;
   }
 
+  function supervisorDecision(step) {
+    return upper(step && step.supervisorReview && step.supervisorReview.decision);
+  }
+
   function supervisorAccepted(step) {
     try {
       if (window.NEXUS_CCS_SUPERVISOR_REVIEW && typeof window.NEXUS_CCS_SUPERVISOR_REVIEW.isSupervisorAccepted === 'function') {
         return window.NEXUS_CCS_SUPERVISOR_REVIEW.isSupervisorAccepted(step || {});
       }
     } catch (err) {}
-    var decision = upper(step && step.supervisorReview && step.supervisorReview.decision);
+    var decision = supervisorDecision(step);
     return decision === 'APPROVED' || decision === 'OVERRIDE';
+  }
+
+  function supervisorOverride(step) {
+    var decision = supervisorDecision(step);
+    return decision === 'OVERRIDE' || !!(step && step.supervisorOverride && step.supervisorOverride.active);
+  }
+
+  function hardGateEvaluate(step, options) {
+    try {
+      if (window.NEXUS_VANGUARD_HARD_GATES && typeof window.NEXUS_VANGUARD_HARD_GATES.validateStep === 'function') {
+        return window.NEXUS_VANGUARD_HARD_GATES.validateStep(step || {}, options || {});
+      }
+    } catch (err) {}
+    return null;
   }
 
   function evaluateStep(step, options) {
@@ -214,37 +234,28 @@
     var warnings = [];
     var passes = [];
     var acceptedBySupervisor = supervisorAccepted(step);
-
-    if (acceptedBySupervisor) {
-      return {
-        status: 'PASS',
-        fieldLabel: 'GOOD',
-        tone: 'good',
-        message: 'Supervisor reviewed and accepted this item with comment.',
-        issues: [],
-        warnings: [],
-        passes: ['Supervisor decision: ' + upper(step.supervisorReview && step.supervisorReview.decision || 'APPROVED')],
-        rules: rules,
-        required: required,
-        eq: eq,
-        section: section,
-        supervisorReview: step.supervisorReview || null,
-        checkedAt: nowISO(),
-        checkedBy: 'NEXUS_CCS_VANGUARD_RULES',
-        confidence: 92
-      };
-    }
+    var overrideBySupervisor = supervisorOverride(step);
+    var hardGate = hardGateEvaluate(step, { requireNaApproval:false, requireLocator:false });
 
     if (!clean(step.title || step.task || step.description)) {
       issues.push('Name this checklist item.');
     }
 
     if (required && !status) {
-      issues.push('Tap PASS, FAIL, or REVIEW.');
+      issues.push('Tap PASS, FAIL, REVIEW, or N/A.');
     }
 
     if (status === 'FAIL') {
-      issues.push('This item is marked FAIL. Fix it or put it in REVIEW with notes.');
+      issues.push('This item is marked FAIL. Fix it or use authorized superintendent/admin override.');
+    }
+
+    if (status === 'NA') {
+      if (!clean(step.note || step.notes || step.reason || (step.supervisorReview && step.supervisorReview.comment))) {
+        issues.push('N/A requires a reason before final sign-off.');
+      }
+      if (!hasReference(step)) {
+        issues.push('N/A requires a source/reference showing why it does not apply.');
+      }
     }
 
     if ((status === 'FAIL' || status === 'REVIEW') && !clean(step.note || step.notes)) {
@@ -255,7 +266,8 @@
       var linkedStep = STEP_RULE_MAP[rule];
 
       if (rule === RULES.DOCUMENT_REFERENCE_REQUIRED && !hasReference(step)) {
-        warnings.push('Add a source, drawing, spec, or reference link.');
+        if (status === 'PASS' || status === 'NA') issues.push('Add a source, drawing, spec, or reference link.');
+        else warnings.push('Add a source, drawing, spec, or reference link.');
       }
 
       if (rule === RULES.PHOTO_REQUIRED && status === 'PASS' && !hasPhotoEvidence(step) && section !== 'FPV') {
@@ -279,6 +291,24 @@
       }
     });
 
+    if (hardGate) {
+      if (hardGate.status === 'BLOCKED') {
+        issues = issues.concat(Array.isArray(hardGate.issues) && hardGate.issues.length ? hardGate.issues : [hardGate.message || 'Vanguard hard gate blocked this item.']);
+      } else if (hardGate.status === 'REVIEW') {
+        warnings = warnings.concat(Array.isArray(hardGate.warnings) && hardGate.warnings.length ? hardGate.warnings : [hardGate.message || 'Vanguard hard gate requires review.']);
+      } else if (hardGate.status === 'PASS') {
+        passes.push('Vanguard hard gate passed.');
+      }
+    }
+
+    if (issues.length && overrideBySupervisor) {
+      warnings.push('Hard failure cleared by superintendent/admin override.');
+      passes.push('Supervisor override: OVERRIDE');
+      issues = [];
+    } else if (!issues.length && acceptedBySupervisor) {
+      passes.push('Supervisor decision: ' + (supervisorDecision(step) || 'APPROVED'));
+    }
+
     var finalStatus = 'PASS';
     var tone = 'good';
     var fieldLabel = 'GOOD';
@@ -289,11 +319,11 @@
       tone = 'stop';
       fieldLabel = 'STOP';
       message = issues[0];
-    } else if (warnings.length || status === 'REVIEW') {
+    } else if (warnings.length || status === 'REVIEW' || status === 'NA') {
       finalStatus = 'REVIEW';
       tone = 'check';
       fieldLabel = 'CHECK';
-      message = warnings[0] || 'Review item. Notes are okay if this is intentional.';
+      message = warnings[0] || (status === 'NA' ? 'N/A recorded. Confirm reason/reference before final release.' : 'Review item. Notes are okay if this is intentional.');
     }
 
     return {
@@ -308,6 +338,8 @@
       required: required,
       eq: eq,
       section: section,
+      supervisorReview: step.supervisorReview || null,
+      hardGate: hardGate || null,
       checkedAt: nowISO(),
       checkedBy: 'NEXUS_CCS_VANGUARD_RULES',
       confidence: finalStatus === 'PASS' ? 96 : finalStatus === 'REVIEW' ? 78 : 45
