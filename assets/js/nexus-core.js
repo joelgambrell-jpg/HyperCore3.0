@@ -190,6 +190,45 @@
     syncRoleSelects(role);
   }
 
+  function loadScriptOnce(src){
+    return new Promise(resolve => {
+      if (!src) { resolve(false); return; }
+      const existing = Array.from(document.scripts || []).find(s => (s.getAttribute("src") || "") === src);
+      if (existing) { resolve(true); return; }
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = false;
+      script.onload = () => resolve(true);
+      script.onerror = () => {
+        console.warn("NEXUS module failed to load:", src);
+        resolve(false);
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  async function loadAuthorityModules(){
+    try {
+      const path = location.pathname || "";
+      const isEquipment = /equipment\.html$/i.test(path) || !!document.getElementById("progressFill");
+      const isRegistry = /index_equipment_registry\.html$/i.test(path) || !!document.getElementById("registrySelect");
+      if (!isEquipment && !isRegistry) return;
+
+      await loadScriptOnce("assets/js/vanguard_validation_authority.js");
+      await loadScriptOnce("assets/js/vanguard_authority_adapters.js");
+
+      if (isEquipment) {
+        await loadScriptOnce("assets/js/vanguard_equipment_authority_indicator.js");
+      }
+
+      if (isRegistry) {
+        await loadScriptOnce("assets/js/vanguard_project_authority_dashboard.js");
+      }
+    } catch (e) {
+      console.warn("NEXUS authority module loader failed:", e);
+    }
+  }
+
   function controlCenterStabilityGuard(){
     try {
       const isControlCenter = /vanguard_control_center/i.test(location.pathname || "") || !!document.getElementById("vxDropZone");
@@ -258,6 +297,7 @@
     updateSessionBanner();
     forceEqOnLinks(document);
     controlCenterStabilityGuard();
+    loadAuthorityModules();
 
     window.addEventListener("focus", updateSessionBanner);
     window.addEventListener("storage", updateSessionBanner);
@@ -286,7 +326,8 @@
     readJSON,
     writeJSON,
     controlCenterStabilityGuard,
-    registryStartupGuard
+    registryStartupGuard,
+    loadAuthorityModules
   };
 
   window.NEXUS = window.NEXUS || {};
