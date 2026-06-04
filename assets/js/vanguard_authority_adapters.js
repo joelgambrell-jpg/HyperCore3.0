@@ -7,17 +7,17 @@
     Validation Authority Engine without changing existing pages.
   - Defensive by design: missing data becomes REVIEW/BLOCKED in the authority result,
     but this file does not mutate workflow state unless a caller explicitly asks.
+  - Stabilized to prevent UI event/render loops.
 */
 (function(){
   'use strict';
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_AUTHORITY_ADAPTERS && window.NEXUS_VANGUARD_AUTHORITY_ADAPTERS.__installed) return;
 
-  var VERSION = '1.0.0-authority-adapters';
+  var VERSION = '1.1.0-stable-dispatch';
 
   function clean(v){ return String(v == null ? '' : v).trim(); }
   function lower(v){ return clean(v).toLowerCase(); }
-  function upper(v){ return clean(v).toUpperCase(); }
   function nowISO(){ return new Date().toISOString(); }
 
   function readJSON(key, fallback){
@@ -109,7 +109,15 @@
       meg.rawValue = 'line/load complete';
     }
 
-    return { eq:eq, steps:steps, complete:steps.filter(function(s){ return s.complete; }).length, total:steps.length, updatedAt:nowISO() };
+    return {
+      eq:eq,
+      steps:steps,
+      complete:steps.filter(function(s){ return s.complete; }).length,
+      total:steps.length,
+      remaining:steps.filter(function(s){ return !s.complete; }).length,
+      percent:steps.length ? Math.round((steps.filter(function(s){ return s.complete; }).length / steps.length) * 100) : 0,
+      updatedAt:nowISO()
+    };
   }
 
   function getCcsSnapshot(eq){
@@ -223,17 +231,20 @@
     };
   }
 
-  function runAuthority(eq){
+  function runAuthority(eq, options){
+    options = options || {};
     eq = clean(eq || getEq());
     var authority = window.NEXUS_VANGUARD_VALIDATION_AUTHORITY || window.VanguardValidationAuthority;
     if (!authority || typeof authority.validatePackage !== 'function') {
       return { status:'REVIEW', canPass:false, message:'Validation Authority Engine is not loaded.', eq:eq, capturedAt:nowISO() };
     }
     var input = buildAuthorityInput(eq);
-    var result = authority.validatePackage(eq, { input:input });
+    var result = authority.validatePackage(eq, { input:input, mode:options.mode || 'FIELD' });
     result.input = input;
     writeJSON('nexus_' + eq + '_authority_snapshot_v1', result);
-    try { window.dispatchEvent(new CustomEvent('vanguard:authority-adapter:updated', { detail:result })); } catch(e) {}
+    if (!options.silent) {
+      try { window.dispatchEvent(new CustomEvent('vanguard:authority-adapter:updated', { detail:result })); } catch(e) {}
+    }
     return result;
   }
 
@@ -243,7 +254,7 @@
     var timer = null;
     function schedule(){
       clearTimeout(timer);
-      timer = setTimeout(function(){ try { runAuthority(getEq()); } catch(e) {} }, 250);
+      timer = setTimeout(function(){ try { runAuthority(getEq(), { silent:false }); } catch(e) {} }, 250);
     }
     window.addEventListener('storage', schedule);
     window.addEventListener('nexus-workflow-change', schedule);
