@@ -3,27 +3,32 @@
   HyperCore / NEXUS Vanguard Validation Authority
 
   Purpose:
-  - Single deterministic authority for PASS / REVIEW / BLOCKED decisions.
-  - AI may extract requirements and evidence, but this engine decides whether a field/module/package can pass.
+  - Separate ENGINEERING REVIEW from FIELD EXECUTION.
+  - Engineering can flag missing references, numeric mismatches, conflicts, bad data, and review items.
+  - Field execution only blocks when:
+      1) The required process is not complete.
+      2) A FAIL exists without a notation/reason.
   - Front-end only. No Firebase backend required.
   - Additive: does not replace existing page logic until callers opt into it.
 
-  Core rule:
-  - No source/citation/reference = no enforcement.
-  - No approved/enforced requirement = review, not pass.
-  - Numeric mismatch = blocked unless authorized override exists.
-  - N/A requires reason + reference + review/override trail.
-  - Open conflicts block package readiness.
+  Canonical operating entities:
+  - ENGINEERING SETUP / REVIEW: strict review intelligence, no automatic field lockout.
+  - FIELD EXECUTION: field-friendly completion authority, minimal blocking.
 */
 (function(){
   'use strict';
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_VALIDATION_AUTHORITY && window.NEXUS_VANGUARD_VALIDATION_AUTHORITY.__installed) return;
 
-  var VERSION = '1.0.0-validation-authority';
+  var VERSION = '1.1.0-field-engineering-split';
   var REQUIREMENTS_KEY = 'nexus_vanguard_requirements';
   var CONFLICTS_KEY = 'nexus_vanguard_conflicts_v1';
   var AUTHORITY_KEY_PREFIX = 'nexus_vanguard_authority_';
+
+  var MODE = {
+    FIELD: 'FIELD',
+    ENGINEERING: 'ENGINEERING'
+  };
 
   var STATUS = {
     PASS: 'PASS',
@@ -97,13 +102,19 @@
     return s || '';
   }
 
+  function normalizeMode(options){
+    options = options || {};
+    var mode = upper(options.mode || options.authorityMode || 'FIELD');
+    return mode === MODE.ENGINEERING ? MODE.ENGINEERING : MODE.FIELD;
+  }
+
   function normalizeUnit(unit){
     var u = lower(unit).replace(/\s+/g,'').replace(/Ω/g,'ω');
     if (['ftlb','ft-lb','ftlbs','footpounds','foot-pound','lbft','lb-ft'].indexOf(u) !== -1) return 'ft-lb';
     if (['inlb','in-lb','inlbs','inchpounds','inch-pound','lbin','lb-in'].indexOf(u) !== -1) return 'in-lb';
     if (['nm','n-m','n·m'].indexOf(u) !== -1) return 'N·m';
-    if (['mω','mohm','megohm','megohms','mω','mωs','mω'].indexOf(u) !== -1) return 'MΩ';
-    if (u === 'mΩ'.toLowerCase()) return 'MΩ';
+    if (['mω','mohm','megohm','megohms','mωs'].indexOf(u) !== -1) return 'MΩ';
+    if (u === 'mω' || u === 'mΩ'.toLowerCase()) return 'MΩ';
     return clean(unit);
   }
 
@@ -130,6 +141,44 @@
       message: clean(message || ''),
       createdAt: nowISO()
     }, detail || {});
+  }
+
+  function result(scope, status, message, issues, extra){
+    issues = Array.isArray(issues) ? issues : [];
+    var blockers = issues.filter(function(i){ return i.severity === SEVERITY.BLOCKER; });
+    var reviews = issues.filter(function(i){ return i.severity === SEVERITY.REVIEW; });
+    var finalStatus = status || (blockers.length ? STATUS.BLOCKED : reviews.length ? STATUS.REVIEW : STATUS.PASS);
+    return Object.assign({
+      id: id('AUTH'),
+      authorityVersion: VERSION,
+      scope: clean(scope || 'general'),
+      status: finalStatus,
+      canPass: finalStatus !== STATUS.BLOCKED,
+      blocking: finalStatus === STATUS.BLOCKED,
+      reviewRequired: finalStatus === STATUS.REVIEW,
+      message: clean(message || ''),
+      issues: issues,
+      blockerCount: blockers.length,
+      reviewCount: reviews.length,
+      createdAt: nowISO()
+    }, extra || {});
+  }
+
+  function downgradeBlockersForField(issues){
+    return (Array.isArray(issues) ? issues : []).map(function(item){
+      if (!item || item.severity !== SEVERITY.BLOCKER) return item;
+      return Object.assign({}, item, {
+        severity: SEVERITY.REVIEW,
+        fieldDowngraded: true,
+        fieldDowngradeReason: 'Field mode only blocks incomplete process or FAIL without notation.'
+      });
+    });
+  }
+
+  function fieldResult(scope, message, issues, extra){
+    issues = downgradeBlockersForField(issues || []);
+    var reviews = issues.filter(function(i){ return i.severity === SEVERITY.REVIEW; });
+    return result(scope, reviews.length ? STATUS.REVIEW : STATUS.PASS, message, issues, extra);
   }
 
   function citationFromRequirement(req){
@@ -165,36 +214,6 @@
     return !!clean(item.reason || item.note || item.notes || item.comment || (item.supervisorReview && item.supervisorReview.comment));
   }
 
-  function hasOverride(item){
-    item = item || {};
-    var decision = upper(item.supervisorReview && item.supervisorReview.decision);
-    if (decision === 'OVERRIDE') return true;
-    if (item.supervisorOverride && item.supervisorOverride.active) return true;
-    if (item.override && (item.override.active || item.override.status === 'OVERRIDDEN')) return true;
-    return false;
-  }
-
-  function result(scope, status, message, issues, extra){
-    issues = Array.isArray(issues) ? issues : [];
-    var blockers = issues.filter(function(i){ return i.severity === SEVERITY.BLOCKER; });
-    var reviews = issues.filter(function(i){ return i.severity === SEVERITY.REVIEW; });
-    var finalStatus = status || (blockers.length ? STATUS.BLOCKED : reviews.length ? STATUS.REVIEW : STATUS.PASS);
-    return Object.assign({
-      id: id('AUTH'),
-      authorityVersion: VERSION,
-      scope: clean(scope || 'general'),
-      status: finalStatus,
-      canPass: finalStatus === STATUS.PASS,
-      blocking: finalStatus === STATUS.BLOCKED,
-      reviewRequired: finalStatus === STATUS.REVIEW,
-      message: clean(message || ''),
-      issues: issues,
-      blockerCount: blockers.length,
-      reviewCount: reviews.length,
-      createdAt: nowISO()
-    }, extra || {});
-  }
-
   function requirementsAsArray(){
     var raw = readJSON(REQUIREMENTS_KEY, {});
     if (Array.isArray(raw)) return raw;
@@ -220,14 +239,14 @@
     if (!reqs.length) {
       return {
         requirement:null,
-        issues:[issue('NO_APPROVED_REQUIREMENT', SEVERITY.REVIEW, 'No approved ' + type + ' requirement is available for enforcement.', { type:type })]
+        issues:[issue('NO_APPROVED_REQUIREMENT', SEVERITY.REVIEW, 'No approved ' + type + ' requirement is available for engineering comparison.', { type:type })]
       };
     }
     var withCitation = reqs.filter(hasCitation);
     if (!withCitation.length) {
       return {
         requirement:reqs[0],
-        issues:[issue('MISSING_REQUIREMENT_CITATION', SEVERITY.BLOCKER, 'Approved ' + type + ' requirement is missing a source citation.', { requirement:reqs[0] })]
+        issues:[issue('MISSING_REQUIREMENT_CITATION', SEVERITY.REVIEW, 'Approved ' + type + ' requirement is missing a source citation.', { requirement:reqs[0] })]
       };
     }
     return { requirement:withCitation[0], issues:[] };
@@ -244,12 +263,8 @@
     var entered = convertNumeric(enteredValue, enteredUnit, reqUnit);
     var issues = [];
 
-    if (reqValue == null) {
-      issues.push(issue('MISSING_REQUIRED_NUMERIC_VALUE', SEVERITY.BLOCKER, 'Approved requirement is missing a numeric value.', { requirement:requirement }));
-    }
-    if (entered == null) {
-      issues.push(issue('MISSING_ENTERED_NUMERIC_VALUE', SEVERITY.BLOCKER, 'Entered field value is missing or not numeric.', { entry:entry }));
-    }
+    if (reqValue == null) issues.push(issue('MISSING_REQUIRED_NUMERIC_VALUE', SEVERITY.REVIEW, 'Approved requirement is missing a numeric value.', { requirement:requirement }));
+    if (entered == null) issues.push(issue('MISSING_ENTERED_NUMERIC_VALUE', SEVERITY.REVIEW, 'Entered field value is missing or not numeric.', { entry:entry }));
     if (issues.length) return { pass:false, issues:issues, enteredValue:entered, requiredValue:reqValue, unit:reqUnit };
 
     var comparator = lower(requirement.comparator || requirement.operator || '');
@@ -281,7 +296,7 @@
     }
 
     if (!pass) {
-      issues.push(issue('NUMERIC_MISMATCH', SEVERITY.BLOCKER, 'Entered value does not meet the approved ' + type + ' requirement.', {
+      issues.push(issue('NUMERIC_MISMATCH', SEVERITY.REVIEW, 'Entered value does not match the approved ' + type + ' requirement.', {
         enteredValue: entered,
         requiredValue: reqValue,
         lowLimit: low,
@@ -298,6 +313,7 @@
 
   function validateNumericEntry(entry, options){
     options = options || {};
+    var mode = normalizeMode(options);
     var type = upper(options.type || entry && (entry.type || entry.requirementType || entry.module) || 'GENERAL');
     var eq = clean(options.eq || options.equipmentId || entry && (entry.eq || entry.equipmentId) || getEq());
     var req = options.requirement || null;
@@ -308,65 +324,72 @@
       req = reqLookup.requirement;
       issues = issues.concat(reqLookup.issues || []);
     } else if (!hasCitation(req)) {
-      issues.push(issue('MISSING_REQUIREMENT_CITATION', SEVERITY.BLOCKER, 'Requirement used for validation is missing citation/source.', { requirement:req }));
+      issues.push(issue('MISSING_REQUIREMENT_CITATION', SEVERITY.REVIEW, 'Requirement used for validation is missing citation/source.', { requirement:req }));
     }
 
-    if (!req) {
-      return result('numeric:' + type.toLowerCase(), issues.some(function(i){ return i.severity === SEVERITY.BLOCKER; }) ? STATUS.BLOCKED : STATUS.REVIEW, 'Numeric validation requires an approved source requirement.', issues, { type:type, eq:eq, entry:entry });
+    if (req) {
+      var comparison = compareNumeric(entry || {}, req, options);
+      issues = issues.concat(comparison.issues || []);
+      var base = mode === MODE.FIELD ? fieldResult : result;
+      return base('numeric:' + type.toLowerCase(), issues.length ? STATUS.REVIEW : STATUS.PASS, issues.length ? type + ' engineering comparison needs review.' : type + ' numeric comparison passed.', issues, { mode:mode, type:type, eq:eq, entry:entry, requirement:req, comparison:comparison, citation:citationFromRequirement(req) });
     }
 
-    var comparison = compareNumeric(entry || {}, req, options);
-    issues = issues.concat(comparison.issues || []);
-
-    if (issues.some(function(i){ return i.severity === SEVERITY.BLOCKER; }) && hasOverride(entry)) {
-      issues.push(issue('AUTHORIZED_OVERRIDE', SEVERITY.REVIEW, 'Numeric blocker has an authorized override and remains review/audit visible.', { entry:entry }));
-      return result('numeric:' + type.toLowerCase(), STATUS.REVIEW, 'Numeric mismatch cleared only by override; review remains required.', issues.filter(function(i){ return i.code !== 'NUMERIC_MISMATCH'; }).concat((comparison.issues || []).map(function(i){ return Object.assign({}, i, { severity:SEVERITY.REVIEW }); })), { type:type, eq:eq, entry:entry, requirement:req, comparison:comparison });
-    }
-
-    var finalStatus = issues.some(function(i){ return i.severity === SEVERITY.BLOCKER; }) ? STATUS.BLOCKED : issues.length ? STATUS.REVIEW : STATUS.PASS;
-    return result('numeric:' + type.toLowerCase(), finalStatus, finalStatus === STATUS.PASS ? type + ' numeric validation passed.' : type + ' numeric validation did not pass.', issues, { type:type, eq:eq, entry:entry, requirement:req, comparison:comparison, citation:citationFromRequirement(req) });
+    return fieldResult('numeric:' + type.toLowerCase(), 'Numeric comparison needs engineering setup.', issues, { mode:mode, type:type, eq:eq, entry:entry });
   }
 
   function validateChecklistItem(item, options){
     options = options || {};
+    var mode = normalizeMode(options);
     item = item || {};
     var status = normalizeStatus(item.status || item.result || item.passFail || '');
     var issues = [];
 
-    if (!status) issues.push(issue('MISSING_STATUS', SEVERITY.BLOCKER, 'Checklist item has no PASS / FAIL / REVIEW / N/A selection.', { item:item }));
-    if (status === 'FAIL') issues.push(issue('FAILED_ITEM', SEVERITY.BLOCKER, 'Checklist item is marked FAIL.', { item:item }));
-    if (status === 'NA') {
-      if (!hasReason(item)) issues.push(issue('NA_MISSING_REASON', SEVERITY.BLOCKER, 'N/A requires a reason.', { item:item }));
-      if (!hasReference(item)) issues.push(issue('NA_MISSING_REFERENCE', SEVERITY.BLOCKER, 'N/A requires a supporting reference.', { item:item }));
-      issues.push(issue('NA_REVIEW_REQUIRED', SEVERITY.REVIEW, 'N/A remains visible for review/audit.', { item:item }));
+    if (!status) {
+      issues.push(issue('MISSING_STATUS', SEVERITY.BLOCKER, 'Checklist item has no PASS / FAIL / REVIEW / N/A selection.', { item:item, fieldBlockingRule:true }));
     }
-    if ((status === 'REVIEW' || status === 'FAIL') && !hasReason(item)) issues.push(issue('REVIEW_MISSING_NOTES', SEVERITY.REVIEW, 'Review/fail item should include notes.', { item:item }));
+
+    if (status === 'FAIL') {
+      if (!hasReason(item)) {
+        issues.push(issue('FAILED_ITEM_MISSING_NOTATION', SEVERITY.BLOCKER, 'FAIL requires notation before the field process can continue.', { item:item, fieldBlockingRule:true }));
+      } else {
+        issues.push(issue('FAILED_ITEM_WITH_NOTATION', SEVERITY.REVIEW, 'FAIL is documented and remains visible for review.', { item:item }));
+      }
+    }
+
+    if (status === 'NA') {
+      if (!hasReason(item)) issues.push(issue('NA_MISSING_REASON', mode === MODE.FIELD ? SEVERITY.REVIEW : SEVERITY.REVIEW, 'N/A should include a reason.', { item:item }));
+      if (!hasReference(item)) issues.push(issue('NA_MISSING_REFERENCE', SEVERITY.REVIEW, 'N/A should include a supporting reference when available.', { item:item }));
+    }
+
+    if (status === 'REVIEW' && !hasReason(item)) {
+      issues.push(issue('REVIEW_MISSING_NOTES', SEVERITY.REVIEW, 'Review item should include notes.', { item:item }));
+    }
 
     var textForRules = upper([item.validationRule, item.rule, item.evidenceRequired, item.source, item.title, item.description].join(' '));
-    var referenceRequired = /DOCUMENT|REFERENCE|SOURCE|DRAWING|SPEC|SUBMITTAL|REQUIREMENT/.test(textForRules) || status === 'PASS';
+    var referenceRequired = /DOCUMENT|REFERENCE|SOURCE|DRAWING|SPEC|SUBMITTAL|REQUIREMENT/.test(textForRules);
     if (referenceRequired && !hasReference(item)) {
-      issues.push(issue('MISSING_REFERENCE', SEVERITY.BLOCKER, 'Checklist item requires a source/reference before it can pass.', { item:item }));
+      issues.push(issue('MISSING_REFERENCE', SEVERITY.REVIEW, 'Checklist item is missing a source/reference.', { item:item }));
     }
 
     if (item.aiCheck) {
       var aiStatus = upper(item.aiCheck.status || item.aiCheck.state || '');
-      if (aiStatus === 'BLOCKED' || aiStatus === 'FAIL' || aiStatus === 'FAILED') issues.push(issue('AI_CHECK_BLOCKED', SEVERITY.BLOCKER, clean(item.aiCheck.message || 'AI/Vanguard check is blocked.'), { aiCheck:item.aiCheck }));
+      if (aiStatus === 'BLOCKED' || aiStatus === 'FAIL' || aiStatus === 'FAILED') {
+        issues.push(issue('AI_CHECK_REVIEW', SEVERITY.REVIEW, clean(item.aiCheck.message || 'AI/Vanguard check requires review.'), { aiCheck:item.aiCheck }));
+      }
       var conf = numeric(item.aiCheck.confidence);
       if (conf != null && conf > 1) conf = conf / 100;
-      if (conf != null && conf > 0 && conf < (options.minimumConfidence || 0.82)) issues.push(issue('LOW_CONFIDENCE', SEVERITY.BLOCKER, 'Validation confidence is below threshold.', { confidence:conf, aiCheck:item.aiCheck }));
-    }
-
-    if (issues.some(function(i){ return i.severity === SEVERITY.BLOCKER; }) && hasOverride(item)) {
-      issues = issues.map(function(i){ return i.severity === SEVERITY.BLOCKER ? Object.assign({}, i, { severity:SEVERITY.REVIEW, overridden:true }) : i; });
-      issues.push(issue('AUTHORIZED_OVERRIDE', SEVERITY.REVIEW, 'Hard gate cleared by authorized override.', { item:item }));
+      if (conf != null && conf > 0 && conf < (options.minimumConfidence || 0.82)) {
+        issues.push(issue('LOW_CONFIDENCE', SEVERITY.REVIEW, 'Validation confidence is below threshold.', { confidence:conf, aiCheck:item.aiCheck }));
+      }
     }
 
     var finalStatus = issues.some(function(i){ return i.severity === SEVERITY.BLOCKER; }) ? STATUS.BLOCKED : issues.length ? STATUS.REVIEW : STATUS.PASS;
-    return result('checklist:item', finalStatus, finalStatus === STATUS.PASS ? 'Checklist item passed authority checks.' : 'Checklist item requires action.', issues, { item:item });
+    return result('checklist:item', finalStatus, finalStatus === STATUS.PASS ? 'Checklist item can proceed.' : finalStatus === STATUS.BLOCKED ? 'Checklist item is blocked by field rule.' : 'Checklist item can proceed with review notation.', issues, { mode:mode, item:item });
   }
 
   function validateChecklist(items, options){
     options = options || {};
+    var mode = normalizeMode(options);
     var list = Array.isArray(items) ? items : (items && Array.isArray(items.steps) ? items.steps : []);
     var itemResults = list.map(function(item, index){
       var r = validateChecklistItem(item, options);
@@ -378,22 +401,25 @@
     var issues = [];
     itemResults.forEach(function(r){
       if (r.status !== STATUS.PASS) {
-        issues.push(issue('CHECKLIST_ITEM_' + r.status, r.status === STATUS.BLOCKED ? SEVERITY.BLOCKER : SEVERITY.REVIEW, 'Step ' + (r.index + 1) + ': ' + (r.message || 'Review required.'), { itemResult:r }));
+        var sev = r.status === STATUS.BLOCKED ? SEVERITY.BLOCKER : SEVERITY.REVIEW;
+        issues.push(issue('CHECKLIST_ITEM_' + r.status, sev, 'Step ' + (r.index + 1) + ': ' + (r.message || 'Review required.'), { itemResult:r }));
       }
     });
     var finalStatus = issues.some(function(i){ return i.severity === SEVERITY.BLOCKER; }) ? STATUS.BLOCKED : issues.length ? STATUS.REVIEW : STATUS.PASS;
-    return result('checklist', finalStatus, finalStatus === STATUS.PASS ? 'Checklist passed authority checks.' : 'Checklist is not ready.', issues, { itemResults:itemResults, total:list.length });
+    return result('checklist', finalStatus, finalStatus === STATUS.PASS ? 'Checklist can proceed.' : finalStatus === STATUS.BLOCKED ? 'Checklist is blocked by field rule.' : 'Checklist can proceed with review items.', issues, { mode:mode, itemResults:itemResults, total:list.length });
   }
 
-  function validateConflicts(){
+  function validateConflicts(options){
+    options = options || {};
+    var mode = normalizeMode(options);
     var raw = readJSON(CONFLICTS_KEY, { conflicts:[] });
     var conflicts = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.conflicts) ? raw.conflicts : []);
     var open = conflicts.filter(function(c){
       var s = upper(c.status || c.state || 'REVIEW');
       return !(s === 'PASS' || s === 'RESOLVED' || s === 'APPROVED' || s === 'CLOSED' || s === 'OVERRIDDEN');
     });
-    var issues = open.map(function(c){ return issue('OPEN_DOCUMENT_CONFLICT', SEVERITY.BLOCKER, clean(c.message || c.reason || 'Open document conflict requires review.'), { conflict:c }); });
-    return result('documents:conflicts', issues.length ? STATUS.BLOCKED : STATUS.PASS, issues.length ? 'Open document conflicts block package readiness.' : 'No open document conflicts.', issues, { conflicts:conflicts, openConflicts:open });
+    var issues = open.map(function(c){ return issue('OPEN_DOCUMENT_CONFLICT', SEVERITY.REVIEW, clean(c.message || c.reason || 'Open document conflict requires engineering review.'), { conflict:c }); });
+    return result('documents:conflicts', issues.length ? STATUS.REVIEW : STATUS.PASS, issues.length ? 'Open document conflicts need engineering review but do not stop field execution.' : 'No open document conflicts.', issues, { mode:mode, conflicts:conflicts, openConflicts:open });
   }
 
   function localStepComplete(eq, step){
@@ -412,43 +438,73 @@
     return keys.some(function(k){ return ['1','true','yes','complete','completed','done','pass','passed','validated'].indexOf(lower(localStorage.getItem(k))) !== -1; });
   }
 
-  function validateWorkflow(eq){
+  function validateWorkflow(eq, options){
+    options = options || {};
     eq = clean(eq || getEq());
     var issues = [];
     var checks = MODULE_SEQUENCE.map(function(step){
       var complete = localStepComplete(eq, step.id);
-      if (!complete) issues.push(issue('WORKFLOW_STEP_INCOMPLETE', SEVERITY.BLOCKER, step.label + ' is not complete.', { step:step.id, label:step.label }));
+      if (!complete) issues.push(issue('WORKFLOW_STEP_INCOMPLETE', SEVERITY.BLOCKER, step.label + ' is not complete.', { step:step.id, label:step.label, fieldBlockingRule:true }));
       return { step:step.id, label:step.label, complete:complete };
     });
-    return result('workflow', issues.length ? STATUS.BLOCKED : STATUS.PASS, issues.length ? 'Workflow has incomplete required steps.' : 'Workflow required steps are complete.', issues, { eq:eq, checks:checks });
+    return result('workflow', issues.length ? STATUS.BLOCKED : STATUS.PASS, issues.length ? 'Required field process is incomplete.' : 'Required field process is complete.', issues, { mode:normalizeMode(options), eq:eq, checks:checks });
+  }
+
+  function validateEngineeringSetup(eq, options){
+    options = options || {};
+    eq = clean(eq || getEq());
+    var checks = [];
+    checks.push(validateConflicts({ mode:MODE.ENGINEERING }));
+
+    var requirements = requirementsAsArray();
+    var reviewReqs = requirements.filter(function(req){ return req && !(req.approved || req.enforce || lower(req.state) === 'approved'); });
+    var noCitation = requirements.filter(function(req){ return req && !hasCitation(req); });
+    var issues = [];
+
+    reviewReqs.forEach(function(req){
+      issues.push(issue('REQUIREMENT_NEEDS_ENGINEER_REVIEW', SEVERITY.REVIEW, 'Requirement needs engineer review before enforcement.', { requirement:req }));
+    });
+    noCitation.forEach(function(req){
+      issues.push(issue('REQUIREMENT_MISSING_CITATION', SEVERITY.REVIEW, 'Requirement is missing citation/source reference.', { requirement:req }));
+    });
+
+    checks.forEach(function(check){ issues = issues.concat(check.issues || []); });
+    return result('engineering-setup', issues.length ? STATUS.REVIEW : STATUS.PASS, issues.length ? 'Engineering setup has review items.' : 'Engineering setup has no open review items.', issues, { mode:MODE.ENGINEERING, eq:eq, requirementCount:requirements.length, reviewRequirementCount:reviewReqs.length, checks:checks });
   }
 
   function validatePackage(eq, options){
     options = options || {};
+    var mode = normalizeMode(options);
     eq = clean(eq || getEq());
     var checks = [];
-    checks.push(validateWorkflow(eq));
-    checks.push(validateConflicts());
+    var issues = [];
+
+    checks.push(validateWorkflow(eq, { mode:mode }));
 
     var ccsPayload = readJSON('nexus_' + eq + '_ccs_vanguard_export', null);
-    if (ccsPayload && Array.isArray(ccsPayload.steps)) checks.push(validateChecklist(ccsPayload.steps, { eq:eq }));
-    else checks.push(result('checklist', STATUS.REVIEW, 'No CCS validation payload found for package authority review.', [issue('MISSING_CCS_PAYLOAD', SEVERITY.REVIEW, 'CCS Vanguard export payload is missing.', { eq:eq })], { eq:eq }));
-
-    var torqueValidation = readJSON('nexus_' + eq + '_torque_vanguard_validation_v1', null);
-    if (torqueValidation && upper(torqueValidation.state || torqueValidation.status) === 'BLOCKED') {
-      checks.push(result('torque', STATUS.BLOCKED, torqueValidation.summary || 'Torque Vanguard validation is blocked.', [issue('TORQUE_BLOCKED', SEVERITY.BLOCKER, torqueValidation.summary || 'Torque validation blocked.', { validation:torqueValidation })], { eq:eq }));
+    if (ccsPayload && Array.isArray(ccsPayload.steps)) {
+      checks.push(validateChecklist(ccsPayload.steps, { eq:eq, mode:mode }));
+    } else {
+      issues.push(issue('MISSING_CCS_PAYLOAD', SEVERITY.REVIEW, 'CCS Vanguard export payload is missing.', { eq:eq }));
     }
 
-    var blockers = [];
-    var reviews = [];
+    var engineering = validateEngineeringSetup(eq, { mode:MODE.ENGINEERING });
+    checks.push(engineering);
+
     checks.forEach(function(check){
-      (check.issues || []).forEach(function(i){
-        if (i.severity === SEVERITY.BLOCKER) blockers.push(i);
-        else if (i.severity === SEVERITY.REVIEW) reviews.push(i);
-      });
+      (check.issues || []).forEach(function(i){ issues.push(i); });
     });
-    var finalStatus = blockers.length ? STATUS.BLOCKED : reviews.length ? STATUS.REVIEW : STATUS.PASS;
-    var out = result('package', finalStatus, finalStatus === STATUS.PASS ? 'Package authority passed. Ready for release review.' : finalStatus === STATUS.BLOCKED ? 'Package authority blocked release.' : 'Package authority requires review.', blockers.concat(reviews), { eq:eq, checks:checks });
+
+    var fieldBlockers = issues.filter(function(i){ return i && i.severity === SEVERITY.BLOCKER; });
+    var reviews = issues.filter(function(i){ return i && i.severity === SEVERITY.REVIEW; });
+    var finalStatus = fieldBlockers.length ? STATUS.BLOCKED : reviews.length ? STATUS.REVIEW : STATUS.PASS;
+    var message = finalStatus === STATUS.BLOCKED
+      ? 'Field process is blocked because required work is incomplete or a FAIL is missing notation.'
+      : finalStatus === STATUS.REVIEW
+        ? 'Field process can continue; engineering/review items remain visible.'
+        : 'Field process can continue.';
+
+    var out = result('package', finalStatus, message, fieldBlockers.concat(reviews), { mode:mode, eq:eq, checks:checks, engineeringSetup:engineering });
     writeJSON(AUTHORITY_KEY_PREFIX + eq, out);
     return out;
   }
@@ -464,11 +520,13 @@
   function assertCanPass(scope, payload, options){
     var out;
     var s = lower(scope);
-    if (s === 'checklist' || s === 'ccs') out = validateChecklist(payload, options || {});
-    else if (s === 'package') out = validatePackage(payload && (payload.eq || payload.equipmentId) || getEq(payload), options || {});
-    else if (s === 'numeric' || s === 'torque' || s === 'meg') out = validateNumericEntry(payload, Object.assign({}, options || {}, { type:s === 'numeric' ? (options && options.type) : upper(s) }));
+    options = options || {};
+    if (s === 'checklist' || s === 'ccs') out = validateChecklist(payload, Object.assign({}, options, { mode:normalizeMode(options) }));
+    else if (s === 'package') out = validatePackage(payload && (payload.eq || payload.equipmentId) || getEq(payload), Object.assign({}, options, { mode:normalizeMode(options) }));
+    else if (s === 'engineering' || s === 'engineering-setup') out = validateEngineeringSetup(payload && (payload.eq || payload.equipmentId) || getEq(payload), Object.assign({}, options, { mode:MODE.ENGINEERING }));
+    else if (s === 'numeric' || s === 'torque' || s === 'meg') out = validateNumericEntry(payload, Object.assign({}, options, { type:s === 'numeric' ? (options && options.type) : upper(s), mode:normalizeMode(options) }));
     else out = result(scope, STATUS.REVIEW, 'No authority validator exists for scope: ' + scope, [issue('UNKNOWN_AUTHORITY_SCOPE', SEVERITY.REVIEW, 'No validator exists for this scope.', { scope:scope })]);
-    if (!out.canPass) {
+    if (out.status === STATUS.BLOCKED) {
       var err = new Error(explain(out));
       err.authorityResult = out;
       throw err;
@@ -479,9 +537,11 @@
   var api = {
     __installed:true,
     version:VERSION,
+    MODE:MODE,
     STATUS:STATUS,
     SEVERITY:SEVERITY,
     normalizeStatus:normalizeStatus,
+    normalizeMode:normalizeMode,
     normalizeUnit:normalizeUnit,
     convertNumeric:convertNumeric,
     compareNumeric:compareNumeric,
@@ -492,6 +552,7 @@
     validateChecklist:validateChecklist,
     validateConflicts:validateConflicts,
     validateWorkflow:validateWorkflow,
+    validateEngineeringSetup:validateEngineeringSetup,
     validatePackage:validatePackage,
     assertCanPass:assertCanPass,
     explain:explain
