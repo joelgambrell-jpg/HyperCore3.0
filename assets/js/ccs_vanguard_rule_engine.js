@@ -6,7 +6,7 @@
   - Converts imported Excel CCS Validation Rule values into simple field states.
   - Additive only. Does not replace existing CCS page logic.
   - Uses existing NEXUS/localStorage completion keys where possible.
-  - Front-end hardened: N/A, FAIL, missing references, and Vanguard hard gates are enforced before final sign-off.
+  - Front-end hardened: N/A, FAIL, missing references, linked workflow gates, and Vanguard hard gates are enforced before final sign-off.
 
   Field states:
   PASS    = GOOD
@@ -20,26 +20,43 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_CCS_VANGUARD_RULES && window.NEXUS_CCS_VANGUARD_RULES.__installed) return;
 
-  var VERSION = '0.4.0-hard-gate-aware';
+  var VERSION = '0.5.0-workflow-gatekeeper';
 
   var RULES = {
     REQUIRED: 'REQUIRED',
     PHOTO_REQUIRED: 'PHOTO_REQUIRED',
     FOREMAN_APPROVAL: 'FOREMAN_APPROVAL',
+    RIF_COMPLETE: 'RIF_COMPLETE',
+    PHENOLIC_COMPLETE: 'PHENOLIC_COMPLETE',
     TORQUE_COMPLETE: 'TORQUE_COMPLETE',
     MEG_COMPLETE: 'MEG_COMPLETE',
     L2_COMPLETE: 'L2_COMPLETE',
     PREFOD_COMPLETE: 'PREFOD_COMPLETE',
     FPV_COMPLETE: 'FPV_COMPLETE',
+    PACKAGE_READY: 'PACKAGE_READY',
     DOCUMENT_REFERENCE_REQUIRED: 'DOCUMENT_REFERENCE_REQUIRED'
   };
 
   var STEP_RULE_MAP = {
+    RIF_COMPLETE: 'rif',
+    PHENOLIC_COMPLETE: 'phenolic',
     TORQUE_COMPLETE: 'torque',
     MEG_COMPLETE: 'meg',
     L2_COMPLETE: 'l2',
     PREFOD_COMPLETE: 'prefod',
-    FPV_COMPLETE: 'fpv'
+    FPV_COMPLETE: 'fpv',
+    PACKAGE_READY: 'package_readiness'
+  };
+
+  var STEP_ALIASES = {
+    rif: ['rif', 'receipt', 'receipt_inspection', 'receiptInspection'],
+    phenolic: ['phenolic', 'phenolic_display', 'phenolicDisplay', 'labels', 'labeling'],
+    torque: ['torque', 'torque_log', 'torqueLog', 'torque_application'],
+    l2: ['l2', 'l2_verification', 'l2Verification', 'level2', 'level_2'],
+    meg: ['meg', 'meg_log', 'megLog', 'megohmmeter', 'megohmmeter_line', 'megohmmeter_load'],
+    prefod: ['prefod', 'pre_fod', 'pre-fod', 'preFod', 'fod'],
+    fpv: ['fpv', 'fpv_photo', 'fpvPhoto', 'finished_product', 'finishedProduct'],
+    package_readiness: ['package_readiness', 'packageReadiness', 'package_ready', 'ready', 'energization']
   };
 
   function clean(value) {
@@ -96,39 +113,92 @@
     }
   }
 
+  function readJSON(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (err) {
+      return fallback;
+    }
+  }
+
   function isTruthyStored(value) {
     var v = lower(value);
-    return v === '1' || v === 'true' || v === 'yes' || v === 'complete' || v === 'completed' || v === 'done' || v === 'pass' || v === 'passed' || v === 'validated';
+    return v === '1' || v === 'true' || v === 'yes' || v === 'complete' || v === 'completed' || v === 'done' || v === 'pass' || v === 'passed' || v === 'validated' || v === 'ready';
+  }
+
+  function aliasesForStep(step) {
+    var s = clean(step);
+    return STEP_ALIASES[s] ? STEP_ALIASES[s].slice() : [s];
   }
 
   function completionKeys(eq, step) {
     var safeEq = clean(eq || getEq()) || 'NO_EQ';
-    var s = clean(step);
-    return [
-      'nexus_' + safeEq + '_step_' + s,
-      'nexus_' + safeEq + '_' + s + '_complete',
-      'nexus_' + safeEq + '_' + s + '_completed',
-      'nexus_' + safeEq + '_' + s + '_done',
-      'nexus_' + safeEq + '_' + s + '_validated'
-    ];
+    var aliases = aliasesForStep(step);
+    var keys = [];
+
+    aliases.forEach(function (alias) {
+      var s = clean(alias);
+      keys = keys.concat([
+        'nexus_' + safeEq + '_step_' + s,
+        'nexus_' + safeEq + '_' + s + '_complete',
+        'nexus_' + safeEq + '_' + s + '_completed',
+        'nexus_' + safeEq + '_' + s + '_done',
+        'nexus_' + safeEq + '_' + s + '_validated',
+        'nexus_' + safeEq + '_' + s + '_signed_off',
+        'nexus_' + safeEq + '_' + s + '_status'
+      ]);
+    });
+
+    return keys;
+  }
+
+  function isPackageReady(eq) {
+    var safeEq = clean(eq || getEq()) || 'NO_EQ';
+    var readiness = readJSON('nexus_' + safeEq + '_package_readiness', null);
+    if (readiness && upper(readiness.status) === 'READY' && !Number(readiness.blockedCount || 0)) return true;
+    if (isTruthyStored(readText('nexus_' + safeEq + '_package_ready', ''))) return true;
+    if (isTruthyStored(readText('nexus_' + safeEq + '_step_energization', ''))) return true;
+    return false;
+  }
+
+  function isMegComplete(eq) {
+    var safeEq = clean(eq || getEq()) || 'NO_EQ';
+    if (isTruthyStored(readText('nexus_' + safeEq + '_step_meg', ''))) return true;
+    if (isTruthyStored(readText('nexus_' + safeEq + '_meg_complete', ''))) return true;
+    if (
+      isTruthyStored(readText('nexus_' + safeEq + '_step_megohmmeter_line', '')) &&
+      isTruthyStored(readText('nexus_' + safeEq + '_step_megohmmeter_load', ''))
+    ) return true;
+    return false;
   }
 
   function isStepComplete(step, eq) {
     var safeEq = clean(eq || getEq());
+    var s = clean(step);
+
+    if (s === 'package_readiness') return isPackageReady(safeEq);
+    if (s === 'meg') return isMegComplete(safeEq);
 
     try {
       if (window.NEXUS_VANGUARD && typeof window.NEXUS_VANGUARD.isStepComplete === 'function') {
-        if (window.NEXUS_VANGUARD.isStepComplete(step, safeEq)) return true;
+        if (window.NEXUS_VANGUARD.isStepComplete(s, safeEq)) return true;
       }
     } catch (err) {}
 
     try {
       if (window.NEXUS && typeof window.NEXUS.isStepComplete === 'function') {
-        if (window.NEXUS.isStepComplete(step, safeEq)) return true;
+        if (window.NEXUS.isStepComplete(s, safeEq)) return true;
       }
     } catch (err2) {}
 
-    var keys = completionKeys(safeEq, step);
+    try {
+      if (window.NEXUS_WORKFLOW && typeof window.NEXUS_WORKFLOW.isStepComplete === 'function') {
+        if (window.NEXUS_WORKFLOW.isStepComplete(safeEq, s)) return true;
+      }
+    } catch (err3) {}
+
+    var keys = completionKeys(safeEq, s);
     for (var i = 0; i < keys.length; i += 1) {
       if (isTruthyStored(readText(keys[i], ''))) return true;
     }
@@ -154,7 +224,7 @@
     if (ee && typeof ee.hasReference === 'function' && ee.hasReference(step || {})) return true;
 
     var refs = Array.isArray(step && step.references) ? step.references : [];
-    if (refs.some(function (ref) { return clean(ref && (ref.url || ref.name || ref.notes)); })) return true;
+    if (refs.some(function (ref) { return clean(ref && (ref.url || ref.name || ref.notes || ref.page || ref.section)); })) return true;
     return !!clean(step && (step.source || step.documentReference || step.reference));
   }
 
@@ -182,12 +252,15 @@
     if (raw.indexOf('REQUIRED') !== -1 || raw.indexOf('PASS OR REVIEW') !== -1 || raw.indexOf('ALL REQUIRED') !== -1 || raw.indexOf('STEP MUST') !== -1) add(RULES.REQUIRED);
     if (raw.indexOf('PHOTO') !== -1 || raw.indexOf('PICTURE') !== -1 || raw.indexOf('IMAGE') !== -1 || raw.indexOf('CAMERA') !== -1) add(RULES.PHOTO_REQUIRED);
     if (raw.indexOf('FOREMAN') !== -1 || raw.indexOf('APPROVAL') !== -1 || raw.indexOf('VERIFY') !== -1 || raw.indexOf('VERIFICATION') !== -1) add(RULES.FOREMAN_APPROVAL);
-    if (raw.indexOf('TORQUE') !== -1) add(RULES.TORQUE_COMPLETE);
-    if (raw.indexOf('MEG') !== -1 || raw.indexOf('MEGOHMMETER') !== -1 || raw.indexOf('LINE AND LOAD') !== -1 || raw.indexOf('LOAD MUST') !== -1) add(RULES.MEG_COMPLETE);
-    if (raw.indexOf('L2') !== -1 || raw.indexOf('LEVEL 2') !== -1) add(RULES.L2_COMPLETE);
+    if (raw.indexOf('RIF') !== -1 || raw.indexOf('RECEIPT') !== -1 || raw.indexOf('RECEIV') !== -1) add(RULES.RIF_COMPLETE);
+    if (raw.indexOf('PHENOLIC') !== -1 || raw.indexOf('LABEL') !== -1 || raw.indexOf('LABELING') !== -1) add(RULES.PHENOLIC_COMPLETE);
+    if (raw.indexOf('TORQUE') !== -1 || raw.indexOf('CONNECTION') !== -1 || raw.indexOf('LUG') !== -1 || raw.indexOf('BOLT') !== -1) add(RULES.TORQUE_COMPLETE);
+    if (raw.indexOf('MEG') !== -1 || raw.indexOf('MEGOHMMETER') !== -1 || raw.indexOf('LINE AND LOAD') !== -1 || raw.indexOf('LOAD MUST') !== -1 || raw.indexOf('INSULATION') !== -1) add(RULES.MEG_COMPLETE);
+    if (raw.indexOf('L2') !== -1 || raw.indexOf('LEVEL 2') !== -1 || raw.indexOf('INSTALLATION VERIFICATION') !== -1) add(RULES.L2_COMPLETE);
     if (raw.indexOf('PREFOD') !== -1 || raw.indexOf('PRE-FOD') !== -1 || raw.indexOf('FOD') !== -1 || raw.indexOf('FOREIGN OBJECT') !== -1 || raw.indexOf('DEBRIS') !== -1) add(RULES.PREFOD_COMPLETE);
     if (raw.indexOf('FPV') !== -1 || raw.indexOf('FINISHED PRODUCT') !== -1 || raw.indexOf('FINAL PHOTO') !== -1) add(RULES.FPV_COMPLETE);
-    if (raw.indexOf('DOCUMENT') !== -1 || raw.indexOf('REFERENCE') !== -1 || raw.indexOf('SOURCE') !== -1 || raw.indexOf('DRAWING') !== -1 || raw.indexOf('SPEC') !== -1) add(RULES.DOCUMENT_REFERENCE_REQUIRED);
+    if (raw.indexOf('PACKAGE READINESS') !== -1 || raw.indexOf('ENERGIZATION') !== -1 || raw.indexOf('READY FOR ENERGIZATION') !== -1) add(RULES.PACKAGE_READY);
+    if (raw.indexOf('DOCUMENT') !== -1 || raw.indexOf('REFERENCE') !== -1 || raw.indexOf('SOURCE') !== -1 || raw.indexOf('DRAWING') !== -1 || raw.indexOf('SPEC') !== -1 || raw.indexOf('SUBMITTAL') !== -1) add(RULES.DOCUMENT_REFERENCE_REQUIRED);
 
     if (!rules.length) add(RULES.REQUIRED);
     return rules;
@@ -219,6 +292,20 @@
       }
     } catch (err) {}
     return null;
+  }
+
+  function linkedStepLabel(linkedStep) {
+    var labels = {
+      rif: 'Receipt Inspection',
+      phenolic: 'Phenolic Display',
+      torque: 'Torque',
+      l2: 'L2 Verification',
+      meg: 'Megohmmeter Testing',
+      prefod: 'Pre-FOD',
+      fpv: 'Finished Product Verification',
+      package_readiness: 'Package Readiness'
+    };
+    return labels[linkedStep] || clean(linkedStep).toUpperCase();
   }
 
   function evaluateStep(step, options) {
@@ -284,9 +371,11 @@
 
       if (linkedStep) {
         if (isStepComplete(linkedStep, eq)) {
-          passes.push(linkedStep.toUpperCase() + ' complete.');
+          passes.push(linkedStepLabel(linkedStep) + ' complete.');
         } else if (status === 'PASS') {
-          warnings.push(linkedStep.toUpperCase() + ' page is not showing complete yet.');
+          issues.push(linkedStepLabel(linkedStep) + ' is not showing complete yet. Complete that workflow before this CCS item can pass.');
+        } else {
+          warnings.push(linkedStepLabel(linkedStep) + ' is not showing complete yet.');
         }
       }
     });
@@ -394,12 +483,15 @@
     __installed: true,
     version: VERSION,
     RULES: RULES,
+    STEP_RULE_MAP: STEP_RULE_MAP,
+    STEP_ALIASES: STEP_ALIASES,
     parseRules: parseRules,
     evaluateStep: evaluateStep,
     evaluateSteps: evaluateSteps,
     summarize: summarize,
     isStepComplete: isStepComplete,
-    normalizeStatus: normalizeStatus
+    normalizeStatus: normalizeStatus,
+    completionKeys: completionKeys
   };
 
   window.NEXUS_CCS_VANGUARD_RULES = api;
