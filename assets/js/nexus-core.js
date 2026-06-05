@@ -18,10 +18,7 @@
     const fromUrl = safeText(qs.get("eq")).trim();
     if (fromUrl) return fromUrl;
     const candidates = ["nexus_active_eq", "nexus_current_eq", "nexus_selected_eq", "nexus_eq", "eq"];
-    for (const key of candidates) {
-      const v = safeText(readText(key, "")).trim();
-      if (v) return v;
-    }
+    for (const key of candidates) { const v = safeText(readText(key, "")).trim(); if (v) return v; }
     return "";
   }
 
@@ -52,24 +49,14 @@
 
   function back() {
     try { if (document.referrer && document.referrer.includes(location.host)) { history.back(); return false; } } catch(e){}
-    const eq = getEq();
-    location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
-    return false;
+    const eq = getEq(); location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html"; return false;
   }
 
   function forceEqOnLinks(root) {
-    const eq = getEq();
-    if (!eq) return;
+    const eq = getEq(); if (!eq) return;
     (root || document).querySelectorAll("a[href]").forEach(a => {
-      let href = a.getAttribute("href");
-      if (!href || href.startsWith("#") || href.startsWith("http")) return;
-      try {
-        const url = new URL(href, location.href);
-        if (!url.searchParams.get("eq")) {
-          url.searchParams.set("eq", eq);
-          a.href = url.pathname.split("/").pop() + url.search;
-        }
-      } catch(e){}
+      let href = a.getAttribute("href"); if (!href || href.startsWith("#") || href.startsWith("http")) return;
+      try { const url = new URL(href, location.href); if (!url.searchParams.get("eq")) { url.searchParams.set("eq", eq); a.href = url.pathname.split("/").pop() + url.search; } } catch(e){}
     });
   }
 
@@ -87,9 +74,7 @@
       if (!src) { resolve(false); return; }
       const existing = Array.from(document.scripts || []).find(s => (s.getAttribute("src") || "") === src);
       if (existing) { resolve(true); return; }
-      const script = document.createElement("script");
-      script.src = src;
-      script.async = false;
+      const script = document.createElement("script"); script.src = src; script.async = false;
       script.onload = () => resolve(true);
       script.onerror = () => { console.warn("NEXUS module failed to load:", src); resolve(false); };
       document.head.appendChild(script);
@@ -99,9 +84,11 @@
   async function loadAuthorityModules(){
     try {
       const path = location.pathname || "";
+      const qs = getQs();
       const isEquipment = /equipment\.html$/i.test(path) || !!document.getElementById("progressFill");
       const isRegistry = /index_equipment_registry\.html$/i.test(path) || !!document.getElementById("registrySelect");
       const isDiagnostic = /vanguard_storage_audit\.html$/i.test(path) || !!document.getElementById("vanguardStorageAuditApp");
+      const dashboardRequested = qs.get("authorityDashboard") === "1" || window.NEXUS_AUTHORITY_DASHBOARD_AUTO === true;
       if (!isEquipment && !isRegistry && !isDiagnostic) return;
 
       await loadScriptOnce("assets/js/vanguard_validation_authority.js");
@@ -109,44 +96,30 @@
       await loadScriptOnce("assets/js/vanguard_storage_audit.js");
 
       if (isEquipment) await loadScriptOnce("assets/js/vanguard_equipment_authority_indicator.js");
-      if (isRegistry) await loadScriptOnce("assets/js/vanguard_project_authority_dashboard.js");
+      if ((isRegistry && dashboardRequested) || isDiagnostic) await loadScriptOnce("assets/js/vanguard_project_authority_dashboard.js");
 
-      try { window.dispatchEvent(new CustomEvent("vanguard:authority-modules-loaded", { detail:{ isEquipment, isRegistry, isDiagnostic } })); } catch(e) {}
-    } catch (e) {
-      console.warn("NEXUS authority module loader failed:", e);
-    }
+      try { window.dispatchEvent(new CustomEvent("vanguard:authority-modules-loaded", { detail:{ isEquipment, isRegistry, isDiagnostic, dashboardRequested } })); } catch(e) {}
+    } catch (e) { console.warn("NEXUS authority module loader failed:", e); }
   }
 
   function controlCenterStabilityGuard(){
     try {
-      const isControlCenter = /vanguard_control_center/i.test(location.pathname || "") || !!document.getElementById("vxDropZone");
-      if (!isControlCenter) return;
-      document.documentElement.style.overflowY = "auto"; document.documentElement.style.height = "auto";
-      document.body.style.overflowY = "auto"; document.body.style.height = "auto"; document.body.style.minHeight = "100vh";
-      const duplicateIntake = document.getElementById("vanguard-finishline-intake");
-      if (duplicateIntake && duplicateIntake.parentNode) duplicateIntake.parentNode.removeChild(duplicateIntake);
+      const isControlCenter = /vanguard_control_center/i.test(location.pathname || "") || !!document.getElementById("vxDropZone"); if (!isControlCenter) return;
+      document.documentElement.style.overflowY = "auto"; document.documentElement.style.height = "auto"; document.body.style.overflowY = "auto"; document.body.style.height = "auto"; document.body.style.minHeight = "100vh";
+      const duplicateIntake = document.getElementById("vanguard-finishline-intake"); if (duplicateIntake && duplicateIntake.parentNode) duplicateIntake.parentNode.removeChild(duplicateIntake);
       const backendInput = document.getElementById("vgBackendUrl");
-      if (backendInput) {
-        const backendPanel = backendInput.closest("div[style]"); const topActions = document.querySelector(".top-actions");
-        if (backendPanel) {
-          backendPanel.style.cssText = "padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);font-family:Arial,Helvetica,sans-serif;color:#f6fbff;";
-          if (topActions && backendPanel.parentNode !== topActions) topActions.appendChild(backendPanel);
-        }
-      }
+      if (backendInput) { const backendPanel = backendInput.closest("div[style]"); const topActions = document.querySelector(".top-actions"); if (backendPanel) { backendPanel.style.cssText = "padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);font-family:Arial,Helvetica,sans-serif;color:#f6fbff;"; if (topActions && backendPanel.parentNode !== topActions) topActions.appendChild(backendPanel); } }
       const zeroIds = ["heroDocCount", "heroMappedCount", "heroConflictCount", "statMapped", "statReview", "statReady", "activeQueueCount", "approvedToday"];
       zeroIds.forEach(id => { const el = document.getElementById(id); if (el && /^(12|47|6|31|4|9)$/.test(String(el.textContent || "").trim())) el.textContent = "0"; });
       const health = document.getElementById("statHealth"); if (health && String(health.textContent || "").trim() === "92%") health.textContent = "0%";
-      const status = document.getElementById("vxLiveStatus");
-      if (status && /Reading local Vanguard project state/i.test(status.textContent || "")) status.textContent = "Control Center loaded. Reading local Vanguard state. Firebase will attach when available.";
+      const status = document.getElementById("vxLiveStatus"); if (status && /Reading local Vanguard project state/i.test(status.textContent || "")) status.textContent = "Control Center loaded. Reading local Vanguard state. Firebase will attach when available.";
     } catch (e) { console.warn("Control Center stability guard failed:", e); }
   }
 
   function registryStartupGuard(){
     try {
-      const isRegistry = /index_equipment_registry/i.test(location.pathname || "");
-      if (!isRegistry || window.__NEXUS_REGISTRY_CORE_GUARD__) return;
-      window.__NEXUS_REGISTRY_CORE_GUARD__ = true;
-      window.__NEXUS_REGISTRY_SKIP_HEAVY_PROGRESS_SCAN__ = true;
+      const isRegistry = /index_equipment_registry/i.test(location.pathname || ""); if (!isRegistry || window.__NEXUS_REGISTRY_CORE_GUARD__) return;
+      window.__NEXUS_REGISTRY_CORE_GUARD__ = true; window.__NEXUS_REGISTRY_SKIP_HEAVY_PROGRESS_SCAN__ = true;
       window.addEventListener("pagehide", function(){ try { window.__NEXUS_REGISTRY_LEAVING__ = true; } catch(e) {} }, { capture:true });
       window.addEventListener("pageshow", function(){ try { window.__NEXUS_REGISTRY_LEAVING__ = false; } catch(e) {} }, { capture:true });
     } catch (e) { console.warn("Registry startup guard failed:", e); }
@@ -154,10 +127,7 @@
 
   function init(){
     registryStartupGuard(); persistEq(getEq()); updateSessionBanner(); forceEqOnLinks(document); controlCenterStabilityGuard(); loadAuthorityModules();
-    window.addEventListener("focus", updateSessionBanner);
-    window.addEventListener("storage", updateSessionBanner);
-    window.addEventListener("load", controlCenterStabilityGuard);
-    window.addEventListener("vanguard:loader:complete", controlCenterStabilityGuard);
+    window.addEventListener("focus", updateSessionBanner); window.addEventListener("storage", updateSessionBanner); window.addEventListener("load", controlCenterStabilityGuard); window.addEventListener("vanguard:loader:complete", controlCenterStabilityGuard);
     setTimeout(controlCenterStabilityGuard, 250); setTimeout(controlCenterStabilityGuard, 1200);
   }
 
