@@ -64,9 +64,7 @@
       const url = new URL(value, location.href);
       if (url.origin === location.origin) return url.pathname.split("/").pop() + url.search + url.hash;
       return url.href;
-    } catch(e) {
-      return value;
-    }
+    } catch(e) { return value; }
   }
 
   function navigateSingleTab(urlLike) {
@@ -87,15 +85,23 @@
       if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
       const wantsNewTab = (link.getAttribute("target") || "").toLowerCase() === "_blank" || link.dataset.newTab === "true" || link.dataset.openNewTab === "true";
       if (!wantsNewTab) return;
+
+      if (isSopUrl(href + " " + link.textContent)) {
+        const yes = window.confirm("Open this SOP in a new tab?\n\nOK = New Tab\nCancel = Same Tab");
+        if (yes) {
+          link.setAttribute("target", "_blank");
+          link.setAttribute("rel", "noopener noreferrer");
+          return;
+        }
+        ev.preventDefault();
+        ev.stopPropagation();
+        navigateSingleTab(href);
+        return;
+      }
+
       ev.preventDefault();
       ev.stopPropagation();
-      if (isSopUrl(href + " " + link.textContent)) {
-        const yes = window.confirm("Open this SOP in a new tab?\n\nChoose OK for new tab or Cancel to stay in this tab.");
-        if (yes) window.open(href, "_blank", "noopener,noreferrer");
-        else navigateSingleTab(href);
-      } else {
-        navigateSingleTab(href);
-      }
+      navigateSingleTab(href);
     }, true);
 
     const originalOpen = window.open;
@@ -103,8 +109,12 @@
       const requested = safeText(target || "");
       const isNew = !requested || requested === "_blank";
       if (isNew && isSopUrl(url)) {
-        const yes = window.confirm("Open this SOP in a new tab?\n\nChoose OK for new tab or Cancel to stay in this tab.");
-        if (yes) return originalOpen.call(window, url, "_blank", features || "noopener,noreferrer");
+        const yes = window.confirm("Open this SOP in a new tab?\n\nOK = New Tab\nCancel = Same Tab");
+        if (yes) {
+          const opened = originalOpen.call(window, url, "_blank", features || "noopener,noreferrer");
+          if (!opened) navigateSingleTab(url);
+          return opened;
+        }
         navigateSingleTab(url);
         return null;
       }
