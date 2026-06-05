@@ -57,8 +57,28 @@
     return value.includes("sop") || value.includes("standard-operating-procedure") || value.includes("procedure");
   }
 
-  function toSameTabUrl(urlLike) {
+  function normalizeLegacyRoute(urlLike) {
     const value = safeText(urlLike).trim();
+    if (!value) return value;
+    try {
+      const url = new URL(value, location.href);
+      const file = (url.pathname.split("/").pop() || "").toLowerCase();
+      if (file === "equipment_steps.html") {
+        url.pathname = url.pathname.replace(/equipment_steps\.html$/i, "equipment.html");
+        if (!url.searchParams.get("eq")) {
+          const eq = getEq();
+          if (eq) url.searchParams.set("eq", eq);
+        }
+        return url.origin === location.origin ? url.pathname.split("/").pop() + url.search + url.hash : url.href;
+      }
+    } catch(e) {
+      if (/^equipment_steps\.html/i.test(value)) return value.replace(/^equipment_steps\.html/i, "equipment.html");
+    }
+    return value;
+  }
+
+  function toSameTabUrl(urlLike) {
+    const value = normalizeLegacyRoute(urlLike);
     if (!value || value === "#") return "";
     try {
       const url = new URL(value, location.href);
@@ -72,6 +92,27 @@
     if (!url) return false;
     location.href = url;
     return false;
+  }
+
+  function installLegacyEquipmentStepsGuard() {
+    if (window.__NEXUS_EQUIPMENT_STEPS_GUARD__) return;
+    window.__NEXUS_EQUIPMENT_STEPS_GUARD__ = true;
+    function patchLinks(root) {
+      (root || document).querySelectorAll('a[href*="equipment_steps.html"]').forEach(a => {
+        const next = normalizeLegacyRoute(a.getAttribute("href") || "");
+        if (next) a.setAttribute("href", next);
+      });
+    }
+    document.addEventListener("click", function(ev){
+      const link = ev.target && ev.target.closest ? ev.target.closest('a[href*="equipment_steps.html"]') : null;
+      if (!link) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      navigateSingleTab(link.getAttribute("href") || "");
+    }, true);
+    patchLinks(document);
+    window.addEventListener("pageshow", () => patchLinks(document));
+    setTimeout(() => patchLinks(document), 250);
   }
 
   function installSingleTabGuard() {
@@ -106,30 +147,34 @@
 
     const originalOpen = window.open;
     window.open = function(url, target, features) {
+      const normalizedUrl = normalizeLegacyRoute(url);
       const requested = safeText(target || "");
       const isNew = !requested || requested === "_blank";
-      if (isNew && isSopUrl(url)) {
+      if (isNew && isSopUrl(normalizedUrl)) {
         const yes = window.confirm("Open this SOP in a new tab?\n\nOK = New Tab\nCancel = Same Tab");
         if (yes) {
-          const opened = originalOpen.call(window, url, "_blank", features || "noopener,noreferrer");
-          if (!opened) navigateSingleTab(url);
+          const opened = originalOpen.call(window, normalizedUrl, "_blank", features || "noopener,noreferrer");
+          if (!opened) navigateSingleTab(normalizedUrl);
           return opened;
         }
-        navigateSingleTab(url);
+        navigateSingleTab(normalizedUrl);
         return null;
       }
       if (isNew) {
-        navigateSingleTab(url);
+        navigateSingleTab(normalizedUrl);
         return null;
       }
-      return originalOpen.call(window, url, target, features);
+      return originalOpen.call(window, normalizedUrl, target, features);
     };
   }
 
   function forceEqOnLinks(root) {
-    const eq = getEq(); if (!eq) return;
+    const eq = getEq();
     (root || document).querySelectorAll("a[href]").forEach(a => {
-      let href = a.getAttribute("href"); if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+      let href = normalizeLegacyRoute(a.getAttribute("href") || "");
+      if (href && href !== a.getAttribute("href")) a.setAttribute("href", href);
+      if (!eq) return;
+      if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
       try { const url = new URL(href, location.href); if (!url.searchParams.get("eq")) { url.searchParams.set("eq", eq); a.href = url.pathname.split("/").pop() + url.search; } } catch(e){}
     });
   }
@@ -200,12 +245,12 @@
   }
 
   function init(){
-    registryStartupGuard(); persistEq(getEq()); updateSessionBanner(); forceEqOnLinks(document); installSingleTabGuard(); controlCenterStabilityGuard(); loadAuthorityModules();
+    registryStartupGuard(); persistEq(getEq()); updateSessionBanner(); forceEqOnLinks(document); installLegacyEquipmentStepsGuard(); installSingleTabGuard(); controlCenterStabilityGuard(); loadAuthorityModules();
     window.addEventListener("focus", updateSessionBanner); window.addEventListener("storage", updateSessionBanner); window.addEventListener("load", controlCenterStabilityGuard); window.addEventListener("vanguard:loader:complete", controlCenterStabilityGuard);
     setTimeout(controlCenterStabilityGuard, 250); setTimeout(controlCenterStabilityGuard, 1200);
   }
 
-  const NEXUS = { getEq, persistEq, getRole, setRole, getStatus, setStatus, stepKey, isStepComplete, setStepComplete, isCcsSigned, setCcsSigned, getEqUrl, forceEqOnLinks, back, updateSessionBanner, readJSON, writeJSON, controlCenterStabilityGuard, registryStartupGuard, loadAuthorityModules, installSingleTabGuard, navigateSingleTab };
+  const NEXUS = { getEq, persistEq, getRole, setRole, getStatus, setStatus, stepKey, isStepComplete, setStepComplete, isCcsSigned, setCcsSigned, getEqUrl, forceEqOnLinks, back, updateSessionBanner, readJSON, writeJSON, controlCenterStabilityGuard, registryStartupGuard, loadAuthorityModules, installSingleTabGuard, installLegacyEquipmentStepsGuard, navigateSingleTab, normalizeLegacyRoute };
   window.NEXUS = window.NEXUS || {}; Object.assign(window.NEXUS, NEXUS); window.NEXUS_back = back;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
