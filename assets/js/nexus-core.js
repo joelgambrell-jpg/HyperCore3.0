@@ -52,10 +52,74 @@
     const eq = getEq(); location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html"; return false;
   }
 
+  function isSopUrl(urlOrText) {
+    const value = safeText(urlOrText).toLowerCase();
+    return value.includes("sop") || value.includes("standard-operating-procedure") || value.includes("procedure");
+  }
+
+  function toSameTabUrl(urlLike) {
+    const value = safeText(urlLike).trim();
+    if (!value || value === "#") return "";
+    try {
+      const url = new URL(value, location.href);
+      if (url.origin === location.origin) return url.pathname.split("/").pop() + url.search + url.hash;
+      return url.href;
+    } catch(e) {
+      return value;
+    }
+  }
+
+  function navigateSingleTab(urlLike) {
+    const url = toSameTabUrl(urlLike);
+    if (!url) return false;
+    location.href = url;
+    return false;
+  }
+
+  function installSingleTabGuard() {
+    if (window.__NEXUS_SINGLE_TAB_GUARD__) return;
+    window.__NEXUS_SINGLE_TAB_GUARD__ = true;
+
+    document.addEventListener("click", function(ev){
+      const link = ev.target && ev.target.closest ? ev.target.closest("a[href]") : null;
+      if (!link) return;
+      const href = link.getAttribute("href") || "";
+      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
+      const wantsNewTab = (link.getAttribute("target") || "").toLowerCase() === "_blank" || link.dataset.newTab === "true" || link.dataset.openNewTab === "true";
+      if (!wantsNewTab) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (isSopUrl(href + " " + link.textContent)) {
+        const yes = window.confirm("Open this SOP in a new tab?\n\nChoose OK for new tab or Cancel to stay in this tab.");
+        if (yes) window.open(href, "_blank", "noopener,noreferrer");
+        else navigateSingleTab(href);
+      } else {
+        navigateSingleTab(href);
+      }
+    }, true);
+
+    const originalOpen = window.open;
+    window.open = function(url, target, features) {
+      const requested = safeText(target || "");
+      const isNew = !requested || requested === "_blank";
+      if (isNew && isSopUrl(url)) {
+        const yes = window.confirm("Open this SOP in a new tab?\n\nChoose OK for new tab or Cancel to stay in this tab.");
+        if (yes) return originalOpen.call(window, url, "_blank", features || "noopener,noreferrer");
+        navigateSingleTab(url);
+        return null;
+      }
+      if (isNew) {
+        navigateSingleTab(url);
+        return null;
+      }
+      return originalOpen.call(window, url, target, features);
+    };
+  }
+
   function forceEqOnLinks(root) {
     const eq = getEq(); if (!eq) return;
     (root || document).querySelectorAll("a[href]").forEach(a => {
-      let href = a.getAttribute("href"); if (!href || href.startsWith("#") || href.startsWith("http")) return;
+      let href = a.getAttribute("href"); if (!href || href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
       try { const url = new URL(href, location.href); if (!url.searchParams.get("eq")) { url.searchParams.set("eq", eq); a.href = url.pathname.split("/").pop() + url.search; } } catch(e){}
     });
   }
@@ -126,12 +190,12 @@
   }
 
   function init(){
-    registryStartupGuard(); persistEq(getEq()); updateSessionBanner(); forceEqOnLinks(document); controlCenterStabilityGuard(); loadAuthorityModules();
+    registryStartupGuard(); persistEq(getEq()); updateSessionBanner(); forceEqOnLinks(document); installSingleTabGuard(); controlCenterStabilityGuard(); loadAuthorityModules();
     window.addEventListener("focus", updateSessionBanner); window.addEventListener("storage", updateSessionBanner); window.addEventListener("load", controlCenterStabilityGuard); window.addEventListener("vanguard:loader:complete", controlCenterStabilityGuard);
     setTimeout(controlCenterStabilityGuard, 250); setTimeout(controlCenterStabilityGuard, 1200);
   }
 
-  const NEXUS = { getEq, persistEq, getRole, setRole, getStatus, setStatus, stepKey, isStepComplete, setStepComplete, isCcsSigned, setCcsSigned, getEqUrl, forceEqOnLinks, back, updateSessionBanner, readJSON, writeJSON, controlCenterStabilityGuard, registryStartupGuard, loadAuthorityModules };
+  const NEXUS = { getEq, persistEq, getRole, setRole, getStatus, setStatus, stepKey, isStepComplete, setStepComplete, isCcsSigned, setCcsSigned, getEqUrl, forceEqOnLinks, back, updateSessionBanner, readJSON, writeJSON, controlCenterStabilityGuard, registryStartupGuard, loadAuthorityModules, installSingleTabGuard, navigateSingleTab };
   window.NEXUS = window.NEXUS || {}; Object.assign(window.NEXUS, NEXUS); window.NEXUS_back = back;
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
