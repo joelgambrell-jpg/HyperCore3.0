@@ -5,68 +5,18 @@
   const STATUS_KEY = "nexus_session_status";
   const VALID_ROLES = ["viewer", "tech", "qcx", "foreman", "superintendent", "admin"];
 
-  function safeText(value) {
-    return String(value == null ? "" : value);
-  }
-
-  function readText(key, fallback = "") {
-    try {
-      const v = localStorage.getItem(key);
-      return v == null ? fallback : v;
-    } catch (e) {
-      return fallback;
-    }
-  }
-
-  function writeText(key, value) {
-    try {
-      localStorage.setItem(key, safeText(value));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function removeKey(key) {
-    try {
-      localStorage.removeItem(key);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function readJSON(key, fallback = null) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch (e) {
-      return fallback;
-    }
-  }
-
-  function writeJSON(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function getQs() {
-    try {
-      return new URLSearchParams(window.location.search || "");
-    } catch (e) {
-      return new URLSearchParams("");
-    }
-  }
+  function safeText(value) { return String(value == null ? "" : value); }
+  function readText(key, fallback = "") { try { const v = localStorage.getItem(key); return v == null ? fallback : v; } catch (e) { return fallback; } }
+  function writeText(key, value) { try { localStorage.setItem(key, safeText(value)); return true; } catch (e) { return false; } }
+  function removeKey(key) { try { localStorage.removeItem(key); return true; } catch (e) { return false; } }
+  function readJSON(key, fallback = null) { try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (e) { return fallback; } }
+  function writeJSON(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); return true; } catch (e) { return false; } }
+  function getQs() { try { return new URLSearchParams(window.location.search || ""); } catch (e) { return new URLSearchParams(""); } }
 
   function getEq() {
     const qs = getQs();
     const fromUrl = safeText(qs.get("eq")).trim();
     if (fromUrl) return fromUrl;
-
     const candidates = ["nexus_active_eq", "nexus_current_eq", "nexus_selected_eq", "nexus_eq", "eq"];
     for (const key of candidates) {
       const v = safeText(readText(key, "")).trim();
@@ -81,65 +31,17 @@
     ["nexus_active_eq", "nexus_current_eq", "nexus_selected_eq", "nexus_eq", "eq"].forEach(k => writeText(k, value));
   }
 
-  function normalizeRole(role) {
-    const value = safeText(role).trim().toLowerCase();
-    return VALID_ROLES.includes(value) ? value : "viewer";
-  }
-
-  function getRole() {
-    return normalizeRole(readText(ROLE_KEY, "viewer"));
-  }
-
-  function setRole(role) {
-    const value = normalizeRole(role);
-    writeText(ROLE_KEY, value);
-    syncRoleSelects(value);
-    updateSessionBanner();
-    return value;
-  }
-
-  function getStatus() {
-    return safeText(readText(STATUS_KEY, "Ready")) || "Ready";
-  }
-
-  function setStatus(text) {
-    const value = safeText(text) || "Ready";
-    writeText(STATUS_KEY, value);
-    updateSessionBanner();
-    return value;
-  }
-
-  function stepKey(stepId, eq) {
-    const equipment = safeText(eq || getEq()) || "NO_EQ";
-    return `nexus_${equipment}_step_${safeText(stepId)}`;
-  }
-
-  function isStepComplete(stepId, eq) {
-    return readText(stepKey(stepId, eq)) === "1";
-  }
-
-  function setStepComplete(stepId, done, eq) {
-    const key = stepKey(stepId, eq);
-    if (done) writeText(key, "1");
-    else removeKey(key);
-    return !!done;
-  }
-
-  function ccsSignedKey(eq) {
-    const equipment = safeText(eq || getEq()) || "NO_EQ";
-    return `nexus_${equipment}_ccs_signed_off`;
-  }
-
-  function isCcsSigned(eq) {
-    return readText(ccsSignedKey(eq)) === "1";
-  }
-
-  function setCcsSigned(done, eq) {
-    const key = ccsSignedKey(eq);
-    if (done) writeText(key, "1");
-    else removeKey(key);
-    return !!done;
-  }
+  function normalizeRole(role) { const value = safeText(role).trim().toLowerCase(); return VALID_ROLES.includes(value) ? value : "viewer"; }
+  function getRole() { return normalizeRole(readText(ROLE_KEY, "viewer")); }
+  function setRole(role) { const value = normalizeRole(role); writeText(ROLE_KEY, value); syncRoleSelects(value); updateSessionBanner(); return value; }
+  function getStatus() { return safeText(readText(STATUS_KEY, "Ready")) || "Ready"; }
+  function setStatus(text) { const value = safeText(text) || "Ready"; writeText(STATUS_KEY, value); updateSessionBanner(); return value; }
+  function stepKey(stepId, eq) { const equipment = safeText(eq || getEq()) || "NO_EQ"; return `nexus_${equipment}_step_${safeText(stepId)}`; }
+  function isStepComplete(stepId, eq) { return readText(stepKey(stepId, eq)) === "1"; }
+  function setStepComplete(stepId, done, eq) { const key = stepKey(stepId, eq); if (done) writeText(key, "1"); else removeKey(key); return !!done; }
+  function ccsSignedKey(eq) { const equipment = safeText(eq || getEq()) || "NO_EQ"; return `nexus_${equipment}_ccs_signed_off`; }
+  function isCcsSigned(eq) { return readText(ccsSignedKey(eq)) === "1"; }
+  function setCcsSigned(done, eq) { const key = ccsSignedKey(eq); if (done) writeText(key, "1"); else removeKey(key); return !!done; }
 
   function getEqUrl(path, eq) {
     const equipment = safeText(eq || getEq());
@@ -149,12 +51,7 @@
   }
 
   function back() {
-    try {
-      if (document.referrer && document.referrer.includes(location.host)) {
-        history.back();
-        return false;
-      }
-    } catch(e){}
+    try { if (document.referrer && document.referrer.includes(location.host)) { history.back(); return false; } } catch(e){}
     const eq = getEq();
     location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
     return false;
@@ -176,14 +73,9 @@
     });
   }
 
-  function syncRoleSelects(role){
-    document.querySelectorAll("#nxRoleSelect").forEach(sel => { sel.value = role; });
-  }
-
+  function syncRoleSelects(role){ document.querySelectorAll("#nxRoleSelect").forEach(sel => { sel.value = role; }); }
   function updateSessionBanner(){
-    const eq = getEq();
-    const role = getRole();
-    const status = getStatus();
+    const eq = getEq(); const role = getRole(); const status = getStatus();
     document.querySelectorAll("[data-nx-eq]").forEach(el => el.textContent = eq || "(none)");
     document.querySelectorAll("[data-nx-role]").forEach(el => el.textContent = role);
     document.querySelectorAll("[data-nx-status]").forEach(el => el.textContent = status);
@@ -199,10 +91,7 @@
       script.src = src;
       script.async = false;
       script.onload = () => resolve(true);
-      script.onerror = () => {
-        console.warn("NEXUS module failed to load:", src);
-        resolve(false);
-      };
+      script.onerror = () => { console.warn("NEXUS module failed to load:", src); resolve(false); };
       document.head.appendChild(script);
     });
   }
@@ -212,18 +101,17 @@
       const path = location.pathname || "";
       const isEquipment = /equipment\.html$/i.test(path) || !!document.getElementById("progressFill");
       const isRegistry = /index_equipment_registry\.html$/i.test(path) || !!document.getElementById("registrySelect");
-      if (!isEquipment && !isRegistry) return;
+      const isDiagnostic = /vanguard_storage_audit\.html$/i.test(path) || !!document.getElementById("vanguardStorageAuditApp");
+      if (!isEquipment && !isRegistry && !isDiagnostic) return;
 
       await loadScriptOnce("assets/js/vanguard_validation_authority.js");
       await loadScriptOnce("assets/js/vanguard_authority_adapters.js");
+      await loadScriptOnce("assets/js/vanguard_storage_audit.js");
 
-      if (isEquipment) {
-        await loadScriptOnce("assets/js/vanguard_equipment_authority_indicator.js");
-      }
+      if (isEquipment) await loadScriptOnce("assets/js/vanguard_equipment_authority_indicator.js");
+      if (isRegistry) await loadScriptOnce("assets/js/vanguard_project_authority_dashboard.js");
 
-      if (isRegistry) {
-        await loadScriptOnce("assets/js/vanguard_project_authority_dashboard.js");
-      }
+      try { window.dispatchEvent(new CustomEvent("vanguard:authority-modules-loaded", { detail:{ isEquipment, isRegistry, isDiagnostic } })); } catch(e) {}
     } catch (e) {
       console.warn("NEXUS authority module loader failed:", e);
     }
@@ -233,41 +121,24 @@
     try {
       const isControlCenter = /vanguard_control_center/i.test(location.pathname || "") || !!document.getElementById("vxDropZone");
       if (!isControlCenter) return;
-
-      document.documentElement.style.overflowY = "auto";
-      document.documentElement.style.height = "auto";
-      document.body.style.overflowY = "auto";
-      document.body.style.height = "auto";
-      document.body.style.minHeight = "100vh";
-
+      document.documentElement.style.overflowY = "auto"; document.documentElement.style.height = "auto";
+      document.body.style.overflowY = "auto"; document.body.style.height = "auto"; document.body.style.minHeight = "100vh";
       const duplicateIntake = document.getElementById("vanguard-finishline-intake");
       if (duplicateIntake && duplicateIntake.parentNode) duplicateIntake.parentNode.removeChild(duplicateIntake);
-
       const backendInput = document.getElementById("vgBackendUrl");
       if (backendInput) {
-        const backendPanel = backendInput.closest("div[style]");
-        const topActions = document.querySelector(".top-actions");
+        const backendPanel = backendInput.closest("div[style]"); const topActions = document.querySelector(".top-actions");
         if (backendPanel) {
           backendPanel.style.cssText = "padding:12px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);font-family:Arial,Helvetica,sans-serif;color:#f6fbff;";
           if (topActions && backendPanel.parentNode !== topActions) topActions.appendChild(backendPanel);
         }
       }
-
       const zeroIds = ["heroDocCount", "heroMappedCount", "heroConflictCount", "statMapped", "statReview", "statReady", "activeQueueCount", "approvedToday"];
-      zeroIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el && /^(12|47|6|31|4|9)$/.test(String(el.textContent || "").trim())) el.textContent = "0";
-      });
-      const health = document.getElementById("statHealth");
-      if (health && String(health.textContent || "").trim() === "92%") health.textContent = "0%";
-
+      zeroIds.forEach(id => { const el = document.getElementById(id); if (el && /^(12|47|6|31|4|9)$/.test(String(el.textContent || "").trim())) el.textContent = "0"; });
+      const health = document.getElementById("statHealth"); if (health && String(health.textContent || "").trim() === "92%") health.textContent = "0%";
       const status = document.getElementById("vxLiveStatus");
-      if (status && /Reading local Vanguard project state/i.test(status.textContent || "")) {
-        status.textContent = "Control Center loaded. Reading local Vanguard state. Firebase will attach when available.";
-      }
-    } catch (e) {
-      console.warn("Control Center stability guard failed:", e);
-    }
+      if (status && /Reading local Vanguard project state/i.test(status.textContent || "")) status.textContent = "Control Center loaded. Reading local Vanguard state. Firebase will attach when available.";
+    } catch (e) { console.warn("Control Center stability guard failed:", e); }
   }
 
   function registryStartupGuard(){
@@ -276,67 +147,21 @@
       if (!isRegistry || window.__NEXUS_REGISTRY_CORE_GUARD__) return;
       window.__NEXUS_REGISTRY_CORE_GUARD__ = true;
       window.__NEXUS_REGISTRY_SKIP_HEAVY_PROGRESS_SCAN__ = true;
-
-      // Leave this guard intentionally small. Do not patch Storage.prototype here;
-      // the registry page has many localStorage-backed controls and image fields.
-      // Prototype interception caused button freezes during navigation testing.
-      window.addEventListener("pagehide", function(){
-        try { window.__NEXUS_REGISTRY_LEAVING__ = true; } catch(e) {}
-      }, { capture:true });
-      window.addEventListener("pageshow", function(){
-        try { window.__NEXUS_REGISTRY_LEAVING__ = false; } catch(e) {}
-      }, { capture:true });
-    } catch (e) {
-      console.warn("Registry startup guard failed:", e);
-    }
+      window.addEventListener("pagehide", function(){ try { window.__NEXUS_REGISTRY_LEAVING__ = true; } catch(e) {} }, { capture:true });
+      window.addEventListener("pageshow", function(){ try { window.__NEXUS_REGISTRY_LEAVING__ = false; } catch(e) {} }, { capture:true });
+    } catch (e) { console.warn("Registry startup guard failed:", e); }
   }
 
   function init(){
-    registryStartupGuard();
-    persistEq(getEq());
-    updateSessionBanner();
-    forceEqOnLinks(document);
-    controlCenterStabilityGuard();
-    loadAuthorityModules();
-
+    registryStartupGuard(); persistEq(getEq()); updateSessionBanner(); forceEqOnLinks(document); controlCenterStabilityGuard(); loadAuthorityModules();
     window.addEventListener("focus", updateSessionBanner);
     window.addEventListener("storage", updateSessionBanner);
     window.addEventListener("load", controlCenterStabilityGuard);
     window.addEventListener("vanguard:loader:complete", controlCenterStabilityGuard);
-    setTimeout(controlCenterStabilityGuard, 250);
-    setTimeout(controlCenterStabilityGuard, 1200);
+    setTimeout(controlCenterStabilityGuard, 250); setTimeout(controlCenterStabilityGuard, 1200);
   }
 
-  const NEXUS = {
-    getEq,
-    persistEq,
-    getRole,
-    setRole,
-    getStatus,
-    setStatus,
-    stepKey,
-    isStepComplete,
-    setStepComplete,
-    isCcsSigned,
-    setCcsSigned,
-    getEqUrl,
-    forceEqOnLinks,
-    back,
-    updateSessionBanner,
-    readJSON,
-    writeJSON,
-    controlCenterStabilityGuard,
-    registryStartupGuard,
-    loadAuthorityModules
-  };
-
-  window.NEXUS = window.NEXUS || {};
-  Object.assign(window.NEXUS, NEXUS);
-  window.NEXUS_back = back;
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  const NEXUS = { getEq, persistEq, getRole, setRole, getStatus, setStatus, stepKey, isStepComplete, setStepComplete, isCcsSigned, setCcsSigned, getEqUrl, forceEqOnLinks, back, updateSessionBanner, readJSON, writeJSON, controlCenterStabilityGuard, registryStartupGuard, loadAuthorityModules };
+  window.NEXUS = window.NEXUS || {}; Object.assign(window.NEXUS, NEXUS); window.NEXUS_back = back;
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
 })();
