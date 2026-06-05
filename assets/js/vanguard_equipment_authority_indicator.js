@@ -7,16 +7,16 @@
   - Only surface Reviews/Stops when they exist.
   - Stops only mean field-blocking items from the Authority Engine:
       process incomplete OR FAIL without notation.
+  - Passive refresh only. No polling loop.
 */
 (function(){
   'use strict';
   if (typeof window === 'undefined') return;
   if (window.NEXUS_EQUIPMENT_AUTHORITY_INDICATOR && window.NEXUS_EQUIPMENT_AUTHORITY_INDICATOR.__installed) return;
 
-  var VERSION = '1.0.0-equipment-option-2';
+  var VERSION = '1.1.0-no-polling';
 
   function clean(v){ return String(v == null ? '' : v).trim(); }
-  function lower(v){ return clean(v).toLowerCase(); }
   function esc(v){ return clean(v).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
   function getEq(){
@@ -60,7 +60,7 @@
   function getAuthorityResult(eq){
     var adapters = window.NEXUS_VANGUARD_AUTHORITY_ADAPTERS || window.VanguardAuthorityAdapters;
     if (adapters && typeof adapters.runAuthority === 'function') {
-      try { return adapters.runAuthority(eq); } catch(e) {}
+      try { return adapters.runAuthority(eq, { silent:true, persist:false }); } catch(e) {}
     }
     try {
       var raw = localStorage.getItem('nexus_vanguard_authority_' + eq) || localStorage.getItem('nexus_' + eq + '_authority_snapshot_v1');
@@ -130,26 +130,25 @@
     pill.className = 'nx-auth-pill ' + (stops.length ? 'stop' : 'review');
 
     var html = '';
-    if (stops.length) {
-      html += '<div class="nx-auth-muted">Stops mean field-blocking items: process incomplete or FAIL without notation.</div><div class="nx-auth-list">' + stops.slice(0,8).map(function(i){ return '<div class="nx-auth-item stop"><b>Stop:</b> ' + esc(i.message) + '</div>'; }).join('') + '</div>';
-    }
-    if (reviews.length) {
-      html += '<div class="nx-auth-muted">Reviews do not stop field work. They stay visible for engineer/supervisor follow-up.</div><div class="nx-auth-list">' + reviews.slice(0,8).map(function(i){ return '<div class="nx-auth-item review"><b>Review:</b> ' + esc(i.message) + '</div>'; }).join('') + '</div>';
-    }
+    if (stops.length) html += '<div class="nx-auth-muted">Stops mean field-blocking items: process incomplete or FAIL without notation.</div><div class="nx-auth-list">' + stops.slice(0,8).map(function(i){ return '<div class="nx-auth-item stop"><b>Stop:</b> ' + esc(i.message) + '</div>'; }).join('') + '</div>';
+    if (reviews.length) html += '<div class="nx-auth-muted">Reviews do not stop field work. They stay visible for engineer/supervisor follow-up.</div><div class="nx-auth-list">' + reviews.slice(0,8).map(function(i){ return '<div class="nx-auth-item review"><b>Review:</b> ' + esc(i.message) + '</div>'; }).join('') + '</div>';
     details.innerHTML = html;
+  }
+
+  function scheduleRender(){
+    clearTimeout(scheduleRender.timer);
+    scheduleRender.timer = setTimeout(render, 150);
   }
 
   function install(){
     render();
-    window.addEventListener('storage', render);
-    window.addEventListener('focus', render);
-    window.addEventListener('pageshow', render);
-    window.addEventListener('vanguard:authority-adapter:updated', render);
-    window.addEventListener('nexus-workflow-change', render);
-    setInterval(render, 5000);
+    window.addEventListener('focus', scheduleRender);
+    window.addEventListener('pageshow', scheduleRender);
+    window.addEventListener('nexus-workflow-change', scheduleRender);
+    window.addEventListener('vanguard:authority-manual-refresh', scheduleRender);
   }
 
-  window.NEXUS_EQUIPMENT_AUTHORITY_INDICATOR = { __installed:true, version:VERSION, render:render };
+  window.NEXUS_EQUIPMENT_AUTHORITY_INDICATOR = { __installed:true, version:VERSION, render:render, refresh:scheduleRender };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
   else install();
 })();
