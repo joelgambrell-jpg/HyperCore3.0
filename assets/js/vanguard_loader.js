@@ -9,7 +9,7 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_LOADER && window.NEXUS_VANGUARD_LOADER.__installed) return;
 
-  var VERSION = '0.4.7-root-registry-lightweight';
+  var VERSION = '0.4.8-authority-risk-mitigation';
 
   var REGISTRY_MODULES = [
     'assets/js/vanguard_core.js',
@@ -18,14 +18,22 @@
     'assets/js/vanguard_ipad_ux_hardening.js'
   ];
 
+  var AUTHORITY_MODULES = [
+    'assets/js/vanguard_validation_authority.js',
+    'assets/js/vanguard_authority_adapters.js',
+    'assets/js/nexus-vanguard-hard-gates.js',
+    'assets/js/vanguard_storage_audit.js'
+  ];
+
   var EXPORT_CORE_MODULES = [
     'assets/js/vanguard_core.js',
     'assets/js/vanguard_state.js',
     'assets/js/vanguard_approved_rules_enforcement.js',
     'assets/js/vanguard_export_state.js',
     'assets/js/vanguard_registry.js',
+    'assets/js/vanguard_validation_engine.js',
     'assets/js/vanguard_ipad_ux_hardening.js'
-  ];
+  ].concat(AUTHORITY_MODULES);
 
   var CORE_MODULES = [
     'assets/js/vanguard_core.js',
@@ -42,7 +50,7 @@
     'assets/js/vanguard_project_state.js',
     'assets/js/vanguard_realtime_sync.js',
     'assets/js/vanguard_ipad_ux_hardening.js'
-  ];
+  ].concat(AUTHORITY_MODULES);
 
   var DOCUMENT_MODULES = [
     'assets/js/vanguard_document_intake.js',
@@ -199,6 +207,7 @@
     version:VERSION,
     mode:MODE,
     modules:MODULES.slice(),
+    authorityModules:AUTHORITY_MODULES.slice(),
     availableModes:Object.keys(MODE_MAP),
     optionalMissing:OPTIONAL_NOT_PRESENT_IN_THIS_BUILD.slice(),
     loadAll:loadAll,
