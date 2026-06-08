@@ -3,13 +3,18 @@
   NEXUS Vanguard Loader
   Mode-aware additive loader. Keeps field/export/dashboard pages from loading
   unrelated Vanguard modules while preserving a full mode for Control Center.
+
+  HyperCore 3.0 rule:
+  - Do not reference placeholder modules.
+  - Every module listed here is a full runtime file with safe no-break behavior.
+  - Field pages remain localStorage-first and single-tab safe.
 */
 (function(){
   'use strict';
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_LOADER && window.NEXUS_VANGUARD_LOADER.__installed) return;
 
-  var VERSION = '0.4.8-authority-risk-mitigation';
+  var VERSION = '0.4.9-full-risk-runtime';
 
   var REGISTRY_MODULES = [
     'assets/js/vanguard_core.js',
@@ -22,7 +27,13 @@
     'assets/js/vanguard_validation_authority.js',
     'assets/js/vanguard_authority_adapters.js',
     'assets/js/nexus-vanguard-hard-gates.js',
-    'assets/js/vanguard_storage_audit.js'
+    'assets/js/vanguard_storage_audit.js',
+    'assets/js/vanguard_package_readiness_engine.js',
+    'assets/js/vanguard_persistence_bridge.js'
+  ];
+
+  var REGRESSION_MODULES = [
+    'assets/js/vanguard_regression_harness.js'
   ];
 
   var EXPORT_CORE_MODULES = [
@@ -99,7 +110,8 @@
     ccs: CORE_MODULES.concat(CCS_MODULES),
     export: EXPORT_CORE_MODULES.concat(EXPORT_MODULES),
     dashboard: CORE_MODULES.concat(DOCUMENT_MODULES, CCS_MODULES, DASHBOARD_MODULES),
-    full: CORE_MODULES.concat(DOCUMENT_MODULES, CCS_MODULES, DASHBOARD_MODULES, EXPORT_MODULES)
+    full: CORE_MODULES.concat(DOCUMENT_MODULES, CCS_MODULES, DASHBOARD_MODULES, EXPORT_MODULES, REGRESSION_MODULES),
+    test: CORE_MODULES.concat(DOCUMENT_MODULES, CCS_MODULES, DASHBOARD_MODULES, EXPORT_MODULES, REGRESSION_MODULES)
   };
 
   function unique(list){
@@ -202,19 +214,30 @@
     });
   }
 
+  function loadRegressionHarness(){
+    return loadList(REGRESSION_MODULES).then(function(results){
+      window.NEXUS_VANGUARD_LOADER.regressionResults = results;
+      try { window.dispatchEvent(new CustomEvent('vanguard:regression-loader-ready',{detail:{version:VERSION,results:results}})); } catch(e){}
+      return results;
+    });
+  }
+
   var api = {
     __installed:true,
     version:VERSION,
     mode:MODE,
     modules:MODULES.slice(),
     authorityModules:AUTHORITY_MODULES.slice(),
+    regressionModules:REGRESSION_MODULES.slice(),
     availableModes:Object.keys(MODE_MAP),
     optionalMissing:OPTIONAL_NOT_PRESENT_IN_THIS_BUILD.slice(),
     loadAll:loadAll,
     loadRegistryAi:loadRegistryAi,
+    loadRegressionHarness:loadRegressionHarness,
     loadScript:loadScript,
     results:[],
-    registryAiResults:[]
+    registryAiResults:[],
+    regressionResults:[]
   };
   window.NEXUS_VANGUARD_LOADER = api;
   window.VanguardLoader = api;
