@@ -6,125 +6,134 @@
 
   <link rel="stylesheet" href="nexus-core.css" />
   <link rel="stylesheet" href="nexus-core.print.css" media="print" />
-
-  <title>L2 Installation Verification</title>
+  <title>Redirecting…</title>
 
   <style>
-    *{box-sizing:border-box;}
-    html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#b60000;}
-    body{background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),url("transformer.jpg") center center / cover no-repeat fixed !important;}
-    .nx-header-wrap{background:rgba(0,0,0,.35);border-bottom:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);}
-    .nx-header{max-width:1100px;margin:0 auto;padding:14px 18px;display:flex;align-items:center;}
-    .nx-header img{height:54px;width:auto;max-width:100%;object-fit:contain;}
-    .wrap{max-width:900px;margin:26px auto 60px;padding:0 18px;}
-    .card{padding:24px;border-radius:24px;background:linear-gradient(180deg,rgba(15,23,42,.94),rgba(2,6,23,.92));border:1px solid rgba(148,163,184,.24);backdrop-filter:blur(12px);box-shadow:0 24px 70px rgba(0,0,0,.36);}
-    h1{margin:0 0 10px;font-size:32px;font-weight:1000;letter-spacing:-.03em;}
-    .sub{margin:0 0 18px;font-size:15px;font-weight:850;opacity:.94;line-height:1.45;color:#cbd5e1;}
-    .status{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border-radius:999px;background:rgba(0,194,255,.14);border:1px solid rgba(0,194,255,.36);color:#dffaff;font-weight:1000;margin-bottom:16px;}
-    .launch-card{padding:18px;border-radius:20px;background:rgba(8,16,30,.72);border:2px solid rgba(148,163,184,.28);box-shadow:0 14px 28px rgba(0,0,0,.22);}
-    .launch-card b{display:block;font-size:22px;font-weight:1000;line-height:1.1;margin-bottom:8px;}
-    .launch-card span{display:block;font-size:14px;font-weight:850;line-height:1.35;color:#cbd5e1;}
-    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;}
-    .btn{padding:14px 18px;font-size:15px;font-weight:1000;border-radius:999px;color:#3ecbff;background:#0a0f24;border:2px solid #00c2ff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;user-select:none;}
-    .btn.secondary{background:rgba(0,0,0,.22);color:#fff;border:2px solid rgba(255,255,255,.35);}
-    .nx-footer{margin-top:40px;padding:18px 12px;text-align:center;font-size:12px;font-weight:700;color:rgba(255,255,255,.85);background:rgba(0,0,0,.35);border-top:1px solid rgba(255,255,255,.18);}
+    /* ===== NEXUS Shared Header ===== */
+    .nx-header-wrap{
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+    }
+    .nx-header{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+    }
+    .nx-header img{
+      height: 54px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+    }
   </style>
+
+  <style>
+    .nx-footer{
+      margin-top: 40px;
+      padding: 18px 12px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      background: rgba(0,0,0,0.35);
+      border-top: 1px solid rgba(255,255,255,0.18);
+    }
+  </style>
+
+  <link rel="stylesheet" href="assets/css/nexus-core.css">
 </head>
 <body>
-<div class="nexus-page">
-  <div id="nxSessionBanner" class="nx-session-banner">
-    <div class="nx-left">
-      <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
-      <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
-      <span class="nx-pill" data-nx-status>L2 Page</span>
-    </div>
-    <div class="nx-right">
-      <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
-        <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
-          <option value="viewer">viewer</option>
-          <option value="tech">tech</option>
-          <option value="foreman">foreman</option>
-          <option value="superintendent">superintendent</option>
-          <option value="admin">admin</option>
-        </select>
-      </label>
-    </div>
-  </div>
+  <div class="nexus-page">
 
-  <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
-
-  <div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
-
-  <div class="wrap">
-    <div class="card">
-      <h1>L2 Installation Verification</h1>
-      <div class="status" id="openStatus">Ready</div>
-      <p class="sub">This is the single L2 landing page opened from the Equipment workflow. It does not add another selection layer and it does not auto-redirect.</p>
-
-      <div class="launch-card">
-        <b>L2 Verification Form</b>
-        <span>Open the original L2 verification form for this equipment when you are ready to complete the L2 checklist.</span>
-        <div class="actions">
-          <a class="btn" id="openL2FormBtn" href="#">Open L2 Form</a>
-          <a class="btn secondary" id="backBtn" href="#">Back to Equipment</a>
-        </div>
+    <div id="nxSessionBanner" class="nx-session-banner">
+      <div class="nx-left">
+        <span class="nx-pill">Equipment: <span data-nx-eq>(none)</span></span>
+        <span class="nx-pill">Role: <span data-nx-role>viewer</span></span>
+        <span class="nx-pill" data-nx-status>Ready</span>
+      </div>
+      <div class="nx-right">
+        <label style="font-weight:800;font-size:12px;opacity:.95;">Set Role
+          <select id="nxRoleSelect" onchange="NEXUS.setRole(this.value)">
+            <option value="viewer">viewer</option>
+            <option value="tech">tech</option>
+            <option value="foreman">foreman</option>
+            <option value="superintendent">superintendent</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
       </div>
     </div>
+
+    <script>
+      (function(){
+        try{
+          var sel=document.getElementById("nxRoleSelect");
+          if(sel && window.NEXUS && typeof window.NEXUS.getRole==="function"){
+            sel.value = window.NEXUS.getRole();
+          }
+        }catch(e){}
+      })();
+    </script>
+
+    <script>
+      (function(){
+        try{
+          if (window.buttons && typeof window.buttons.push === "function") {
+            window.buttons.push({
+              label: "L2 Installation Verification SOP",
+              href: (typeof window.getEqLink === "function" ? (window.getEqLink("l2Sop") || "#") : "#"),
+              external: true
+            });
+          }
+        }catch(e){}
+      })();
+    </script>
+
+    <a class="nx-back-btn" href="#" onclick="return NEXUS_back();">← Back</a>
+
+    <div class="nx-header-wrap">
+      <div class="nx-header">
+        <img src="nexus.png" alt="NEXUS" />
+      </div>
+    </div>
+
+    <script>
+      const qs = new URLSearchParams(location.search);
+      const eq = (qs.get('eq') || '').trim();
+
+      const u = new URL('form.html', location.href);
+      u.searchParams.set('id','l2');
+      if (eq) u.searchParams.set('eq', eq);
+
+      location.replace(u.pathname.split('/').pop() + u.search);
+    </script>
+
+    <script>
+      (function(){
+        window.NEXUS_back = function(){
+          try{
+            if (document.referrer && document.referrer.indexOf(location.host) !== -1){
+              history.back();
+              return false;
+            }
+          }catch(e){}
+          const qs = new URLSearchParams(location.search);
+          const eq = qs.get("eq");
+          location.href = eq ? `equipment.html?eq=${encodeURIComponent(eq)}` : "equipment.html";
+          return false;
+        };
+      })();
+    </script>
+
+    <footer class="nx-footer">
+      © 2026 NEXUS Data Science — Built for Faith Technologies Incorporated — All Rights Reserved
+    </footer>
+
+    <script src="assets/js/nexus-core.js"></script>
+    <script src="assets/js/nexus-firebase-bridge.js"></script>
   </div>
-
-  <footer class="nx-footer">© 2026 NEXUS Data Science — All Rights Reserved</footer>
-</div>
-
-<script src="assets/js/nexus-workflow-state.js"></script>
-<script src="assets/js/nexus-core.js"></script>
-<script src="assets/js/nexus-firebase-bridge.js"></script>
-<script>
-(function(){
-  const qs = new URLSearchParams(location.search);
-  const eq = (qs.get("eq") || "").trim();
-  const l2 = (qs.get("l2") || "").trim();
-
-  function withEq(page){
-    const u = new URL(page, location.href);
-    if(eq) u.searchParams.set("eq", eq);
-    if(l2) u.searchParams.set("l2", l2);
-    return u.pathname.split("/").pop() + u.search;
-  }
-
-  try{
-    if(eq){
-      localStorage.setItem("nexus_active_eq", eq);
-      localStorage.setItem("nexus_active_equipment", eq);
-    }
-    const sel = document.getElementById("nxRoleSelect");
-    if(sel && window.NEXUS && typeof window.NEXUS.getRole === "function") sel.value = window.NEXUS.getRole();
-  }catch(e){}
-
-  const openL2FormBtn = document.getElementById("openL2FormBtn");
-  const backBtn = document.getElementById("backBtn");
-  const status = document.querySelector("[data-nx-status]");
-  const eqNode = document.querySelector("[data-nx-eq]");
-
-  if(openL2FormBtn) openL2FormBtn.href = withEq("l2_no_procore.html");
-  if(backBtn) backBtn.href = eq ? ("equipment.html?eq=" + encodeURIComponent(eq)) : "equipment.html";
-  if(status) status.textContent = "L2 Page";
-  if(eqNode) eqNode.textContent = eq || "(none)";
-
-  try{
-    localStorage.setItem("nexus_" + (eq || "NO_EQ") + "_l2_launcher_v1", JSON.stringify({
-      eq:eq || "NO_EQ",
-      section:"l2_launcher",
-      status:"READY",
-      target:openL2FormBtn ? openL2FormBtn.href : "",
-      updatedAt:new Date().toISOString()
-    }));
-  }catch(e){}
-
-  window.NEXUS_back = function(){
-    location.href = eq ? "equipment.html?eq=" + encodeURIComponent(eq) : "equipment.html";
-    return false;
-  };
-})();
-</script>
 </body>
 </html>
