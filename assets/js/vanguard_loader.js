@@ -14,7 +14,7 @@
   if (typeof window === 'undefined') return;
   if (window.NEXUS_VANGUARD_LOADER && window.NEXUS_VANGUARD_LOADER.__installed) return;
 
-  var VERSION = '0.4.9-full-risk-runtime';
+  var VERSION = '0.4.10-export-stabilization-marker';
 
   var REGISTRY_MODULES = [
     'assets/js/vanguard_core.js',
